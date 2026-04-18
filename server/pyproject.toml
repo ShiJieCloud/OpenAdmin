@@ -1,0 +1,30 @@
+[project]
+name = "openadmin-server"
+version = "0.1.0"
+description = "OpenAdmin 基于 FastAPI 的后端服务"
+authors = [
+    { name = "sjzhao", email = "1500492856@qq.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi (>=0.128.0,<0.129.0)",
+    "uvicorn (>=0.40.0,<0.41.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry]
+packages = [
+    { include = "app" }
+]
+
+# 镜像源配置
+[[tool.poetry.source]]
+name = "mirrors"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
+priority = "primary"
