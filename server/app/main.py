@@ -1,7 +1,6 @@
-from app.core.response import ResponseBuilder
+from app.core import ResponseBuilder, register_exception_handlers, setup_cors
 from fastapi import FastAPI
 from app.core.lifespan import lifespan
-from app.core.exception_handler import register_exception_handlers
 from app.schemas.base.response import ApiResponse
 
 app = FastAPI(
@@ -10,6 +9,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# 配置 CORS 跨域中间件
+setup_cors(app)
 
 # 注册全局异常处理器
 register_exception_handlers(app)
