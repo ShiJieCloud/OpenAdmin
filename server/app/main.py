@@ -2,12 +2,19 @@ from app.core import ResponseBuilder, register_exception_handlers, setup_cors
 from fastapi import FastAPI
 from app.core.lifespan import lifespan
 from app.schemas.base.response import ApiResponse
+from app.config.app import app_config
 
 app = FastAPI(
-    title="OpenAdmin 后台管理系统",
-    description="FastAPI + Vue3 开源后台",
-    version="1.0.0",
-    lifespan=lifespan
+    title=app_config.DOCS_TITLE,
+    description=app_config.DOCS_DESCRIPTION,
+    version=app_config.DOCS_VERSION,
+    lifespan=lifespan,
+    contact={
+        "name": app_config.DOCS_CONTACT_NAME,
+        "email": app_config.DOCS_CONTACT_EMAIL,
+    },
+    docs_url=app_config.DOCS_URL if app_config.DOCS_ENABLE else None,
+    redoc_url=app_config.REDOC_URL if app_config.DOCS_ENABLE else None,
 )
 
 # 配置 CORS 跨域中间件
