@@ -2,14 +2,13 @@ from datetime import datetime
 from typing import List, Optional
 
 from app.schemas.base.response import ApiResponse, PaginationResponse, PaginationData
-from .enums import RespCodeEnum
-from .types import T
+from app.core.enums import RespCodeEnum
+from app.core.types import T
 
 
 class ResponseBuilder:
-    """响应构建器类
-    
-    使用类方法构建不同类型的响应对象
+    """
+    响应构建器类
     """
     
     @classmethod
@@ -24,28 +23,27 @@ class ResponseBuilder:
             ApiResponse 对象
         """
         return ApiResponse[T](
-            code=RespCodeEnum.SUCCESS,
+            code=RespCodeEnum.SUCCESS.code,
             message=message or RespCodeEnum.SUCCESS.msg,
             data=data,
             timestamp=int(datetime.now().timestamp() * 1000)
         )
     
     @classmethod
-    def error(cls, code: RespCodeEnum, message: Optional[str] = None) -> ApiResponse[T]:
+    def error(cls, err_code: RespCodeEnum, message: Optional[str] = None) -> ApiResponse[T]:
         """构建错误响应
         
         Args:
-            code: 业务状态码， RespCodeEnum 枚举
+            err_code: 业务状态码， RespCodeEnum 枚举
             message: 提示信息，默认为 None，会使用响应码的默认提示信息
         
         Returns:
             ApiResponse 对象
         """
-        resp_code = code
         
         return ApiResponse[T](
-            code=resp_code,
-            message=message or resp_code.msg,
+            code=err_code.code,
+            message=message or err_code.msg,
             data=None,
             timestamp=int(datetime.now().timestamp() * 1000)
         )
@@ -75,7 +73,7 @@ class ResponseBuilder:
         )
         
         return PaginationResponse[T](
-            code=RespCodeEnum.SUCCESS,
+            code=RespCodeEnum.SUCCESS.code,
             message=RespCodeEnum.SUCCESS.msg,
             data=pagination_data,
             timestamp=int(datetime.now().timestamp() * 1000)
