@@ -1,8 +1,10 @@
-from app.core import ResponseBuilder, register_exception_handlers, setup_cors
+from app.core.exceptions import register_exception_handlers
+from app.core.middlewares import setup_cors
 from fastapi import FastAPI
 from app.core.lifespan import lifespan
 from app.schemas.base.response import ApiResponse
 from app.config.app import app_config
+from app.core.response import ResponseBuilder
 
 app = FastAPI(
     title=app_config.DOCS_TITLE,
