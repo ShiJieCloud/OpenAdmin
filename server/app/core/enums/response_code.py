@@ -35,6 +35,16 @@ class RespCodeEnum(Enum):
     PERMISSION_ERROR = ("403", "权限不足")
     RESOURCE_ERROR = ("404", "资源错误")
     
+    # ========================
+    # 认证授权相关错误 (AUxxxx)
+    # ========================
+    TOKEN_INVALID = ("AU0001", "Token 无效")
+    TOKEN_EXPIRED = ("AU0002", "Token 已过期")
+    TOKEN_TYPE_ERROR = ("AU0003", "Token 类型错误")
+    NOT_AUTHENTICATED = ("AU0004", "未登录，请先登录")
+    USER_DISABLED = ("AU0005", "账号已被禁用")
+    USER_NOT_FOUND = ("AU0006", "用户不存在")
+    
     def __init__(self, code, msg):
         self.code = code
         self.msg = msg
