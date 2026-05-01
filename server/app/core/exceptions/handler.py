@@ -24,6 +24,7 @@ def register_exception_handlers(app: FastAPI):
         Returns:
             JSONResponse: 统一格式的错误响应
         """
+
         response = ResponseBuilder.error(code=exc.code, message=exc.message)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
@@ -66,11 +67,9 @@ def register_exception_handlers(app: FastAPI):
         Returns:
             JSONResponse: 统一格式的错误响应
         """
-        # 记录异常信息
-        print(f"全局异常捕获: {exc}")
         
         # 返回统一格式的错误响应
-        response = ResponseBuilder.error(RespCodeEnum.INTERNAL_SERVER_ERROR)
+        response = ResponseBuilder.error(RespCodeEnum.INTERNAL_SERVER_ERROR.code, RespCodeEnum.INTERNAL_SERVER_ERROR.msg)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=response.model_dump()

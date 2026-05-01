@@ -11,9 +11,7 @@ from app.core.exceptions import BusinessError
 from app.schemas.auth import TokenPayload
 
 
-# ================================================
-# 密码加密
-# ================================================
+# ========================== 密码加密 ==========================
 
 # 忽略passlib警告
 warnings.filterwarnings("ignore", category=UserWarning, module="passlib.handlers.bcrypt")
@@ -29,17 +27,18 @@ def get_password_hash(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """密码校验"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except (ValueError, TypeError):
+        # TODO: 打印异常信息
+        return False
 
 
-
-# ================================================
-# JWT 令牌
-# ================================================
+# ========================== JWT 令牌 ==========================
 
 
 def create_token(
-    subject: str,
+    subject: int,
     token_type: TokenTypeEnum,
     expires_delta: Optional[timedelta] = None,
 ) -> str:
@@ -79,18 +78,18 @@ def create_token(
     )
 
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: int) -> str:
     """创建访问令牌"""
     return create_token(user_id, TokenTypeEnum.ACCESS)
 
 
-def create_refresh_token(user_id: str) -> str:
+def create_refresh_token(user_id: int) -> str:
     """创建刷新令牌"""
     
     return create_token(user_id, TokenTypeEnum.REFRESH)
 
 
-def create_tokens(user_id: str) -> tuple[str, str]:
+def create_tokens(user_id: int) -> tuple[str, str]:
     """创建访问令牌和刷新令牌"""
     access_token = create_access_token(user_id)
     refresh_token = create_refresh_token(user_id)

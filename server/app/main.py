@@ -5,6 +5,7 @@ from app.core.lifespan import lifespan
 from app.schemas.base.response import ApiResponse
 from app.config.app import app_config
 from app.core.response import ResponseBuilder
+from app.api.router import api_router
 
 app = FastAPI(
     title=app_config.DOCS_TITLE,
@@ -24,6 +25,9 @@ setup_cors(app)
 
 # 注册全局异常处理器
 register_exception_handlers(app)
+
+# 注册API路由
+app.include_router(api_router, prefix="/api")
 
 # 测试接口
 @app.get("/", response_model=ApiResponse[str])

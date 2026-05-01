@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from app.schemas.base.response import ApiResponse, PaginationResponse, PaginationData
 from app.core.enums import RespCodeEnum
@@ -12,7 +12,7 @@ class ResponseBuilder:
     """
     
     @classmethod
-    def success(cls, data: Optional[T] = None, message: Optional[str] = None) -> ApiResponse[T]:
+    def success(cls, data: T | None = None, message: str | None = None) -> ApiResponse[T]:
         """构建成功响应
         
         Args:
@@ -30,7 +30,7 @@ class ResponseBuilder:
         )
     
     @classmethod
-    def error(cls, err_code: RespCodeEnum, message: Optional[str] = None) -> ApiResponse[T]:
+    def error(cls, code: str, message: str) -> ApiResponse[T]:
         """构建错误响应
         
         Args:
@@ -42,8 +42,8 @@ class ResponseBuilder:
         """
         
         return ApiResponse[T](
-            code=err_code.code,
-            message=message or err_code.msg,
+            code=code,
+            message=message,
             data=None,
             timestamp=int(datetime.now().timestamp() * 1000)
         )
