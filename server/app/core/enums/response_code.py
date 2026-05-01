@@ -26,6 +26,7 @@ class RespCodeEnum(Enum):
     TOKEN_INVALID = ("BAU0001", "Token 无效")
     TOKEN_EXPIRED = ("BAU0002", "Token 已过期")
     TOKEN_TYPE_ERROR = ("BAU0003", "Token 类型错误")
+    LOGIN_EXPIRED = ("BAU0004", "登录已失效，请重新登录")
 
     # B-US = 用户相关 (User)
     USER_NOT_EXIST = ("BUS0001", "用户不存在")
