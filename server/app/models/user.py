@@ -1,4 +1,4 @@
-from sqlalchemy import String, BigInteger, Integer, DateTime, func
+from sqlalchemy import String, BigInteger, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.mysql import TINYINT
 
@@ -10,12 +10,6 @@ class User(BaseModel):
     """用户模型"""
     __tablename__ = "sys_user"
     
-    id: Mapped[int] = mapped_column(
-        BigInteger,
-        primary_key=True,
-        autoincrement=True,
-        comment="用户ID（主键）"
-    )
     username: Mapped[str] = mapped_column(
         String(50),
         unique=True,
@@ -93,19 +87,6 @@ class User(BaseModel):
         comment="账号锁定时间"
     )
     
-    create_time: Mapped[DateTime] = mapped_column(
-        DateTime,
-        server_default=func.now(),
-        nullable=False,
-        comment="创建时间"
-    )
-    update_time: Mapped[DateTime] = mapped_column(
-        DateTime,
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-        comment="更新时间"
-    )
     remark: Mapped[str | None] = mapped_column(
         String(500),
         nullable=True,
