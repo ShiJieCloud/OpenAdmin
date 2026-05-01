@@ -30,6 +30,7 @@ class RespCodeEnum(Enum):
 
     # B-US = 用户相关 (User)
     USER_NOT_EXIST = ("BUS0001", "用户不存在")
+    USER_STATUS_ERROR = ("BUS0002", "用户状态异常")
 
     # B-PW = 密码认证 (Password)
     PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误")

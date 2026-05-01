@@ -121,3 +121,13 @@ class UserService(BaseService):
             refresh_token=new_refresh_token,
             expires_in=auth_config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * TimeSec.MINUTE
         )
+
+    async def logout(self, user_id: int) -> None:
+        """用户退出登录，销毁 Redis 中的刷新令牌
+        
+        Args:
+            user_id: 用户ID
+        """
+        # 从 Redis 删除刷新令牌
+        await self.redis_client.delete(RedisKeyTemplate.refresh_token(user_id))
+
