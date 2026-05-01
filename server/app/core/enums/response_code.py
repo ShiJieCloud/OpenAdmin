@@ -2,52 +2,46 @@ from enum import Enum
 
 
 class RespCodeEnum(Enum):
-    """响应码枚举类
-    
-    用于定义系统中所有的响应码，每个枚举成员包含业务码和提示信息
-    
-    格式：枚举成员 = (响应码, 提示信息)
-    
-    特性：
-    1. print(RespCodeEnum.SUCCESS) → 输出 000000
-    2. RespCodeEnum.SUCCESS.code → 000000
-    3. RespCodeEnum.SUCCESS.msg → 请求成功
+    """
+    系统全局响应码枚举类
+
+    编码规则（固定7位）：
+      - 第1位：一级分类（0=成功 / T=技术错误 / B=业务错误 / E=第三方错误）
+      - 第2-3位：二级分类（2位字母，详见类内注释）
+      - 第4-7位：4位数字序号（0000~9999）
+
+    完整格式：XXXNNNN（共7位）
+      - 示例：0000000 = 成功
+      - 示例：BPW0001 = 业务类-密码错误-序号0001
     """
 
-    # 成功
-    SUCCESS = ("000000", "请求成功")
-    
-    # 客户端错误
-    BAD_REQUEST = ("400", "请求参数错误")
-    UNAUTHORIZED = ("401", "未授权")
-    FORBIDDEN = ("403", "禁止访问")
-    NOT_FOUND = ("404", "资源不存在")
-    METHOD_NOT_ALLOWED = ("405", "方法不允许")
-    CONFLICT = ("409", "资源冲突")
-    
-    # 服务器错误
-    INTERNAL_SERVER_ERROR = ("500", "服务器内部错误")
-    SERVICE_UNAVAILABLE = ("503", "服务不可用")
-    
-    # 业务错误
-    VALIDATION_ERROR = ("422", "数据验证错误")
-    AUTHENTICATION_ERROR = ("401", "认证失败")
-    PERMISSION_ERROR = ("403", "权限不足")
-    RESOURCE_ERROR = ("404", "资源错误")
-    
-    # ========================
-    # 认证授权相关错误 (AUxxxx)
-    # ========================
-    TOKEN_INVALID = ("AU0001", "Token 无效")
-    TOKEN_EXPIRED = ("AU0002", "Token 已过期")
-    TOKEN_TYPE_ERROR = ("AU0003", "Token 类型错误")
-    NOT_AUTHENTICATED = ("AU0004", "未登录，请先登录")
-    USER_DISABLED = ("AU0005", "账号已被禁用")
-    USER_NOT_FOUND = ("AU0006", "用户不存在")
-    
-    def __init__(self, code, msg):
+    # ==================== 0：成功 ====================
+    SUCCESS = ("0000000", "请求成功")
+
+    # ==================== T：技术类错误（Technical Error） ====================
+    INTERNAL_SERVER_ERROR = ("TSV0001", "服务器内部错误")
+
+    # ==================== B：业务类错误（Business Error） ====================
+    # B-AU = 认证授权 (Auth)
+    TOKEN_INVALID = ("BAU0001", "Token 无效")
+    TOKEN_EXPIRED = ("BAU0002", "Token 已过期")
+    TOKEN_TYPE_ERROR = ("BAU0003", "Token 类型错误")
+
+    # B-US = 用户相关 (User)
+    USER_NOT_EXIST = ("BUS0001", "用户不存在")
+
+    # B-PW = 密码认证 (Password)
+    PWD_INVALID = ("BPW0001", "密码错误")
+    PWD_HASH_INVALID = ("BPW0002", "密码哈希被篡改或格式非法")
+    PWD_TYPE_ERROR = ("BPW0003", "密码类型错误")
+
+    # B-GE = 通用业务 (General)
+    PARAM_INVALID = ("BGE0001", "参数无效")
+    QUERY_CONDITION_INVALID = ("BGE0002", "查询条件不能为空")
+
+    # ==================== E：第三方错误（Third-party Error） ====================
+
+
+    def __init__(self, code: str, msg: str):
         self.code = code
         self.msg = msg
-    
-    def __str__(self):
-        return self.code
