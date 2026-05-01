@@ -19,7 +19,7 @@ class RespCodeEnum(Enum):
     SUCCESS = ("0000000", "请求成功")
 
     # ==================== T：技术类错误（Technical Error） ====================
-    INTERNAL_SERVER_ERROR = ("TSV0001", "服务器内部错误")
+    INTERNAL_SERVER_ERROR = ("TSV0001", "服务器内部异常")
 
     # ==================== B：业务类错误（Business Error） ====================
     # B-AU = 认证授权 (Auth)
@@ -31,9 +31,7 @@ class RespCodeEnum(Enum):
     USER_NOT_EXIST = ("BUS0001", "用户不存在")
 
     # B-PW = 密码认证 (Password)
-    PWD_INVALID = ("BPW0001", "密码错误")
-    PWD_HASH_INVALID = ("BPW0002", "密码哈希被篡改或格式非法")
-    PWD_TYPE_ERROR = ("BPW0003", "密码类型错误")
+    PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误")
 
     # B-GE = 通用业务 (General)
     PARAM_INVALID = ("BGE0001", "参数无效")
