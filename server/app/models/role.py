@@ -8,7 +8,11 @@ from app.models.base import BaseModel
 
 class Role(BaseModel):
     """角色模型"""
+
     __tablename__ = "sys_role"
+    __table_args__ = (
+        {"comment": "角色表"},
+    )
     
     role_name: Mapped[str] = mapped_column(
         String(50),
@@ -22,10 +26,10 @@ class Role(BaseModel):
         index=True,
         comment="角色唯一编码"
     )
-    role_sort: Mapped[int] = mapped_column(
+    sort: Mapped[int] = mapped_column(
         Integer,
         default=0,
-        comment="角色排序"
+        comment="显示顺序（越小越靠前）"
     )
     description: Mapped[str] = mapped_column(
         String(255),
