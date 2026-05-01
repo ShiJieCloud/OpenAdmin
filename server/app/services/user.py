@@ -8,6 +8,7 @@ from app.models.user import User
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.services.base import BaseService
 from app.core.redis import RedisClient
+from datetime import datetime
 
 
 class UserService(BaseService):
@@ -50,26 +51,60 @@ class UserService(BaseService):
     async def login_password(self, req: PasswordLoginRequest) -> TokenResponse:
         """账号密码登录"""
 
-        # 1. 校验用户名是否存在
+        # 1. 查询用户
         user = await self.user_crud.get_user(username=req.username)
         if user is None:
             raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
-        
-        # 2. 校验密码是否正确
-        if not verify_password(req.password, user.password):
-            raise BusinessError(RespCodeEnum.PWD_VERIFY_FAIL)
 
-        # 3. 生成 JWT 令牌
+        # 2. 检查账户状态
+        if user.status == UserStatusEnum.LOCKED:
+            # 锁定状态判断是否要自动解锁
+            is_locked = await self.redis_client.exists(RedisKeyTemplate.account_lock(user.id))
+            if is_locked:
+                raise BusinessError(RespCodeEnum.ACCOUNT_LOCKED)
+            # Redis 锁已过期，自动解锁
+            await self.user_crud.reset_user_login_status(user.id)
+        elif user.status != UserStatusEnum.NORMAL:
+            # 其它状态直接报错
+            raise BusinessError(RespCodeEnum.ACCOUNT_STATUS_ABNORMAL)
+
+        # 3. 密码校验
+        if not verify_password(req.password, user.password):
+
+            # 失败次数 +1
+            await self.user_crud.increment_login_fail_count(user.id)
+
+             # 计算剩余次数，包含当前失败次数（SQLAlchemy 会自动同步 Session 内 UPDATE 后的属性）
+            remaining_attempts = auth_config.MAX_LOGIN_ATTEMPTS - user.login_fail_count
+            
+            #  达到上限 → 锁定账号
+            if remaining_attempts <= 0:
+
+                # 密码错误次数超过最大尝试次数，锁定账号
+                await self.user_crud.lock_user(user.id)
+
+                # 设置 Redis 锁，过期时间为 LOCK_DURATION 秒
+                await self.redis_client.set(
+                    RedisKeyTemplate.account_lock(user.id),
+                    datetime.now().timestamp(),
+                    auth_config.ACCOUNT_LOCK_DURATION_MINUTES * TimeSec.MINUTE
+                )
+                raise BusinessError(RespCodeEnum.ACCOUNT_LOCKED)
+
+            # 未达上限 → 返回剩余次数
+            raise BusinessError(RespCodeEnum.PWD_VERIFY_FAIL, count=remaining_attempts)
+
+        # 4. 登录成功 → 重置所有登录状态
+        await self.user_crud.reset_user_login_status(user.id)
+
+        # 5. 生成令牌
         access_token, refresh_token = create_tokens(user.id)
-        
-        # 4. 存储刷新令牌到 Redis
         await self.redis_client.set(
             RedisKeyTemplate.refresh_token(user.id),
             refresh_token,
             auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
         )
 
-        # 5. 返回令牌
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,

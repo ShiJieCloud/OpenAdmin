@@ -59,6 +59,6 @@ async def get_current_active_user(
     """
 
     if not UserStatusEnum.is_normal(user.status):
-        raise BusinessError(RespCodeEnum.USER_STATUS_ERROR)
+        raise BusinessError(RespCodeEnum.ACCOUNT_STATUS_ABNORMAL)
 
     return user
