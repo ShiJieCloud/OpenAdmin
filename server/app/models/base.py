@@ -1,10 +1,10 @@
 from sqlalchemy import MetaData, BigInteger, DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.dialects.mysql import TINYINT
 
 
-class BaseModel(DeclarativeBase):
-    """基础模型类"""
+class BaseRelation(DeclarativeBase):
+    """关联表基础类（只有ID，无时间字段）"""
+    __abstract__ = True
 
     metadata = MetaData(naming_convention={
         "ix": "ix_%(column_0_label)s",
@@ -20,6 +20,12 @@ class BaseModel(DeclarativeBase):
         autoincrement=True,
         comment="主键ID"
     )
+
+
+class BaseModel(BaseRelation):
+    """基础模型类（含ID、创建时间、更新时间）"""
+    __abstract__ = True
+
     create_time: Mapped[DateTime] = mapped_column(
         DateTime,
         server_default=func.now(),

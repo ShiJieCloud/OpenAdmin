@@ -8,13 +8,24 @@ from app.models.base import BaseModel
 
 class User(BaseModel):
     """用户模型"""
+
     __tablename__ = "sys_user"
+    __table_args__ = (
+        {"comment": "用户表"},
+    )
     
     username: Mapped[str] = mapped_column(
         String(50),
         unique=True,
         nullable=False,
         comment="登录账号（唯一）"
+    )
+    employee_no: Mapped[str | None] = mapped_column(
+        String(12),
+        nullable=True,
+        unique=True,
+        index=True,
+        comment="工号（唯一）"
     )
     password: Mapped[str] = mapped_column(
         String(100),
@@ -58,12 +69,8 @@ class User(BaseModel):
     dept_id: Mapped[int | None] = mapped_column(
         BigInteger,
         nullable=True,
+        index=True,
         comment="所属部门ID"
-    )
-    post_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        nullable=True,
-        comment="所属岗位ID"
     )
     
     last_login_ip: Mapped[str | None] = mapped_column(
