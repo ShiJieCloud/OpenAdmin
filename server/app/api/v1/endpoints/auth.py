@@ -3,11 +3,11 @@ from fastapi import APIRouter, Depends
 from app.core.response import ResponseBuilder
 from app.deps.auth import get_current_active_user
 from app.deps.service import get_user_service
+from app.models.user import User
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.schemas.base.response import ApiResponse
+from app.schemas.user import UserInfoResponse
 from app.services.user import UserService
-from app.models.user import User
-
 
 router = APIRouter()
 
@@ -40,3 +40,12 @@ async def logout(
     """退出登录"""
     await user_service.logout(user.id)
     return ResponseBuilder.success(message="退出登录成功")
+
+
+@router.get("/me", response_model=ApiResponse[UserInfoResponse])
+async def get_current_user_info(
+    user: User = Depends(get_current_active_user)
+):
+    """获取当前登录用户信息"""
+    user_info = UserInfoResponse.model_validate(user)
+    return ResponseBuilder.success(user_info)
