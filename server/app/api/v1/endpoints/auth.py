@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends
 
 from app.core.response import ResponseBuilder
+from app.deps.auth import get_current_active_user
 from app.deps.service import get_user_service
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.schemas.base.response import ApiResponse
 from app.services.user import UserService
+from app.models.user import User
+
 
 router = APIRouter()
 
@@ -27,3 +30,13 @@ async def refresh_token(
     """刷新令牌"""
     token = await user_service.refresh_token(req)
     return ResponseBuilder.success(token)
+
+
+@router.post("/logout", response_model=ApiResponse[None])
+async def logout(
+    user: User = Depends(get_current_active_user),
+    user_service: UserService = Depends(get_user_service)
+):
+    """退出登录"""
+    await user_service.logout(user.id)
+    return ResponseBuilder.success(message="退出登录成功")
