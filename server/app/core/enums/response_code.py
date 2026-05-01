@@ -30,11 +30,12 @@ class RespCodeEnum(Enum):
 
     # B-US = 用户相关 (User)
     USER_NOT_EXIST = ("BUS0001", "用户不存在")
-    USER_STATUS_ERROR = ("BUS0002", "用户状态异常")
+    ACCOUNT_STATUS_ABNORMAL = ("BUS0002", "账号状态异常，请联系管理员")
 
     # B-PW = 密码认证 (Password)
-    PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误")
-
+    PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误，，剩余尝试次数: {count} 次")
+    ACCOUNT_LOCKED = ("BPW0002", "账号已被锁定，请稍后再试或联系管理员")
+    
     # B-GE = 通用业务 (General)
     PARAM_INVALID = ("BGE0001", "参数无效")
     QUERY_CONDITION_INVALID = ("BGE0002", "查询条件不能为空")
