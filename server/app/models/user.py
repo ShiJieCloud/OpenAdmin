@@ -56,9 +56,9 @@ class User(BaseModel):
     )
     status: Mapped[int] = mapped_column(
         TINYINT,
-        default=1,
+        default=0,
         nullable=False,
-        comment="账号状态：0=禁用 1=正常 2-锁定"
+        comment="账号状态：0=正常 1=禁用 2=锁定 3=注销 4=冻结"
     )
     
     dept_id: Mapped[int | None] = mapped_column(

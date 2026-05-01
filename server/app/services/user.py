@@ -1,13 +1,13 @@
+from app.config import auth_config
 from app.core.constants import RedisKeyTemplate, TimeSec
-from app.core.enums import RespCodeEnum
+from app.core.enums import RespCodeEnum, UserStatusEnum
 from app.core.exceptions import BusinessError
-from app.core.security import verify_password, create_tokens
+from app.core.security import verify_password, create_tokens, verify_refresh_token
 from app.crud.user import UserCRUD
 from app.models.user import User
-from app.schemas.auth import PasswordLoginRequest, TokenResponse
+from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.services.base import BaseService
 from app.core.redis import RedisClient
-from app.config import auth_config
 
 
 class UserService(BaseService):
@@ -73,5 +73,51 @@ class UserService(BaseService):
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
+            expires_in=auth_config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * TimeSec.MINUTE
+        )
+
+    async def refresh_token(self, req: RefreshTokenRequest) -> TokenResponse:
+        """刷新令牌
+        
+        Args:
+            req: 刷新令牌请求对象
+            
+        Returns:
+            TokenResponse: 新的访问令牌和刷新令牌响应对象
+        """
+        # 1. 验证 refresh_token 签名和有效期
+        payload = verify_refresh_token(req.refresh_token)
+        user_id = int(payload.sub)
+
+        # 2. 从 Redis 获取存储的 refresh_token
+        stored_token = await self.redis_client.get(RedisKeyTemplate.refresh_token(user_id))
+        
+        # 3. 校验令牌是否匹配（防止复用泄露的令牌）
+        if not stored_token or stored_token != req.refresh_token:
+            raise BusinessError(RespCodeEnum.TOKEN_INVALID)
+
+        # 4. 校验用户状态
+        user = await self.user_crud.get_user(id=user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+        if not UserStatusEnum.is_normal(user.status):
+            # 用户状态异常，拒绝刷新令牌，删除 refresh_token
+            await self.redis_client.delete(RedisKeyTemplate.refresh_token(user_id))
+            raise BusinessError(RespCodeEnum.LOGIN_EXPIRED)
+
+        # 5. 生成新的令牌对
+        new_access_token, new_refresh_token = create_tokens(user_id)
+
+        # 6. 更新 Redis 中的 refresh_token
+        await self.redis_client.set(
+            RedisKeyTemplate.refresh_token(user_id),
+            new_refresh_token,
+            auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
+        )
+
+        # 7. 返回新令牌
+        return TokenResponse(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
             expires_in=auth_config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * TimeSec.MINUTE
         )
