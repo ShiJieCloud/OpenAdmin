@@ -1,7 +1,11 @@
 from enum import StrEnum
 
+class BasePermEnum(StrEnum):
+    """基础权限码"""
+    __repr__ = lambda self: self.value
 
-class UserPermEnum(StrEnum):
+
+class UserPermEnum(BasePermEnum):
     """用户模块权限码"""
     READ = "user:read"
     CREATE = "user:create"
@@ -12,7 +16,7 @@ class UserPermEnum(StrEnum):
     RESET_PASSWORD = "user:reset_password"
 
 
-class RolePermEnum(StrEnum):
+class RolePermEnum(BasePermEnum):
     """角色模块权限码"""
     READ = "role:read"
     CREATE = "role:create"
@@ -20,7 +24,7 @@ class RolePermEnum(StrEnum):
     DELETE = "role:delete"
 
 
-class PermPermEnum(StrEnum):
+class PermPermEnum(BasePermEnum):
     """权限模块权限码"""
     READ = "perm:read"
     CREATE = "perm:create"
@@ -28,7 +32,7 @@ class PermPermEnum(StrEnum):
     DELETE = "perm:delete"
 
 
-class DeptPermEnum(StrEnum):
+class DeptPermEnum(BasePermEnum):
     """部门模块权限码"""
     READ = "dept:read"
     CREATE = "dept:create"
@@ -36,7 +40,7 @@ class DeptPermEnum(StrEnum):
     DELETE = "dept:delete"
 
 
-class PostPermEnum(StrEnum):
+class PostPermEnum(BasePermEnum):
     """岗位模块权限码"""
     READ = "post:read"
     CREATE = "post:create"
@@ -44,7 +48,7 @@ class PostPermEnum(StrEnum):
     DELETE = "post:delete"
 
 
-class MenuPermEnum(StrEnum):
+class MenuPermEnum(BasePermEnum):
     """菜单模块权限码"""
     READ = "menu:read"
     CREATE = "menu:create"
@@ -52,14 +56,14 @@ class MenuPermEnum(StrEnum):
     DELETE = "menu:delete"
 
 
-class LogPermEnum(StrEnum):
+class LogPermEnum(BasePermEnum):
     """日志模块权限码"""
     READ = "log:read"
     EXPORT = "log:export"
     DELETE = "log:delete"
 
 
-class SystemPermEnum(StrEnum):
+class SystemPermEnum(BasePermEnum):
     """系统模块权限码"""
     SETTING_VIEW = "system:setting_view"
     SETTING_UPDATE = "system:setting_update"
@@ -67,7 +71,7 @@ class SystemPermEnum(StrEnum):
 
 
 # 统一总出口
-class PermEnum:
+class PermCode:
     User = UserPermEnum
     Role = RolePermEnum
     Perm = PermPermEnum
