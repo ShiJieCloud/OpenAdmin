@@ -2,7 +2,7 @@ from .response_code import RespCodeEnum
 from .token_type import TokenTypeEnum
 from .user_status import UserStatusEnum
 from .perm_type import PermTypeEnum
-from .perm import PermEnum
+from .perm_code import PermCode
 
 
 __all__ = [
@@ -10,5 +10,5 @@ __all__ = [
     "TokenTypeEnum",
     "UserStatusEnum",
     "PermTypeEnum",
-    "PermEnum",
+    "PermCode",
 ]

@@ -106,8 +106,20 @@ def has_perm(*perms: str) -> PermChecker:
     required = set(perms)
     async def check(role_codes: list[str], perm_codes: list[str]):
         if not required.issubset(perm_codes):
-            raise PermDeniedException(RespCodeEnum.PERM_DENIED)
+            # 打印【权限不足】告警日志（重要！用于排查问题）
+            print(
+                f"[权限不足] 拒绝访问 | "
+                f"缺少权限: {required - set(perm_codes)} | "
+                f"用户权限: {perm_codes} | "
+                f"接口要求权限: {required}"
+            )
 
+            raise PermDeniedException(RespCodeEnum.PERM_DENIED)
+        # 校验通过日志（可选）
+        print("[权限校验通过] 允许访问"
+            f"用户权限: {perm_codes} | "
+            f"接口需要权限: {required}"
+        )
     return PermChecker(check)
 
 
@@ -118,8 +130,20 @@ def has_any_perm(*perms: str) -> PermChecker:
     required = set(perms)   
     async def check(role_codes: list[str], perm_codes: list[str]):
         if not required & set(perm_codes):
+            # 打印【权限不足】告警日志（重要！用于排查问题）
+            print(
+                f"[权限不足] 拒绝访问 | "
+                f"缺少权限: {required - set(perm_codes)} | "
+                f"用户权限: {perm_codes} | "
+                f"接口要求权限: {required}"
+            )
+            
             raise PermDeniedException(RespCodeEnum.PERM_DENIED)
-
+        # 校验通过日志（可选）
+        print("[权限校验通过] 允许访问"
+            f"用户权限: {perm_codes} | "
+            f"接口需要权限: {required}"
+        )
     return PermChecker(check)
 
 
@@ -130,7 +154,19 @@ def has_role(*roles: str) -> PermChecker:
     required = set(roles)
     async def check(role_codes: list[str], perm_codes: list[str]):
         if not required.issubset(role_codes):
+            # 打印【角色不足】告警日志（重要！用于排查问题）
+            print(
+                f"[角色不足] 拒绝访问 | "
+                f"缺少角色: {required - set(role_codes)} | "
+                f"用户角色: {role_codes} | "
+                f"接口要求角色: {required}"
+            )
             raise PermDeniedException(RespCodeEnum.PERM_DENIED)
+        # 校验通过日志（可选）
+        print("[角色校验通过] 允许访问"
+            f"用户角色: {role_codes} | "
+            f"接口需要角色: {required}"
+        )
             
     return PermChecker(check)
 
@@ -143,6 +179,17 @@ def has_any_role(*roles: str) -> PermChecker:
     required = set(roles)
     async def check(role_codes: list[str], perm_codes: list[str]):
         if not required & set(role_codes):
+            # 打印【角色不足】告警日志（重要！用于排查问题）
+            print(
+                f"[角色不足] 拒绝访问 | "
+                f"缺少角色: {required - set(role_codes)} | "
+                f"用户角色: {role_codes} | "
+                f"接口要求角色: {required}"
+            )
             raise PermDeniedException(RespCodeEnum.PERM_DENIED)
-
+        # 校验通过日志（可选）
+        print("[角色校验通过] 允许访问"
+            f"用户角色: {role_codes} | "
+            f"接口需要角色: {required}"
+        )
     return PermChecker(check)
