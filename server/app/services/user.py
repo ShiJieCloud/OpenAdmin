@@ -3,8 +3,8 @@ from app.core.constants import RedisKeyTemplate, TimeSec
 from app.core.enums import RespCodeEnum, UserStatusEnum
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token
-from app.crud.user import UserCRUD
-from app.models.user import User
+from app.crud import UserCRUD
+from app.models import User, Role
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.services.base import BaseService
 from app.core.redis import RedisClient
@@ -166,3 +166,13 @@ class UserService(BaseService):
         # 从 Redis 删除刷新令牌
         await self.redis_client.delete(RedisKeyTemplate.refresh_token(user_id))
 
+    async def get_user_roles(self, user_id: int) -> list[Role]:
+        """
+        获取用户关联的角色列表
+        """
+        roles = await self.user_crud.get_user_roles(user_id)
+        if not roles:
+            return []
+        
+        return roles
+        

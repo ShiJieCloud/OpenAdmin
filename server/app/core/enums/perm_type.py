@@ -1,6 +1,6 @@
-import enum
+from enum import StrEnum
 
 
-class PermTypeEnum(str, enum.Enum):
+class PermTypeEnum(StrEnum):
     MENU = "menu"
     BUTTON = "button"

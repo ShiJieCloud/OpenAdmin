@@ -27,6 +27,7 @@ class RespCodeEnum(Enum):
     TOKEN_EXPIRED = ("BAU0002", "Token 已过期")
     TOKEN_TYPE_ERROR = ("BAU0003", "Token 类型错误")
     LOGIN_EXPIRED = ("BAU0004", "登录已失效，请重新登录")
+    PERM_DENIED = ("BAU0005", "权限不足，无法访问该资源")
 
     # B-US = 用户相关 (User)
     USER_NOT_EXIST = ("BUS0001", "用户不存在")
