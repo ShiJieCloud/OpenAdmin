@@ -9,7 +9,7 @@ from app.core.exceptions import BusinessError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def verify_token(
@@ -25,8 +25,11 @@ async def verify_token(
         BusinessError: Token 无效或过期
     """
 
-    token = credentials.credentials
+    # 校验 Token 是否存在
+    if not credentials:
+        raise BusinessError(RespCodeEnum.UNAUTHORIZED)
 
+    token = credentials.credentials
     return verify_access_token(token)
     
 async def get_current_user(

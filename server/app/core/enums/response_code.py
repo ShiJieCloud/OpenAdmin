@@ -23,6 +23,7 @@ class RespCodeEnum(Enum):
 
     # ==================== B：业务类错误（Business Error） ====================
     # B-AU = 认证授权 (Auth)
+    UNAUTHORIZED = ("BAU0000", "未登录，请先登录")
     TOKEN_INVALID = ("BAU0001", "Token 无效")
     TOKEN_EXPIRED = ("BAU0002", "Token 已过期")
     TOKEN_TYPE_ERROR = ("BAU0003", "Token 类型错误")
