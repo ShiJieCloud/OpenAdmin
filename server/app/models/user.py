@@ -1,4 +1,4 @@
-from sqlalchemy import String, BigInteger, Integer, DateTime
+from sqlalchemy import Boolean, String, BigInteger, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.mysql import TINYINT
 
@@ -65,14 +65,12 @@ class User(BaseModel):
         nullable=False,
         comment="账号状态：0=正常 1=禁用 2=锁定 3=注销 4=冻结"
     )
-    
     dept_id: Mapped[int | None] = mapped_column(
         BigInteger,
         nullable=True,
         index=True,
         comment="所属部门ID"
     )
-    
     last_login_ip: Mapped[str | None] = mapped_column(
         String(50),
         nullable=True,
@@ -93,7 +91,6 @@ class User(BaseModel):
         nullable=True,
         comment="账号锁定时间"
     )
-    
     remark: Mapped[str | None] = mapped_column(
         String(500),
         nullable=True,
@@ -104,4 +101,10 @@ class User(BaseModel):
         default=0,
         nullable=False,
         comment="删除标志：0=未删除 1=已删除"
+    )
+    is_superuser: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="是否超级管理员"
     )
