@@ -28,21 +28,3 @@ register_exception_handlers(app)
 
 # 注册API路由
 app.include_router(api_router, prefix="/api")
-
-# 测试接口
-@app.get("/", response_model=ApiResponse[str])
-def index(username: str):
-    return ResponseBuilder.success(username)
-
-# 测试 RequestValidationError 异常
-@app.get("/test-validation", response_model=ApiResponse[int])
-def test_validation_error(item_id: int):
-    """测试参数验证错误
-    
-    Args:
-        item_id: 物品 ID，必须是整数
-    
-    Returns:
-        ApiResponse: 测试结果
-    """
-    return ResponseBuilder.success(item_id)
