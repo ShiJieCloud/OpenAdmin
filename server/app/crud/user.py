@@ -148,3 +148,19 @@ class UserCRUD(BaseCRUD):
         await self.db_session.flush()
         await self.db_session.refresh(user)
         return user
+
+    async def update_user_password(self, user_id: int, hashed_password: str) -> None:
+        """
+        更新用户密码
+
+        :param user_id: 用户 ID
+        :param hashed_password: 加密后的新密码
+        :return: None
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(password=hashed_password)
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()

@@ -16,6 +16,13 @@ class UserCreateRequest(BaseModel):
     remark: str | None = Field(None, description="备注", max_length=500)
 
 
+class UserResetPasswordRequest(BaseModel):
+    """重置用户密码请求"""
+
+    user_id: int = Field(..., description="用户ID", ge=1, example=1001)
+    new_password: str = Field(..., description="新密码", min_length=6, max_length=50, example="123456")
+
+
 class UserInfoResponse(BaseModel):
     """用户信息响应"""
 

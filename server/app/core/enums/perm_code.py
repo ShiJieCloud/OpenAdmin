@@ -13,7 +13,7 @@ class UserPermEnum(BasePermEnum):
     DELETE = "user:delete"
     EXPORT = "user:export"
     IMPORT = "user:import"
-    RESET_PASSWORD = "user:reset_password"
+    RESET_PASSWORD = "user:password:reset"
 
 
 class RolePermEnum(BasePermEnum):
