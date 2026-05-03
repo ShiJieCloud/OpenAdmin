@@ -38,6 +38,11 @@ class RespCodeEnum(Enum):
     PHONE_EXIST = ("BUS0005", "手机号已被注册")
     USER_DELETED = ("BUS0006", "用户已注销")
     USER_STATUS_INVALID = ("BUS0007", "用户状态异常，无法操作")
+    USER_STATUS_CANNOT_CHANGE = ("BUS0008", "用户已注销，状态不可修改")
+    USER_STATUS_TARGET_LOCKED = ("BUS0009", "后台不能手动设为登录锁定状态")
+    USER_STATUS_TARGET_CANCELLED = ("BUS0010", "后台不能手动注销用户")
+    USER_STATUS_NO_CHANGE = ("BUS0011", "用户状态无需修改")
+    USER_STATUS_TRANSITION_INVALID = ("BUS0012", "不支持的用户状态流转")
 
     # B-PW = 密码认证 (Password)
     PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误，，剩余尝试次数: {count} 次")

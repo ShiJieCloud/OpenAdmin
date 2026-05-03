@@ -5,7 +5,7 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
 from app.schemas.base.response import ApiResponse
-from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest
+from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest
 from app.services import UserService
 
 router = APIRouter()
@@ -82,4 +82,34 @@ async def reset_user_password(
     :raises BusinessError: 用户不存在
     """
     await user_service.reset_user_password(req)
+    return ResponseBuilder.success()
+
+
+@router.put(
+    "/status",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.User.CREATE))],
+    summary="修改用户状态",
+    description="修改用户账号状态（启用/禁用/冻结，需要具备用户更新权限）"
+)
+async def update_user_status(
+    req: UserUpdateStatusRequest = Body(..., description="修改用户状态请求信息"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    修改用户状态
+    
+    管理员修改用户账号状态，支持启用、禁用、冻结操作。
+    接口内置完整的状态互斥和拦截规则：
+    - 用户已注销时拒绝任何状态修改
+    - 禁止手动设置为登录锁定或注销状态
+    - 校验状态流转的合法性
+    
+    接口需要用户登录并拥有用户更新权限方可访问。
+    
+    :param req: 修改用户状态请求信息，包含用户ID和目标状态
+    :return: 返回成功响应
+    :raises BusinessError: 用户不存在、用户已注销、状态无需修改、不支持的状态流转
+    """
+    await user_service.update_user_status(req)
     return ResponseBuilder.success()

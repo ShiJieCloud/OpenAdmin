@@ -25,3 +25,25 @@ class UserStatusEnum(IntEnum):
     def is_normal(cls, status: int) -> bool:
         """检查用户状态是否正常"""
         return status == cls.NORMAL
+
+    @classmethod
+    def is_valid_transition(cls, current_status: int, target_status: int) -> bool:
+        """
+        检查状态流转是否合法
+        
+        允许的状态流转：
+            正常 (0) ↔ 禁用 (1)：允许互相切换
+            正常 (0) → 冻结 (4)：允许
+            冻结 (4) → 正常 (0)：允许
+            禁用 (1) → 冻结 (4)：允许
+            冻结 (4) → 禁用 (1)：允许
+        """
+        valid_transitions = {
+            (cls.NORMAL, cls.DISABLED): True,
+            (cls.DISABLED, cls.NORMAL): True,
+            (cls.NORMAL, cls.FROZEN): True,
+            (cls.FROZEN, cls.NORMAL): True,
+            (cls.DISABLED, cls.FROZEN): True,
+            (cls.FROZEN, cls.DISABLED): True,
+        }
+        return valid_transitions.get((current_status, target_status), False)
