@@ -6,7 +6,7 @@ from app.core.security import verify_password, create_tokens, verify_refresh_tok
 from app.crud import UserCRUD
 from app.models import User, Role
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
-from app.schemas.user import UserCreateRequest
+from app.schemas.user import UserCreateRequest, UserResetPasswordRequest
 from app.services.base import BaseService
 from app.core.redis import RedisClient
 from datetime import datetime
@@ -211,4 +211,30 @@ class UserService(BaseService):
         # 创建用户
         user = await self.user_crud.create_user(user_data)
         return user
+
+    async def reset_user_password(self, req: UserResetPasswordRequest) -> None:
+        """
+        重置用户密码
+
+        :param req: 重置密码请求
+        :return: None
+        """
+        # 校验用户是否存在
+        user = await self.user_crud.get_user(id=req.user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+
+        # 校验用户是否被软删除（0=未删除 1=已删除）
+        if user.del_flag:
+            raise BusinessError(RespCodeEnum.USER_DELETED)
+        
+        # 校验用户状态是否正常
+        if not UserStatusEnum.is_normal(user.status):
+            raise BusinessError(RespCodeEnum.USER_STATUS_INVALID)
+
+        # 密码加密
+        hashed_password = get_password_hash(req.new_password)
+
+        # 更新密码
+        await self.user_crud.update_user_password(req.user_id, hashed_password)
         

@@ -5,7 +5,7 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
 from app.schemas.base.response import ApiResponse
-from app.schemas.user import UserInfoResponse, UserCreateRequest
+from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest
 from app.services import UserService
 
 router = APIRouter()
@@ -58,3 +58,28 @@ async def create_user(
     user = await user_service.create_user(req)
     user_info = UserInfoResponse.model_validate(user)
     return ResponseBuilder.success(user_info)
+
+
+@router.post(
+    "/reset-password",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.User.CREATE))],
+    summary="重置用户密码",
+    description="重置指定用户的登录密码（需要具备用户重置密码权限）"
+)
+async def reset_user_password(
+    req: UserResetPasswordRequest = Body(..., description="重置密码请求信息"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    重置用户密码
+    
+    管理员重置指定用户的登录密码。
+    接口需要用户登录并拥有用户重置密码权限方可访问。
+    
+    :param req: 重置密码请求信息，包含用户ID和新密码
+    :return: 返回成功响应
+    :raises BusinessError: 用户不存在
+    """
+    await user_service.reset_user_password(req)
+    return ResponseBuilder.success()
