@@ -1,7 +1,7 @@
 from app.config import auth_config
 from app.core.constants import RedisKeyTemplate, TimeSec
 from app.core.enums import RespCodeEnum, UserStatusEnum
-from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest
+from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
@@ -308,4 +308,14 @@ class UserService(BaseService):
             user = await self.user_crud.get_user(id=req.user_id)
 
         return user
+
+    async def get_user_list(self, query: UserListQueryRequest) -> tuple[list[User], int, int, int]:
+        """
+        分页查询用户列表
+
+        :param query: 查询条件
+        :return: (用户列表, 总条数, 总页数, 当前页码)
+        """
+        users, total, pages, page_num = await self.user_crud.get_user_list(query)
+        return users, total, pages, page_num
         
