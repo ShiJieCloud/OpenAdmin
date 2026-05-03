@@ -164,3 +164,19 @@ class UserCRUD(BaseCRUD):
         )
         await self.db_session.execute(stmt)
         await self.db_session.flush()
+
+    async def update_user_status(self, user_id: int, status: int) -> None:
+        """
+        更新用户状态
+
+        :param user_id: 用户 ID
+        :param status: 目标状态
+        :return: None
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(status=status)
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()

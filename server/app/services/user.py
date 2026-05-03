@@ -1,6 +1,7 @@
 from app.config import auth_config
 from app.core.constants import RedisKeyTemplate, TimeSec
 from app.core.enums import RespCodeEnum, UserStatusEnum
+from app.schemas.user import UserUpdateStatusRequest
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
@@ -237,4 +238,39 @@ class UserService(BaseService):
 
         # 更新密码
         await self.user_crud.update_user_password(req.user_id, hashed_password)
+
+    async def update_user_status(self, req: UserUpdateStatusRequest) -> None:
+        """
+        修改用户状态
+
+        :param req: 修改用户状态请求
+        :return: None
+        """
+        # 校验用户是否存在
+        user = await self.user_crud.get_user(id=req.user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+
+        # 用户当前状态 = 3（注销）：任何情况都不允许修改（不可逆）
+        if user.status == UserStatusEnum.CANCELLED:
+            raise BusinessError(RespCodeEnum.USER_STATUS_CANNOT_CHANGE)
+
+        # 当前状态 = 目标状态：直接返回 "无需修改"
+        if user.status == req.status:
+            raise BusinessError(RespCodeEnum.USER_STATUS_NO_CHANGE)
+
+        # 目标状态 = 2（登录锁定）：拒绝（后台不能手动设为登录锁定）
+        if req.status == UserStatusEnum.LOCKED:
+            raise BusinessError(RespCodeEnum.USER_STATUS_TARGET_LOCKED)
+
+        # 目标状态 = 3（注销）：拒绝（后台不能手动注销用户）
+        if req.status == UserStatusEnum.CANCELLED:
+            raise BusinessError(RespCodeEnum.USER_STATUS_TARGET_CANCELLED)
+
+        # 状态流转合法性校验
+        if not UserStatusEnum.is_valid_transition(user.status, req.status):
+            raise BusinessError(RespCodeEnum.USER_STATUS_TRANSITION_INVALID)
+
+        # 更新用户状态
+        await self.user_crud.update_user_status(req.user_id, req.status)
         

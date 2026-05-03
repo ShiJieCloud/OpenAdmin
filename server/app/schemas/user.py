@@ -23,6 +23,13 @@ class UserResetPasswordRequest(BaseModel):
     new_password: str = Field(..., description="新密码", min_length=6, max_length=50, example="123456")
 
 
+class UserUpdateStatusRequest(BaseModel):
+    """修改用户状态请求"""
+
+    user_id: int = Field(..., description="用户ID", ge=1, example=1001)
+    status: int = Field(..., description="目标状态：0=正常 1=禁用 4=冻结", ge=0, le=4, example=1)
+
+
 class UserInfoResponse(BaseModel):
     """用户信息响应"""
 
