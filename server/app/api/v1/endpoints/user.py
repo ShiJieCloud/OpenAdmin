@@ -5,7 +5,7 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
 from app.schemas.base.response import ApiResponse
-from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest
+from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest, UserUpdateRequest
 from app.services import UserService
 
 router = APIRouter()
@@ -113,3 +113,30 @@ async def update_user_status(
     """
     await user_service.update_user_status(req)
     return ResponseBuilder.success()
+
+
+@router.put(
+    "",
+    response_model=ApiResponse[UserInfoResponse],
+    dependencies=[Depends(has_perm(PermCode.User.UPDATE))],
+    summary="编辑用户基础信息",
+    description="编辑用户基础信息（需要具备用户更新权限）"
+)
+async def update_user_info(
+    req: UserUpdateRequest = Body(..., description="编辑用户信息请求"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    编辑用户基础信息
+    
+    更新用户的昵称、头像、邮箱、手机号、性别、所属部门、备注等信息。
+    接口会自动校验邮箱和手机号的唯一性（排除当前用户）。
+    接口需要用户登录并拥有用户更新权限方可访问。
+    
+    :param req: 编辑用户信息请求
+    :return: 返回更新后的用户详细信息
+    :raises BusinessError: 用户不存在、邮箱已存在、手机号已存在
+    """
+    user = await user_service.update_user_info(req)
+    user_info = UserInfoResponse.model_validate(user)
+    return ResponseBuilder.success(user_info)

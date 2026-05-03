@@ -180,3 +180,19 @@ class UserCRUD(BaseCRUD):
         )
         await self.db_session.execute(stmt)
         await self.db_session.flush()
+
+    async def update_user_info(self, user_id: int, user_data: dict) -> None:
+        """
+        更新用户基础信息
+
+        :param user_id: 用户 ID
+        :param user_data: 用户数据字典
+        :return: None
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(**user_data)
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()

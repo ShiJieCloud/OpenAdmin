@@ -1,7 +1,7 @@
 from app.config import auth_config
 from app.core.constants import RedisKeyTemplate, TimeSec
 from app.core.enums import RespCodeEnum, UserStatusEnum
-from app.schemas.user import UserUpdateStatusRequest
+from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
@@ -273,4 +273,39 @@ class UserService(BaseService):
 
         # 更新用户状态
         await self.user_crud.update_user_status(req.user_id, req.status)
+
+    async def update_user_info(self, req: UserUpdateRequest) -> User:
+        """
+        编辑用户基础信息
+
+        :param req: 编辑用户信息请求
+        :return: 更新后的用户对象
+        """
+        # 校验用户是否存在
+        user = await self.user_crud.get_user(id=req.user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+
+        # 校验邮箱唯一性（排除当前用户）
+        if req.email and req.email != user.email:
+            existing_user = await self.user_crud.get_user(email=req.email)
+            if existing_user:
+                raise BusinessError(RespCodeEnum.EMAIL_EXIST)
+
+        # 校验手机号唯一性（排除当前用户）
+        if req.phone and req.phone != user.phone:
+            existing_user = await self.user_crud.get_user(phone=req.phone)
+            if existing_user:
+                raise BusinessError(RespCodeEnum.PHONE_EXIST)
+
+        # 构建更新数据
+        update_data = req.model_dump(exclude_unset=True)
+
+        # 更新用户信息
+        if update_data:
+            await self.user_crud.update_user_info(req.user_id, update_data)
+            # 重新获取更新后的用户信息
+            user = await self.user_crud.get_user(id=req.user_id)
+
+        return user
         
