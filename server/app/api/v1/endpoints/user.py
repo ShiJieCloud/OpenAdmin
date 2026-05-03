@@ -63,7 +63,7 @@ async def create_user(
 @router.post(
     "/reset-password",
     response_model=ApiResponse[None],
-    dependencies=[Depends(has_perm(PermCode.User.CREATE))],
+    dependencies=[Depends(has_perm(PermCode.User.RESET_PASSWORD))],
     summary="重置用户密码",
     description="重置指定用户的登录密码（需要具备用户重置密码权限）"
 )
@@ -88,7 +88,7 @@ async def reset_user_password(
 @router.put(
     "/status",
     response_model=ApiResponse[None],
-    dependencies=[Depends(has_perm(PermCode.User.CREATE))],
+    dependencies=[Depends(has_perm(PermCode.User.UPDATE))],
     summary="修改用户状态",
     description="修改用户账号状态（启用/禁用/冻结，需要具备用户更新权限）"
 )
