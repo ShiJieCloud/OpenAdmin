@@ -51,7 +51,11 @@ class UserService(BaseService):
         return user
 
     async def login_password(self, req: PasswordLoginRequest) -> TokenResponse:
-        """账号密码登录"""
+        """账号密码登录
+
+        :param req: 登录请求
+        :return: TokenResponse
+        """
 
         # 1. 查询用户
         user = await self.user_crud.get_user(username=req.username)
@@ -99,7 +103,10 @@ class UserService(BaseService):
         # 4. 登录成功 → 重置所有登录状态
         await self.user_crud.reset_user_login_status(user.id)
 
-        # 5. 生成令牌
+        # 5. 登录成功 → 更新登录时间
+        await self.user_crud.update_login_time(user.id)
+
+        # 6. 生成令牌
         access_token, refresh_token = create_tokens(user.id)
         await self.redis_client.set(
             RedisKeyTemplate.refresh_token(user.id),
