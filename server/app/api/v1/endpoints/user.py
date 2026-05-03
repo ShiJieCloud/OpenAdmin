@@ -4,8 +4,8 @@ from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
-from app.schemas.base.response import ApiResponse
-from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest, UserUpdateRequest
+from app.schemas.base.response import ApiResponse, PaginationResponse
+from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest
 from app.services import UserService
 
 router = APIRouter()
@@ -140,3 +140,33 @@ async def update_user_info(
     user = await user_service.update_user_info(req)
     user_info = UserInfoResponse.model_validate(user)
     return ResponseBuilder.success(user_info)
+
+
+@router.post(
+    "/list",
+    response_model=PaginationResponse[UserInfoResponse],
+    dependencies=[Depends(has_perm(PermCode.User.READ))],
+    summary="分页查询用户列表",
+    description="分页获取用户列表，支持多条件筛选（需要具备用户查看权限）"
+)
+async def get_user_list(
+    query: UserListQueryRequest = Body(..., description="查询条件"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    分页查询用户列表
+    
+    支持的条件筛选：
+    - 用户名、昵称、邮箱、手机号（模糊查询）
+    - 账号状态（精确匹配）
+    - 所属部门ID（精确匹配）
+    
+    结果按创建时间倒序排列。
+    接口需要用户登录并拥有用户查看权限方可访问。
+    
+    :param query: 分页参数和筛选条件
+    :return: 返回分页用户列表
+    """
+    users, total, pages, page_num = await user_service.get_user_list(query)
+    records = [UserInfoResponse.model_validate(user) for user in users]
+    return ResponseBuilder.pagination(records, total, page_num, query.page_size)

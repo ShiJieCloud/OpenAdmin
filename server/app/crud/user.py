@@ -1,9 +1,11 @@
 from datetime import datetime
-from sqlalchemy import select, update
+from math import ceil
+from sqlalchemy import select, update, func
 
 from app.core.enums import UserStatusEnum
 from app.crud.base import BaseCRUD
 from app.models import User, Role, Post, UserRole, UserPost, PostRole
+from app.schemas.user import UserListQueryRequest
 
 
 class UserCRUD(BaseCRUD):
@@ -196,3 +198,48 @@ class UserCRUD(BaseCRUD):
         )
         await self.db_session.execute(stmt)
         await self.db_session.flush()
+
+    async def get_user_list(self, query: UserListQueryRequest) -> tuple[list[User], int, int, int]:
+        """
+        分页查询用户列表
+
+        :param query: 查询条件
+        :return: (用户列表, 总条数, 总页数, 当前页)
+        """
+        # 构建查询条件
+        conditions = [User.del_flag == 0]
+        
+        if query.username:
+            conditions.append(User.username.like(f"%{query.username}%"))
+        if query.nickname:
+            conditions.append(User.nickname.like(f"%{query.nickname}%"))
+        if query.email:
+            conditions.append(User.email.like(f"%{query.email}%"))
+        if query.phone:
+            conditions.append(User.phone.like(f"%{query.phone}%"))
+        if query.status is not None:
+            conditions.append(User.status == query.status)
+        if query.dept_id:
+            conditions.append(User.dept_id == query.dept_id)
+
+        # 查询总条数
+        count_stmt = select(func.count(User.id)).where(*conditions)
+        count_result = await self.db_session.execute(count_stmt)
+        total = count_result.scalar_one()
+
+        # 计算总页数
+        pages = ceil(total / query.page_size) if total > 0 else 1
+
+        # 分页查询用户列表，按创建时间倒序
+        offset = (query.page_num - 1) * query.page_size
+        list_stmt = (
+            select(User)
+            .where(*conditions)
+            .order_by(User.create_time.desc())
+            .offset(offset)
+            .limit(query.page_size)
+        )
+        list_result = await self.db_session.execute(list_stmt)
+        users = list(list_result.scalars().all())
+
+        return users, total, pages, query.page_num

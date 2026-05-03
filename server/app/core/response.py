@@ -67,8 +67,8 @@ class ResponseBuilder:
         pagination_data = PaginationData[T](
             records=records,
             total=total,
-            page=page_num,
-            size=page_size,
+            page_num=page_num,
+            page_size=page_size,
             pages=pages
         )
         

@@ -43,6 +43,19 @@ class UserUpdateRequest(BaseModel):
     remark: str | None = Field(None, description="备注", max_length=500)
 
 
+class UserListQueryRequest(BaseModel):
+    """用户列表查询请求"""
+
+    page_num: int = Field(1, description="当前页码", ge=1, example=1)
+    page_size: int = Field(10, description="每页条数", ge=1, le=100, example=10)
+    username: str | None = Field(None, description="登录账号（模糊查询）", max_length=50)
+    nickname: str | None = Field(None, description="用户昵称（模糊查询）", max_length=50)
+    email: str | None = Field(None, description="邮箱（模糊查询）", max_length=100)
+    phone: str | None = Field(None, description="手机号（模糊查询）", max_length=20)
+    status: int | None = Field(None, description="账号状态：0=正常 1=禁用 2=锁定 4=冻结", ge=0, le=4)
+    dept_id: int | None = Field(None, description="所属部门ID", ge=1)
+
+
 class UserInfoResponse(BaseModel):
     """用户信息响应"""
 
