@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps.datebase import get_db_session, get_redis
-from app.services import UserService, PermissionService
+from app.services import UserService, PermissionService, RoleService
 from app.core.redis import RedisClient
 
 
@@ -19,3 +19,10 @@ async def get_permission_service(
 ) -> PermissionService:
     """权限服务依赖注入，返回 PermissionService 实例"""
     return PermissionService(db_session)
+
+
+async def get_role_service(
+    db_session: AsyncSession = Depends(get_db_session)
+) -> RoleService:
+    """角色服务依赖注入，返回 RoleService 实例"""
+    return RoleService(db_session)
