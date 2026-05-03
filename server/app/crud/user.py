@@ -199,6 +199,21 @@ class UserCRUD(BaseCRUD):
         await self.db_session.execute(stmt)
         await self.db_session.flush()
 
+    async def update_login_time(self, user_id: int) -> None:
+        """
+        更新用户登录时间
+
+        :param user_id: 用户 ID
+        :return: None
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(last_login_date=datetime.now())
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()
+
     async def get_user_list(self, query: UserListQueryRequest) -> tuple[list[User], int, int, int]:
         """
         分页查询用户列表
