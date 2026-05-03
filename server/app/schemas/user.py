@@ -30,6 +30,19 @@ class UserUpdateStatusRequest(BaseModel):
     status: int = Field(..., description="目标状态：0=正常 1=禁用 4=冻结", ge=0, le=4, example=1)
 
 
+class UserUpdateRequest(BaseModel):
+    """编辑用户基础信息请求"""
+
+    user_id: int = Field(..., description="用户ID", ge=1, example=1001)
+    nickname: str | None = Field(None, description="用户昵称/姓名", max_length=50, example="管理员")
+    avatar: str | None = Field(None, description="头像URL", max_length=255)
+    email: str | None = Field(None, description="邮箱", max_length=100, example="admin@example.com")
+    phone: str | None = Field(None, description="手机号", max_length=20, example="13800138000")
+    sex: int | None = Field(None, description="性别：0=未知 1=男 2=女", ge=0, le=2, example=0)
+    dept_id: int | None = Field(None, description="所属部门ID", ge=1)
+    remark: str | None = Field(None, description="备注", max_length=500)
+
+
 class UserInfoResponse(BaseModel):
     """用户信息响应"""
 
