@@ -134,3 +134,17 @@ class UserCRUD(BaseCRUD):
 
         result = await self.db_session.execute(stmt)
         return list(result.scalars().all())
+
+    async def create_user(self, user_data: dict) -> User:
+        """
+        创建新用户
+
+        :param user_data: 用户数据字典
+        :return: 创建后的用户对象
+        """
+        
+        user = User(**user_data)
+        self.db_session.add(user)
+        await self.db_session.flush()
+        await self.db_session.refresh(user)
+        return user

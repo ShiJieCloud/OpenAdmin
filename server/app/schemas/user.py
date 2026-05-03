@@ -2,6 +2,20 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class UserCreateRequest(BaseModel):
+    """创建用户请求"""
+
+    username: str = Field(..., description="登录账号", min_length=3, max_length=50, example="admin")
+    password: str = Field(..., description="登录密码", min_length=6, max_length=50, example="123456")
+    nickname: str | None = Field(None, description="用户昵称/姓名", max_length=50, example="管理员")
+    avatar: str | None = Field(None, description="头像URL", max_length=255)
+    email: str | None = Field(None, description="邮箱", max_length=100, example="admin@example.com")
+    phone: str | None = Field(None, description="手机号", max_length=20, example="13800138000")
+    sex: int = Field(0, description="性别：0=未知 1=男 2=女", ge=0, le=2, example=0)
+    dept_id: int | None = Field(None, description="所属部门ID", ge=1)
+    remark: str | None = Field(None, description="备注", max_length=500)
+
+
 class UserInfoResponse(BaseModel):
     """用户信息响应"""
 
