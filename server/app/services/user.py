@@ -2,10 +2,11 @@ from app.config import auth_config
 from app.core.constants import RedisKeyTemplate, TimeSec
 from app.core.enums import RespCodeEnum, UserStatusEnum
 from app.core.exceptions import BusinessError
-from app.core.security import verify_password, create_tokens, verify_refresh_token
+from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
 from app.models import User, Role
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
+from app.schemas.user import UserCreateRequest
 from app.services.base import BaseService
 from app.core.redis import RedisClient
 from datetime import datetime
@@ -175,4 +176,39 @@ class UserService(BaseService):
             return []
         
         return roles
+
+    async def create_user(self, req: UserCreateRequest) -> User:
+        """
+        创建新用户
+
+        :param req: 创建用户请求
+        :return: 创建后的用户对象
+        """
+        # 校验用户名是否已存在
+        existing_user = await self.user_crud.get_user(username=req.username)
+        if existing_user:
+            raise BusinessError(RespCodeEnum.USERNAME_EXIST)
+
+        # 校验邮箱是否已存在
+        if req.email:
+            existing_user = await self.user_crud.get_user(email=req.email)
+            if existing_user:
+                raise BusinessError(RespCodeEnum.EMAIL_EXIST)
+
+        # 校验手机号是否已存在
+        if req.phone:
+            existing_user = await self.user_crud.get_user(phone=req.phone)
+            if existing_user:
+                raise BusinessError(RespCodeEnum.PHONE_EXIST)
+
+        # 密码加密
+        hashed_password = get_password_hash(req.password)
+
+        # 构建用户数据
+        user_data = req.model_dump()
+        user_data["password"] = hashed_password
+
+        # 创建用户
+        user = await self.user_crud.create_user(user_data)
+        return user
         

@@ -33,6 +33,9 @@ class RespCodeEnum(Enum):
     # B-US = 用户相关 (User)
     USER_NOT_EXIST = ("BUS0001", "用户不存在")
     ACCOUNT_STATUS_ABNORMAL = ("BUS0002", "账号状态异常，请联系管理员")
+    USERNAME_EXIST = ("BUS0003", "用户名已存在")
+    EMAIL_EXIST = ("BUS0004", "邮箱已被注册")
+    PHONE_EXIST = ("BUS0005", "手机号已被注册")
 
     # B-PW = 密码认证 (Password)
     PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误，，剩余尝试次数: {count} 次")

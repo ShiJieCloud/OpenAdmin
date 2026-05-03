@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Body
 
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
 from app.schemas.base.response import ApiResponse
-from app.schemas.user import UserInfoResponse
-from app.services.user import UserService
+from app.schemas.user import UserInfoResponse, UserCreateRequest
+from app.services import UserService
 
 router = APIRouter()
 
@@ -33,5 +33,28 @@ async def get_user_info(
     :raises BusinessError: 用户不存在
     """
     user = await user_service.get_user(user_id)
+    user_info = UserInfoResponse.model_validate(user)
+    return ResponseBuilder.success(user_info)
+
+
+@router.post(
+    "",
+    response_model=ApiResponse[UserInfoResponse],
+    dependencies=[Depends(has_perm(PermCode.User.CREATE))],
+    summary="创建用户",
+    description="创建新用户账号（需要具备用户创建权限）"
+)
+async def create_user(
+    req: UserCreateRequest = Body(..., description="创建用户请求信息"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    创建新用户
+    
+    :param req: 创建用户请求信息
+    :return: 返回创建后的用户详细信息
+    :raises BusinessError: 用户名/邮箱/手机号已存在
+    """
+    user = await user_service.create_user(req)
     user_info = UserInfoResponse.model_validate(user)
     return ResponseBuilder.success(user_info)
