@@ -1,73 +1,93 @@
 from enum import StrEnum
 
 class BasePermEnum(StrEnum):
-    """基础权限码"""
+    """
+    基础权限码
+    
+    格式：模块:子模块:操作
+    """
     __repr__ = lambda self: self.value
 
 
 class UserPermEnum(BasePermEnum):
-    """用户模块权限码"""
-    READ = "user:read"
-    CREATE = "user:create"
-    UPDATE = "user:update"
-    DELETE = "user:delete"
-    EXPORT = "user:export"
-    IMPORT = "user:import"
-    RESET_PASSWORD = "user:password:reset"
+    """
+    用户模块权限码
+    """
+    READ = "system:user:read"
+    CREATE = "system:user:create"
+    UPDATE = "system:user:update"
+    DELETE = "system:user:delete"
+    EXPORT = "system:user:export"
+    IMPORT = "system:user:import"
+    RESET_PASSWORD = "system:user:reset_password"
 
 
 class RolePermEnum(BasePermEnum):
-    """角色模块权限码"""
-    READ = "role:read"
-    CREATE = "role:create"
-    UPDATE = "role:update"
-    DELETE = "role:delete"
+    """
+    角色模块权限码
+    """
+    READ = "system:role:role:read"
+    CREATE = "system:role:role:create"
+    UPDATE = "system:role:update"
+    DELETE = "system:role:role:delete"
 
 
 class PermPermEnum(BasePermEnum):
-    """权限模块权限码"""
-    READ = "perm:read"
-    CREATE = "perm:create"
-    UPDATE = "perm:update"
-    DELETE = "perm:delete"
+    """
+    权限模块权限码
+    """
+    READ = "system:perm:read"
+    CREATE = "system:perm:create"
+    UPDATE = "system:perm:update"
+    DELETE = "system:perm:delete"
 
 
 class DeptPermEnum(BasePermEnum):
-    """部门模块权限码"""
-    READ = "dept:read"
-    CREATE = "dept:create"
-    UPDATE = "dept:update"
-    DELETE = "dept:delete"
+    """
+    部门模块权限码
+    """
+    READ = "system:dept:read"
+    CREATE = "system:dept:create"
+    UPDATE = "system:dept:update"
+    DELETE = "system:dept:delete"
 
 
 class PostPermEnum(BasePermEnum):
-    """岗位模块权限码"""
-    READ = "post:read"
-    CREATE = "post:create"
-    UPDATE = "post:update"
-    DELETE = "post:delete"
+    """
+    岗位模块权限码
+    """
+    READ = "system:post:read"
+    CREATE = "system:post:create"
+    UPDATE = "system:post:update"
+    DELETE = "system:post:delete"
 
 
 class MenuPermEnum(BasePermEnum):
-    """菜单模块权限码"""
-    READ = "menu:read"
-    CREATE = "menu:create"
-    UPDATE = "menu:update"
-    DELETE = "menu:delete"
+    """
+    菜单模块权限码
+    """
+    READ = "system:menu:read"
+    CREATE = "system:menu:create"
+    UPDATE = "system:menu:update"
+    DELETE = "system:menu:delete"
 
 
 class LogPermEnum(BasePermEnum):
-    """日志模块权限码"""
-    READ = "log:read"
-    EXPORT = "log:export"
-    DELETE = "log:delete"
+    """
+    日志模块权限码
+    """
+    READ = "system:log:read"
+    EXPORT = "system:log:export"
+    DELETE = "system:log:delete"
 
 
 class SystemPermEnum(BasePermEnum):
-    """系统模块权限码"""
-    SETTING_VIEW = "system:setting_view"
-    SETTING_UPDATE = "system:setting_update"
-    CACHE_CLEAR = "system:cache_clear"
+    """
+    系统模块权限码
+    """
+    SETTING_VIEW = "system:setting:view"
+    SETTING_UPDATE = "system:setting:update"
+    CACHE_CLEAR = "system:cache:clear"
 
 
 # 统一总出口
