@@ -23,6 +23,13 @@ class RoleUpdateRequest(BaseModel):
     status: int | None = Field(None, description="状态：0=启用 1=禁用", ge=0, le=1)
 
 
+class RoleUpdateStatusRequest(BaseModel):
+    """更新角色状态请求"""
+
+    role_id: int = Field(..., description="角色ID", ge=1, example=1)
+    status: int = Field(..., description="状态：0=启用 1=禁用", ge=0, le=1, example=0)
+
+
 class RoleListQueryRequest(BaseModel):
     """角色列表查询请求"""
 

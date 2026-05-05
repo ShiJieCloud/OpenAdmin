@@ -5,7 +5,7 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_role_service
 from app.schemas.base.response import ApiResponse, PaginationResponse
-from app.schemas.role import RoleInfoResponse, RoleCreateRequest, RoleUpdateRequest, RoleListQueryRequest
+from app.schemas.role import RoleInfoResponse, RoleCreateRequest, RoleUpdateRequest, RoleUpdateStatusRequest, RoleListQueryRequest
 from app.services import RoleService
 
 router = APIRouter()
@@ -142,3 +142,29 @@ async def delete_role(
     """
     await role_service.delete_role(role_id)
     return ResponseBuilder.success(message="删除成功")
+
+
+@router.put(
+    "/status",
+    response_model=ApiResponse[RoleInfoResponse],
+    dependencies=[Depends(has_perm(PermCode.Role.UPDATE))],
+    summary="更新角色状态",
+    description="启用或禁用角色（需要具备角色编辑权限）"
+)
+async def update_role_status(
+    req: RoleUpdateStatusRequest = Body(..., description="更新角色状态请求"),
+    role_service: RoleService = Depends(get_role_service)
+):
+    """
+    更新角色状态
+
+    启用或禁用角色。
+    接口需要用户登录并拥有角色编辑权限方可访问。
+
+    :param req: 更新角色状态请求
+    :return: 更新后的角色信息
+    :raises BusinessError: 角色不存在
+    """
+    role = await role_service.update_role_status(req)
+    role_info = RoleInfoResponse.model_validate(role)
+    return ResponseBuilder.success(role_info)

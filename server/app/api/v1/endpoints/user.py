@@ -14,7 +14,7 @@ router = APIRouter()
 @router.get(
     "/{user_id}",
     response_model=ApiResponse[UserInfoResponse],
-    dependencies=[Depends(has_perm(PermCode.User.READ))],
+    dependencies=[Depends(has_perm(PermCode.User.VIEW))],
     summary="获取用户详情",
     description="根据用户唯一ID查询指定用户的详细信息（需要具备用户查看权限）"
 )
@@ -145,7 +145,7 @@ async def update_user_info(
 @router.post(
     "/list",
     response_model=PaginationResponse[UserInfoResponse],
-    dependencies=[Depends(has_perm(PermCode.User.READ))],
+    dependencies=[Depends(has_perm(PermCode.User.VIEW))],
     summary="分页查询用户列表",
     description="分页获取用户列表，支持多条件筛选（需要具备用户查看权限）"
 )
