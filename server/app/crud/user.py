@@ -129,8 +129,10 @@ class UserCRUD(BaseCRUD):
             # 用户 → 角色 直接关联
             .outerjoin(UserRole, (UserRole.role_id == Role.id) & (UserRole.user_id == user_id))
             # 岗位链路 或 直接分配，任一满足即可
+            # 只返回启用状态的角色
             .where(
-                (UserPost.user_id == user_id) | (UserRole.user_id == user_id)
+                ((UserPost.user_id == user_id) | (UserRole.user_id == user_id)) &
+                (Role.status == 0)
             )
         )
 

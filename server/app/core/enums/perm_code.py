@@ -13,7 +13,7 @@ class UserPermEnum(BasePermEnum):
     """
     用户模块权限码
     """
-    READ = "system:user:read"
+    VIEW = "system:user:view"
     CREATE = "system:user:create"
     UPDATE = "system:user:update"
     DELETE = "system:user:delete"

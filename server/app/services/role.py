@@ -2,7 +2,7 @@ from app.core.enums import RespCodeEnum
 from app.core.exceptions import BusinessError
 from app.crud import RoleCRUD
 from app.models import Role
-from app.schemas.role import RoleCreateRequest, RoleUpdateRequest, RoleListQueryRequest
+from app.schemas.role import RoleCreateRequest, RoleUpdateRequest, RoleUpdateStatusRequest, RoleListQueryRequest
 from app.services.base import BaseService
 
 
@@ -113,6 +113,26 @@ class RoleService(BaseService):
             raise BusinessError(RespCodeEnum.ROLE_HAS_POST)
 
         await self.role_crud.delete_role(role_id)
+
+    async def update_role_status(self, req: RoleUpdateStatusRequest) -> Role:
+        """更新角色状态
+
+        Args:
+            req: 更新角色状态请求
+
+        Returns:
+            Role: 更新后的角色对象
+
+        Raises:
+            BusinessError: 角色不存在
+        """
+        role = await self.role_crud.get_role(req.role_id)
+        if not role:
+            raise BusinessError(RespCodeEnum.ROLE_NOT_EXIST)
+
+        await self.role_crud.update_role(req.role_id, {"status": req.status})
+        role = await self.role_crud.get_role(req.role_id)
+        return role
 
     async def get_role_list(self, query: RoleListQueryRequest) -> tuple[list[Role], int, int, int]:
         """分页查询角色列表
