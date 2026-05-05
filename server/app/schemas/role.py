@@ -2,6 +2,27 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class RoleCreateRequest(BaseModel):
+    """创建角色请求"""
+
+    role_name: str = Field(..., description="角色名称", min_length=2, max_length=50, example="管理员")
+    role_code: str = Field(..., description="角色唯一编码", min_length=2, max_length=50, example="ADMIN")
+    sort: int = Field(0, description="显示顺序", ge=0, example=1)
+    description: str | None = Field(None, description="角色描述", max_length=255)
+    status: int = Field(0, description="状态：0=启用 1=禁用", ge=0, le=1, example=0)
+
+
+class RoleUpdateRequest(BaseModel):
+    """编辑角色请求"""
+
+    role_id: int = Field(..., description="角色ID", ge=1, example=1)
+    role_name: str | None = Field(None, description="角色名称", min_length=2, max_length=50)
+    role_code: str | None = Field(None, description="角色唯一编码", min_length=2, max_length=50)
+    sort: int | None = Field(None, description="显示顺序", ge=0)
+    description: str | None = Field(None, description="角色描述", max_length=255)
+    status: int | None = Field(None, description="状态：0=启用 1=禁用", ge=0, le=1)
+
+
 class RoleListQueryRequest(BaseModel):
     """角色列表查询请求"""
 

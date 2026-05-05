@@ -26,10 +26,11 @@ class RolePermEnum(BasePermEnum):
     """
     角色模块权限码
     """
-    READ = "system:role:role:read"
-    CREATE = "system:role:role:create"
+    READ = "system:role:read"
+    LIST = "system:role:list"
+    CREATE = "system:role:create"
     UPDATE = "system:role:update"
-    DELETE = "system:role:role:delete"
+    DELETE = "system:role:delete"
 
 
 class PermPermEnum(BasePermEnum):
