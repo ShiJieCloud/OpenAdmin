@@ -2,6 +2,20 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class UserRoleAssignRequest(BaseModel):
+    """用户角色分配请求（对比差异合并）
+
+    前端传入用户调整后的所有角色ID
+    后端对比差异：
+    - 数据库没有，前端有 → 新增
+    - 数据库有，前端没有 → 删除
+    - 两边都有 → 保持不变
+    """
+
+    user_id: int = Field(..., description="用户ID", ge=1, example=1001)
+    role_ids: list[int] = Field(..., description="调整后的所有角色ID列表", example=[1, 2, 3])
+
+
 class UserCreateRequest(BaseModel):
     """创建用户请求"""
 

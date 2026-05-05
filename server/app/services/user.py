@@ -325,4 +325,39 @@ class UserService(BaseService):
         """
         users, total, pages, page_num = await self.user_crud.get_user_list(query)
         return users, total, pages, page_num
+
+    async def assign_roles_to_user(self, user_id: int, role_ids: list[int]) -> list[int]:
+        """对比差异分配角色给用户
+
+        前端传入用户调整后的所有角色ID
+        Service层对比差异：
+        - 数据库没有，前端有 → 调用CRUD新增
+        - 数据库有，前端没有 → 调用CRUD删除
+        - 两边都有 → 保持不变
+
+        Args:
+            user_id: 用户ID
+            role_ids: 前端最终的角色ID列表
+
+        Returns:
+            list[int]: 分配后的角色ID列表
+        """
+        user = await self.user_crud.get_user(id=user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+
+        existing_role_ids = await self.user_crud.get_user_role_ids(user_id)
+        existing_set = set(existing_role_ids)
+        new_set = set(role_ids)
+
+        to_add = new_set - existing_set
+        to_remove = existing_set - new_set
+
+        if to_remove:
+            await self.user_crud.remove_roles_from_user(user_id, list(to_remove))
+
+        if to_add:
+            await self.user_crud.add_roles_to_user(user_id, list(to_add))
+
+        return await self.user_crud.get_user_role_ids(user_id)
         

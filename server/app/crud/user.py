@@ -1,6 +1,6 @@
 from datetime import datetime
 from math import ceil
-from sqlalchemy import select, update, func
+from sqlalchemy import delete, insert, select, update, func
 
 from app.core.enums import UserStatusEnum
 from app.crud.base import BaseCRUD
@@ -258,3 +258,53 @@ class UserCRUD(BaseCRUD):
         users = list(list_result.scalars().all())
 
         return users, total, pages, query.page_num
+
+    async def get_user_role_ids(self, user_id: int) -> list[int]:
+        """获取用户已绑定的角色ID列表
+
+        Args:
+            user_id: 用户ID
+
+        Returns:
+            list[int]: 角色ID列表
+        """
+        stmt = select(UserRole.role_id).where(UserRole.user_id == user_id)
+        result = await self.db_session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def add_roles_to_user(self, user_id: int, role_ids: list[int]) -> None:
+        """批量新增用户角色关联
+
+        Args:
+            user_id: 用户ID
+            role_ids: 要新增的角色ID列表
+        """
+        if not role_ids:
+            return
+
+        role_relations = [
+            {"user_id": user_id, "role_id": role_id}
+            for role_id in set(role_ids)
+        ]
+        
+        insert_stmt = insert(UserRole).values(role_relations)
+        await self.db_session.execute(insert_stmt)
+
+    async def remove_roles_from_user(self, user_id: int, role_ids: list[int]) -> None:
+        """批量删除用户角色关联
+
+        Args:
+            user_id: 用户ID
+            role_ids: 要删除的角色ID列表
+        """
+        if not role_ids:
+            return
+
+        delete_stmt = (
+            delete(UserRole)
+            .where(
+                UserRole.user_id == user_id,
+                UserRole.role_id.in_(role_ids)
+            )
+        )
+        await self.db_session.execute(delete_stmt)

@@ -5,7 +5,7 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
 from app.schemas.base.response import ApiResponse, PaginationResponse
-from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest
+from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest, UserRoleAssignRequest
 from app.services import UserService
 
 router = APIRouter()
@@ -19,7 +19,7 @@ router = APIRouter()
     description="根据用户唯一ID查询指定用户的详细信息（需要具备用户查看权限）"
 )
 async def get_user_info(
-    user_id: int = Path(..., description="用户ID", ge=1, example=1001),
+    user_id: int = Path(..., description="用户ID", ge=1, examples=[1001]),
     user_service: UserService = Depends(get_user_service)
 ):
     """
@@ -170,3 +170,39 @@ async def get_user_list(
     users, total, pages, page_num = await user_service.get_user_list(query)
     records = [UserInfoResponse.model_validate(user) for user in users]
     return ResponseBuilder.pagination(records, total, page_num, query.page_size)
+
+
+@router.post(
+    "/roles/assign",
+    response_model=ApiResponse[list[int]],
+    dependencies=[Depends(has_perm(PermCode.User.UPDATE))],
+    summary="分配用户角色",
+    description="对比差异分配用户角色：新增没有的、删除多余的、保留共有的（需要具备用户编辑权限）"
+)
+async def assign_user_roles(
+    req: UserRoleAssignRequest = Body(..., description="角色分配请求"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    分配用户角色（智能合并）
+
+    工作逻辑：
+    1. 前端传入用户调整后的所有角色ID
+    2. 后端对比数据库中已有的角色
+    3. 数据库没有，前端有 → 新增关联
+    4. 数据库有，前端没有 → 删除关联
+    5. 两边都有 → 保持不变
+
+    特点：
+    - 只变更有差异的记录，不影响无变化的角色
+    - 前端无需关心哪些是新增、哪些是删除
+    - 传入空列表 [] = 清空所有角色
+
+    接口需要用户登录并拥有用户编辑权限方可访问。
+
+    :param req: 用户ID和最终的角色ID列表
+    :return: 返回分配后的角色ID列表
+    :raises BusinessError: 用户不存在
+    """
+    role_ids = await user_service.assign_roles_to_user(req.user_id, req.role_ids)
+    return ResponseBuilder.success(role_ids)
