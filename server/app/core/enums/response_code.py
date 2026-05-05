@@ -52,6 +52,14 @@ class RespCodeEnum(Enum):
     PARAM_INVALID = ("BGE0001", "参数无效")
     QUERY_CONDITION_INVALID = ("BGE0002", "查询条件不能为空")
 
+    # B-RO = 角色相关 (Role)
+    ROLE_NOT_EXIST = ("BRO0001", "角色不存在")
+    ROLE_CODE_EXIST = ("BRO0002", "角色编码已存在")
+    ROLE_NAME_EXIST = ("BRO0003", "角色名称已存在")
+    ROLE_HAS_USER = ("BRO0004", "角色已分配给用户，无法删除")
+    ROLE_HAS_POST = ("BRO0005", "角色已分配给岗位，无法删除")
+
+
     # ==================== E：第三方错误（Third-party Error） ====================
 
 
