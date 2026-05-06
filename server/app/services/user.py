@@ -5,7 +5,7 @@ from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest, UserLis
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
-from app.models import User, Role
+from app.models import User, Role, Post
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.schemas.user import UserCreateRequest, UserResetPasswordRequest
 from app.services.base import BaseService
@@ -184,6 +184,18 @@ class UserService(BaseService):
             return []
         
         return roles
+
+    async def get_user_posts(self, user_id: int) -> list[Post]:
+        """
+        获取用户关联的岗位列表
+
+        Args:
+            user_id: 用户ID
+
+        Returns:
+            list[Post]: 岗位列表
+        """
+        return await self.user_crud.get_user_posts(user_id)
 
     async def create_user(self, req: UserCreateRequest) -> User:
         """

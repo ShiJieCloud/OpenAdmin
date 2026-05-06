@@ -105,39 +105,45 @@ class UserCRUD(BaseCRUD):
 
     async def get_user_roles(self, user_id: int) -> list[Role]:
         """
-        获取用户所有角色（直接角色 + 岗位间接角色）
-
-        SQL 对应逻辑：
-            SELECT DISTINCT sr.*
-            FROM sys_role sr
-            LEFT JOIN sys_post_role spr ON sr.id = spr.role_id
-            LEFT JOIN sys_post sp ON spr.post_id = sp.id
-            LEFT JOIN sys_user_post sup ON sp.id = sup.post_id
-            LEFT JOIN sys_user_role sur ON sr.id = sur.role_id
-            WHERE sup.user_id = :user_id 
-               OR sur.user_id = :user_id
+        获取用户关联的角色列表
         """
         stmt = (
             select(Role)
             .distinct()
-            # 岗位 → 角色 关联
-            .outerjoin(PostRole, PostRole.role_id == Role.id)
-            # 岗位表
-            .outerjoin(Post, Post.id == PostRole.post_id)
-            # 用户 → 岗位 关联
-            .outerjoin(UserPost, (UserPost.post_id == Post.id) & (UserPost.user_id == user_id))
             # 用户 → 角色 直接关联
-            .outerjoin(UserRole, (UserRole.role_id == Role.id) & (UserRole.user_id == user_id))
-            # 岗位链路 或 直接分配，任一满足即可
+            .join(UserRole, UserRole.role_id == Role.id)
             # 只返回启用状态的角色
             .where(
-                ((UserPost.user_id == user_id) | (UserRole.user_id == user_id)) &
-                (Role.status == 0)
+                UserRole.user_id == user_id,
+                Role.status == 0
             )
         )
 
         result = await self.db_session.execute(stmt)
-        return list(result.scalars().all())
+        return result.scalars().all()
+
+    async def get_user_posts(self, user_id: int) -> list[Post]:
+        """
+        获取用户关联的岗位列表
+
+        Args:
+            user_id: 用户ID
+
+        Returns:
+            list[Post]: 岗位列表
+        """
+        stmt = (
+            select(Post)
+            .distinct()
+            .join(UserPost, UserPost.post_id == Post.id)
+            .where(
+                UserPost.user_id == user_id,
+                Post.status == 0
+            )
+        )
+
+        result = await self.db_session.execute(stmt)
+        return result.scalars().all()
 
     async def create_user(self, user_data: dict) -> User:
         """

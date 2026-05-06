@@ -30,8 +30,8 @@ class Permission(BaseModel):
     )
     perm_type: Mapped[int] = mapped_column(
         TINYINT,
-        default=1,
-        comment="权限类型：1=按钮 2=接口"
+        default=0,
+        comment="权限类型：0=按钮 1=接口"
     )
     sort: Mapped[int] = mapped_column(
         Integer,
