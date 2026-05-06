@@ -3,6 +3,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.models.dept import Dept
 from app.models.post import Post
+from app.models.menu import Menu
 from app.models.permission import Permission
 from app.models.user_post import UserPost
 from app.models.post_role import PostRole
@@ -16,6 +17,7 @@ __all__ = [
     "Role",
     "Dept",
     "Post",
+    "Menu",
     "Permission",
     "UserPost",
     "PostRole",

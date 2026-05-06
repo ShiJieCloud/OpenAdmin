@@ -1,7 +1,7 @@
 from typing import Callable, Awaitable
 from fastapi import Depends
 
-from app.core.enums import RespCodeEnum, PermTypeEnum
+from app.core.enums import RespCodeEnum
 from app.core.exceptions import PermDeniedException
 from app.deps.auth import get_current_active_user
 from app.deps.service import get_user_service, get_permission_service
@@ -43,7 +43,7 @@ async def get_current_user_perms(
         return []
 
     # 根据角色ID批量查询权限编码
-    perms = await perm_service.get_perms_by_role_codes(user_roles, perm_type=PermTypeEnum.BUTTON)
+    perms = await perm_service.get_perms_by_role_codes(user_roles)
     
     # 提取权限编码
     return [p.perm_code for p in perms]
