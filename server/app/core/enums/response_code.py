@@ -59,6 +59,9 @@ class RespCodeEnum(Enum):
     ROLE_HAS_USER = ("BRO0004", "角色已分配给用户，无法删除")
     ROLE_HAS_POST = ("BRO0005", "角色已分配给岗位，无法删除")
 
+    # B-PO = 岗位相关 (Post)
+    POST_NOT_EXIST = ("BPO0001", "岗位不存在")
+
 
     # ==================== E：第三方错误（Third-party Error） ====================
 

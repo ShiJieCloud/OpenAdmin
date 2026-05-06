@@ -4,49 +4,59 @@ from fastapi import Depends
 from app.core.enums import RespCodeEnum
 from app.core.exceptions import PermDeniedException
 from app.deps.auth import get_current_active_user
-from app.deps.service import get_user_service, get_permission_service
-from app.models import User
-from app.services import UserService, PermissionService
-
+from app.deps.service import get_user_service, get_permission_service, get_post_service
+from app.models import User, Role
+from app.services import UserService, PermissionService, PostService
 
 async def get_current_user_roles(
     current_user: User = Depends(get_current_active_user),
-    user_service: UserService = Depends(get_user_service)
-) -> list[str]:
+    user_service: UserService = Depends(get_user_service),
+    post_service: PostService = Depends(get_post_service),
+) -> set[str]:
     """
     获取当前用户的角色列表
     """
-    # 超级管理员返回空列表，由 __call__ 统一处理
-    if current_user.is_superuser:
-        return ["*"]
 
+    # 1. 超级管理员直接返回所有角色
+    if current_user.is_superuser:
+        return set()
+
+    # 2. 获取用户自身绑定的角色
     user_roles = await user_service.get_user_roles(current_user.id)
 
-    # 提取角色编码
-    return [r.role_code for r in user_roles]
+    # 3. 获取用户所属的岗位列表
+    user_posts = await user_service.get_user_posts(current_user.id)
 
+    # 4. 获取岗位关联的角色
+    if user_posts:
+        post_ids = [post.id for post in user_posts]
+        post_roles = await post_service.get_posts_roles(post_ids)
+    else:
+        post_roles = []
+
+    # 5. 合并用户角色和岗位角色，并根据角色ID去重
+    merged_roles = set(user_roles + post_roles)
+
+    return {r.role_code for r in merged_roles}
 
 async def get_current_user_perms(
-    current_user: User = Depends(get_current_active_user),
-    user_roles: list[str] = Depends(get_current_user_roles),
+    role_codes: set[str] = Depends(get_current_user_roles),
     perm_service: PermissionService = Depends(get_permission_service)
-) -> list[str]:
+) -> set[str]:
     """
     获取当前用户的权限列表
+    权限来源：用户直接角色 + 用户所属岗位关联角色，合并去重后查询权限
     """
-    # 超级管理员通配符
-    if current_user.is_superuser:
-        return ["*"]
 
-    # 提取角色编码
-    if not user_roles:
-        return []
+    # 1. 无角色则返回空权限
+    if not role_codes:
+        return set()
 
-    # 根据角色ID批量查询权限编码
-    perms = await perm_service.get_perms_by_role_codes(user_roles)
-    
-    # 提取权限编码
-    return [p.perm_code for p in perms]
+    # 2. 根据角色编码查询权限列表
+    perms = await perm_service.get_perms_by_role_codes(role_codes)
+
+    # 3. 提取权限码并返回
+    return {p.perm_code for p in perms}
 
 
 class PermChecker:
@@ -61,8 +71,8 @@ class PermChecker:
     async def __call__(
         self,
         current_user: User = Depends(get_current_active_user),
-        role_codes: list[str] = Depends(get_current_user_roles),
-        perm_codes: list[str] = Depends(get_current_user_perms)
+        role_codes: set[str] = Depends(get_current_user_roles),
+        perm_codes: set[str] = Depends(get_current_user_perms)
     ):
         # 超级管理员直接放行（统一入口）
         if current_user.is_superuser:
