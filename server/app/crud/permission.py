@@ -1,6 +1,6 @@
+from app.core.enums import PermTypeEnum
 from sqlalchemy import select
 
-from app.core.enums import PermTypeEnum
 from app.crud.base import BaseCRUD
 from app.models import Permission, Role, RolePermission
 

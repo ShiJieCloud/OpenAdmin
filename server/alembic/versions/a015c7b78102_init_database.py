@@ -1,8 +1,8 @@
-"""init table
+"""init database
 
-Revision ID: 83d3611b9008
+Revision ID: a015c7b78102
 Revises: 
-Create Date: 2026-05-02 00:00:08.715271
+Create Date: 2026-05-05 17:01:42.506862
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision: str = '83d3611b9008'
+revision: str = 'a015c7b78102'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -33,24 +33,36 @@ def upgrade() -> None:
     comment='部门表'
     )
     op.create_index(op.f('ix_sys_dept_parent_id'), 'sys_dept', ['parent_id'], unique=False)
-    op.create_table('sys_permission',
+    op.create_table('sys_menu',
+    sa.Column('menu_name', sa.String(length=64), nullable=False, comment='菜单名称'),
     sa.Column('parent_id', sa.BigInteger(), nullable=False, comment='父菜单ID'),
-    sa.Column('perm_type', sa.String(length=20), nullable=False, comment='权限类型：menu=菜单 button=按钮'),
-    sa.Column('perm_code', sa.String(length=100), nullable=False, comment='权限标识'),
-    sa.Column('perm_name', sa.String(length=100), nullable=False, comment='名称'),
-    sa.Column('path', sa.String(length=255), nullable=True, comment='路由地址'),
-    sa.Column('component', sa.String(length=255), nullable=True, comment='前端组件'),
-    sa.Column('icon', sa.String(length=100), nullable=True, comment='菜单图标'),
-    sa.Column('sort', sa.Integer(), nullable=False, comment='显示顺序'),
-    sa.Column('status', mysql.TINYINT(), nullable=False, comment='状态 0=启用 1=禁用'),
+    sa.Column('sort', sa.Integer(), nullable=False, comment='排序'),
+    sa.Column('path', sa.String(length=255), nullable=False, comment='前端路由地址'),
+    sa.Column('component', sa.String(length=255), nullable=True, comment='前端组件路径'),
+    sa.Column('menu_type', mysql.TINYINT(), nullable=False, comment='菜单类型：0=目录 1=页面'),
+    sa.Column('icon', sa.String(length=128), nullable=False, comment='菜单图标'),
+    sa.Column('is_hidden', mysql.TINYINT(), nullable=False, comment='是否隐藏：0=显示 1=隐藏'),
+    sa.Column('is_frame', mysql.TINYINT(), nullable=False, comment='是否内嵌：0=否 1=是'),
+    sa.Column('is_external', mysql.TINYINT(), nullable=False, comment='是否外部链接：0=否 1=是'),
+    sa.Column('create_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False, comment='创建时间'),
+    sa.Column('update_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False, comment='更新时间'),
+    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False, comment='主键ID'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_sys_menu')),
+    comment='菜单表(目录+页面)'
+    )
+    op.create_table('sys_permission',
+    sa.Column('menu_id', sa.BigInteger(), nullable=False, comment='所属菜单ID'),
+    sa.Column('perm_name', sa.String(length=64), nullable=False, comment='权限名称'),
+    sa.Column('perm_code', sa.String(length=128), nullable=False, comment='权限标识'),
+    sa.Column('perm_type', mysql.TINYINT(), nullable=False, comment='权限类型：1=按钮 2=接口'),
+    sa.Column('sort', sa.Integer(), nullable=False, comment='排序'),
     sa.Column('create_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False, comment='创建时间'),
     sa.Column('update_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False, comment='更新时间'),
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False, comment='主键ID'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_sys_permission')),
+    sa.UniqueConstraint('perm_code', name=op.f('uq_sys_permission_perm_code')),
     comment='权限表'
     )
-    op.create_index(op.f('ix_sys_permission_perm_code'), 'sys_permission', ['perm_code'], unique=True)
-    op.create_index(op.f('ix_sys_permission_perm_type'), 'sys_permission', ['perm_type'], unique=False)
     op.create_table('sys_post',
     sa.Column('post_name', sa.String(length=50), nullable=False, comment='岗位名称'),
     sa.Column('dept_id', sa.BigInteger(), nullable=True, comment='所属部门ID（可为空）'),
@@ -110,6 +122,7 @@ def upgrade() -> None:
     sa.Column('lock_time', sa.DateTime(), nullable=True, comment='账号锁定时间'),
     sa.Column('remark', sa.String(length=500), nullable=True, comment='备注'),
     sa.Column('del_flag', mysql.TINYINT(), nullable=False, comment='删除标志：0=未删除 1=已删除'),
+    sa.Column('is_superuser', sa.Boolean(), nullable=False, comment='是否超级管理员'),
     sa.Column('create_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False, comment='创建时间'),
     sa.Column('update_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False, comment='更新时间'),
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False, comment='主键ID'),
@@ -154,9 +167,8 @@ def downgrade() -> None:
     op.drop_table('sys_post_role')
     op.drop_index(op.f('ix_sys_post_dept_id'), table_name='sys_post')
     op.drop_table('sys_post')
-    op.drop_index(op.f('ix_sys_permission_perm_type'), table_name='sys_permission')
-    op.drop_index(op.f('ix_sys_permission_perm_code'), table_name='sys_permission')
     op.drop_table('sys_permission')
+    op.drop_table('sys_menu')
     op.drop_index(op.f('ix_sys_dept_parent_id'), table_name='sys_dept')
     op.drop_table('sys_dept')
     # ### end Alembic commands ###

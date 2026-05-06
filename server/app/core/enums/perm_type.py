@@ -1,6 +1,8 @@
-from enum import StrEnum
+from enum import IntEnum
 
 
-class PermTypeEnum(StrEnum):
-    MENU = "menu"
-    BUTTON = "button"
+class PermTypeEnum(IntEnum):
+    """权限类型枚举"""
+
+    BUTTON = 0  # 按钮
+    API = 1  # 接口
