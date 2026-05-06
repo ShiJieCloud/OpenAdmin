@@ -62,6 +62,12 @@ class RespCodeEnum(Enum):
     # B-PO = 岗位相关 (Post)
     POST_NOT_EXIST = ("BPO0001", "岗位不存在")
 
+    # B-ME = 菜单相关 (Menu)
+    MENU_NOT_EXIST = ("BME0001", "菜单不存在")
+    MENU_HAS_CHILDREN = ("BME0002", "菜单存在子菜单，无法删除")
+    MENU_PARENT_NOT_EXIST = ("BME0003", "父菜单不存在")
+    MENU_PARENT_CANNOT_BE_SELF = ("BME0004", "父菜单不能是自身")
+
 
     # ==================== E：第三方错误（Third-party Error） ====================
 
