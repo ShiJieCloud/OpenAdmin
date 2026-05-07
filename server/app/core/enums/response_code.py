@@ -67,6 +67,7 @@ class RespCodeEnum(Enum):
     MENU_HAS_CHILDREN = ("BME0002", "菜单存在子菜单，无法删除")
     MENU_PARENT_NOT_EXIST = ("BME0003", "父菜单不存在")
     MENU_PARENT_CANNOT_BE_SELF = ("BME0004", "父菜单不能是自身")
+    MENU_STATUS_INVALID = ("BME0005", "菜单状态值无效")
 
 
     # ==================== E：第三方错误（Third-party Error） ====================

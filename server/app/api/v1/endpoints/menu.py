@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, Body, Path
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder, ApiResponse
-from app.deps.permission import get_current_active_user,has_perm
+from app.deps.permission import get_current_active_user, has_perm
 from app.deps.service import get_menu_service, get_user_service, get_post_service
 from app.models import User
-from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuResponse, MenuTreeResponse
+from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuUpdateStatusRequest, MenuResponse, MenuTreeResponse
 from app.services import UserService, PostService, MenuService
 
 router = APIRouter()
+
 
 @router.post(
     "",
@@ -32,7 +33,7 @@ async def create_menu(
 @router.put(
     "/{menu_id}",
     response_model=ApiResponse[None],
-       dependencies=[Depends(has_perm(PermCode.Menu.UPDATE))],
+    dependencies=[Depends(has_perm(PermCode.Menu.UPDATE))],
     summary="编辑菜单",
     description="编辑菜单信息（需具备菜单更新权限）"
 )
@@ -46,6 +47,33 @@ async def update_menu(
     """
     await menu_service.update_menu(menu_id, req)
     return ResponseBuilder.success(message="更新成功")
+
+
+@router.put(
+    "/status/{menu_id}",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.Menu.UPDATE))],
+    summary="更新菜单状态",
+    description="更新菜单启用/禁用状态（需具备菜单更新权限）"
+)
+async def update_menu_status(
+    menu_id: int = Path(..., description="菜单ID", gt=0),
+    status: int = Body(..., description="状态值：0=启用 1=禁用", ge=0, le=1),
+    menu_service: MenuService = Depends(get_menu_service)
+):
+    """
+    更新菜单状态（启用/禁用）
+
+    权限：`system:menu:update`
+
+    **状态说明：**
+    - 0：启用状态，菜单可正常访问
+    - 1：禁用状态，菜单不可访问（不会出现在用户菜单树中）
+    """
+    req = MenuUpdateStatusRequest(menu_id=menu_id, status=status)
+    await menu_service.update_menu_status(req)
+    status_text = "启用" if status == 0 else "禁用"
+    return ResponseBuilder.success(message=f"菜单{status_text}成功")
 
 
 @router.delete(

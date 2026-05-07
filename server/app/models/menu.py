@@ -64,4 +64,8 @@ class Menu(BaseModel):
         default=0,
         comment="是否外部链接：0=否 1=是"
     )
-
+    status: Mapped[int] = mapped_column(
+        TINYINT,
+        default=0,
+        comment="状态：0=启用 1=禁用"
+    )
