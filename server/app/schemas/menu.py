@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from pydantic import ConfigDict
 from datetime import datetime
 
@@ -55,3 +55,24 @@ class MenuResponse(BaseModel):
     update_time: datetime = Field(..., description="更新时间")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MenuTreeResponse(BaseModel):
+    """菜单树响应（递归结构）"""
+
+    id: int = Field(..., description="菜单ID")
+    menu_name: str = Field(..., description="菜单名称")
+    parent_id: int = Field(..., description="父菜单ID")
+    sort: int = Field(..., description="排序号，越小越靠前")
+    path: str = Field(..., description="前端路由地址")
+    component: Optional[str] = Field(None, description="前端组件路径")
+    menu_type: int = Field(..., description="菜单类型：0=目录 1=页面")
+    icon: str = Field(..., description="菜单图标")
+    is_hidden: int = Field(..., description="是否隐藏：0=显示 1=隐藏")
+    is_frame: int = Field(..., description="是否内嵌：0=否 1=是")
+    children: List["MenuTreeResponse"] = Field([], description="子菜单列表")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+MenuTreeResponse.model_rebuild()
