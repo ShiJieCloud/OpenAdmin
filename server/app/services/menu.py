@@ -2,7 +2,7 @@ from app.core.enums import RespCodeEnum
 from app.core.exceptions import BusinessError
 from app.crud.menu import MenuCRUD
 from app.models import Menu
-from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuTreeResponse
+from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuUpdateStatusRequest, MenuTreeResponse
 from app.services.base import BaseService
 from typing import List
 
@@ -77,12 +77,29 @@ class MenuService(BaseService):
         update_data = req.model_dump(exclude_unset=True)
         await self.menu_crud.update_menu(menu_id, update_data)
 
+    async def update_menu_status(self, req: MenuUpdateStatusRequest) -> None:
+        """更新菜单状态（启用/禁用）
+
+        Args:
+            req: 更新状态请求
+
+        Raises:
+            BusinessError: 菜单不存在或状态值无效
+        """
+        if req.status not in (0, 1):
+            raise BusinessError(RespCodeEnum.MENU_STATUS_INVALID)
+
+        menu = await self.menu_crud.get_menu(req.menu_id)
+        if not menu:
+            raise BusinessError(RespCodeEnum.MENU_NOT_EXIST)
+
+        await self.menu_crud.update_menu(req.menu_id, {"status": req.status})
+
     async def delete_menu(self, menu_id: int) -> None:
         """删除菜单
 
         Args:
             menu_id: 菜单ID
-            recursive: 是否递归删除子菜单
 
         Raises:
             BusinessError: 菜单不存在或存在子菜单
@@ -106,38 +123,29 @@ class MenuService(BaseService):
         """
         return await self.menu_crud.get_menus()
 
-    async def get_user_menu_tree(self, role_codes: list[str], is_superuser: bool = False) -> list[MenuTreeResponse]:
-        """获取当前用户的权限菜单树（前端侧边栏使用）
-        - 超级管理员：返回全部菜单
-        - 普通用户：返回有权限的菜单 + 自动包含所有父级目录
+    async def get_user_menu_tree(self, role_codes: list[str], is_superuser: bool = False) -> List[MenuTreeResponse]:
+        """获取当前用户的权限菜单树（用于前端侧边栏）
+
+        Args:
+            role_codes: 用户的角色编码列表
+            is_superuser: 是否超级管理员
+
+        Returns:
+            List[MenuTreeResponse]: 用户的权限菜单树
         """
-        # 1. 超级管理员直接获取所有菜单
         if is_superuser:
             menus = await self.menu_crud.get_menus()
-    
-        # 2. 普通用户按角色权限获取菜单
         else:
-            # 无角色 → 直接返回空
-            if not role_codes:
-                return []
-        
-            # 获取角色有权限的页面
             user_menus = await self.menu_crud.get_menus_by_role_codes(role_codes)
             if not user_menus:
                 return []
-
-            # 批量获取页面 + 所有祖先目录
+            
             menu_ids = [m.id for m in user_menus]
             menus = await self.menu_crud.get_menus_with_parents(menu_ids)
 
-        # 3. 无任何菜单 → 返回空
-        if not menus:
-            return []
+        return self._build_menu_tree(menus, 0)
 
-        # 4. 构建树形结构
-        return self._build_menu_tree(menus, parent_id=0)
-
-    def _build_menu_tree(self, menus: list[Menu], parent_id: int = 0) -> List[MenuTreeResponse]:
+    def _build_menu_tree(self, menus: list[Menu], parent_id: int) -> List[MenuTreeResponse]:
         """递归构建菜单树
 
         Args:

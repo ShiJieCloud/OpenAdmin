@@ -86,7 +86,7 @@ class MenuCRUD(BaseCRUD):
         Returns:
             list[Menu]: 菜单列表
         """
-        stmt = select(Menu).order_by(Menu.sort.asc())
+        stmt = select(Menu).where(Menu.status == 0).order_by(Menu.sort.asc())
         result = await self.db_session.execute(stmt)
         return result.scalars().all()
 
@@ -111,7 +111,8 @@ class MenuCRUD(BaseCRUD):
             .where(
                 Role.role_code.in_(role_codes),
                 Role.status == 0,
-                Menu.is_hidden == 0
+                Menu.is_hidden == 0,
+                Menu.status == 0,
             )
             .order_by(Menu.sort.asc())
         )
@@ -138,7 +139,7 @@ class MenuCRUD(BaseCRUD):
                 SELECT m.* FROM sys_menu m
                 JOIN menu_tree mt ON mt.parent_id = m.id
             )
-            SELECT * FROM menu_tree ORDER BY parent_id, sort;
+            SELECT * FROM menu_tree WHERE status = 0 AND ORDER BY parent_id, sort;
         """
 
         result = await self.db_session.execute(sql, {"menu_ids": tuple(menu_ids)})

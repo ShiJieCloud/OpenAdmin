@@ -16,6 +16,7 @@ class MenuCreateRequest(BaseModel):
     icon: str = Field("", description="菜单图标", max_length=128)
     is_hidden: int = Field(0, description="是否隐藏：0=显示 1=隐藏")
     is_frame: int = Field(0, description="是否内嵌：0=否 1=是")
+    status: int = Field(0, description="状态：0=启用 1=禁用")
 
 
 class MenuUpdateRequest(BaseModel):
@@ -30,6 +31,14 @@ class MenuUpdateRequest(BaseModel):
     icon: Optional[str] = Field(None, description="菜单图标", max_length=128)
     is_hidden: Optional[int] = Field(None, description="是否隐藏：0=显示 1=隐藏")
     is_frame: Optional[int] = Field(None, description="是否内嵌：0=否 1=是")
+    status: Optional[int] = Field(None, description="状态：0=启用 1=禁用")
+
+
+class MenuUpdateStatusRequest(BaseModel):
+    """菜单更新状态请求"""
+
+    menu_id: int = Field(..., description="菜单ID")
+    status: int = Field(..., description="状态：0=启用 1=禁用")
 
 
 class MenuDeleteRequest(BaseModel):
@@ -51,6 +60,7 @@ class MenuResponse(BaseModel):
     icon: str = Field(..., description="菜单图标")
     is_hidden: int = Field(..., description="是否隐藏：0=显示 1=隐藏")
     is_frame: int = Field(..., description="是否内嵌：0=否 1=是")
+    status: int = Field(..., description="状态：0=启用 1=禁用")
     create_time: datetime = Field(..., description="创建时间")
     update_time: datetime = Field(..., description="更新时间")
 
