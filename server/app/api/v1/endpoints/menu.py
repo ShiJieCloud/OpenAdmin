@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, Body, Path
-from app.core.enums.perm_code import PermCode
-from app.core.response import ResponseBuilder
-from app.deps.permission import has_perm
-from app.deps.service import get_menu_service
-from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuResponse
-from app.services.menu import MenuService
-from app.core.response import ApiResponse
+from app.core.enums import PermCode
+from app.core.response import ResponseBuilder, ApiResponse
+from app.deps.permission import get_current_active_user,has_perm
+from app.deps.service import get_menu_service, get_user_service, get_post_service
+from app.models import User
+from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuResponse, MenuTreeResponse
+from app.services import UserService, PostService, MenuService
 
 router = APIRouter()
 
@@ -90,3 +90,62 @@ async def get_menu_detail(
     return ResponseBuilder.success(
         data=menu_info
     )
+
+
+@router.get(
+    "/tree",
+    dependencies=[Depends(has_perm(PermCode.Menu.READ))],
+    summary="获取全系统菜单树",
+    description="获取所有菜单的完整树结构（管理员查看所有）"
+)
+async def get_all_menu_tree(
+    menu_service: MenuService = Depends(get_menu_service)
+):
+    """
+    获取全系统菜单树（所有菜单，用于菜单管理页面）
+
+    权限：`system:menu:read`
+    """
+    menus = await menu_service.get_menu_list()
+    tree = menu_service._build_menu_tree(menus, 0)
+    return ResponseBuilder.success(data=tree)
+
+
+@router.get(
+    "/tree/user",
+    response_model=ApiResponse[list[MenuTreeResponse]],
+    summary="获取当前用户的权限菜单树",
+    description="获取当前登录用户的权限菜单树（前端侧边栏使用）"
+)
+async def get_user_menu_tree(
+    current_user: User = Depends(get_current_active_user),
+    menu_service: MenuService = Depends(get_menu_service),
+    user_service: UserService = Depends(get_user_service),
+    post_service: PostService = Depends(get_post_service),
+):
+    """
+    获取当前用户权限菜单树
+    - 超级管理员：返回全部菜单
+    - 普通用户：根据角色自动获取权限菜单（自动补全父级目录）
+    """
+    # 超级管理员直接返回全量菜单
+    if current_user.is_superuser:
+        menu_tree = await menu_service.get_user_menu_tree([], is_superuser=True)
+        return ResponseBuilder.success(data=menu_tree)
+
+    # 1. 获取用户角色 + 岗位角色
+    user_roles = await user_service.get_user_roles(current_user.id)
+    post_roles = await post_service.get_posts_roles(current_user.id)
+    all_roles = user_roles + post_roles
+
+    # 无角色 → 返回空菜单
+    if not all_roles:
+        return ResponseBuilder.success(data=[])
+
+    # 2. 提取角色编码
+    role_codes = [role.role_code for role in all_roles]
+    
+    # 3. 直接获取菜单树
+    menu_tree = await menu_service.get_user_menu_tree(role_codes, is_superuser=False)
+
+    return ResponseBuilder.success(data=menu_tree)
