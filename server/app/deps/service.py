@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps.datebase import get_db_session, get_redis
-from app.services import UserService, PermissionService, RoleService, PostService, MenuService
+from app.services import UserService, PermissionService, RoleService, PostService, MenuService, LoginLogService
 from app.core.redis import RedisClient
 
 
@@ -40,3 +40,10 @@ async def get_menu_service(
 ) -> MenuService:
     """菜单服务依赖注入，返回 MenuService 实例"""
     return MenuService(db_session)
+
+
+async def get_login_log_service(
+    db_session: AsyncSession = Depends(get_db_session)
+) -> LoginLogService:
+    """登录日志服务依赖注入，返回 LoginLogService 实例"""
+    return LoginLogService(db_session)

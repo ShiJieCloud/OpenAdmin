@@ -4,6 +4,7 @@ from app.crud.permission import PermissionCRUD
 from app.crud.role import RoleCRUD
 from app.crud.post import PostCRUD
 from app.crud.menu import MenuCRUD
+from app.crud.login_log import LoginLogCRUD
 
 __all__ = [
     "BaseCRUD",
@@ -11,5 +12,6 @@ __all__ = [
     "PermissionCRUD",
     "RoleCRUD",
     "PostCRUD",
-    "MenuCRUD"
+    "MenuCRUD",
+    "LoginLogCRUD"
 ]
