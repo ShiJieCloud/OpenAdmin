@@ -4,5 +4,6 @@ from app.services.permission import PermissionService
 from app.services.role import RoleService
 from app.services.post import PostService
 from app.services.menu import MenuService
+from app.services.login_log import LoginLogService
 
-__all__ = ["BaseService", "UserService", "PermissionService", "RoleService", "PostService", "MenuService"]
+__all__ = ["BaseService", "UserService", "PermissionService", "RoleService", "PostService", "MenuService", "LoginLogService"]
