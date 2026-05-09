@@ -1,10 +1,8 @@
 from app.core.exceptions import register_exception_handlers
-from app.core.middlewares import setup_cors
+from app.core.middlewares import setup_cors, setup_context_middleware
 from fastapi import FastAPI
 from app.core.lifespan import lifespan
-from app.schemas.base.response import ApiResponse
 from app.config.app import app_config
-from app.core.response import ResponseBuilder
 from app.api.router import api_router
 
 app = FastAPI(
@@ -20,11 +18,14 @@ app = FastAPI(
     redoc_url=app_config.REDOC_URL if app_config.DOCS_ENABLE else None,
 )
 
-# 配置 CORS 跨域中间件
-setup_cors(app)
-
 # 注册全局异常处理器
 register_exception_handlers(app)
 
 # 注册API路由
 app.include_router(api_router, prefix="/api")
+
+# 配置 CORS 跨域中间件
+setup_cors(app)
+
+# 配置上下文中间件（必须放在最前面，确保请求上下文最先初始化）
+setup_context_middleware(app)

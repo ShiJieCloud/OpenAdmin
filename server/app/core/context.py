@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, Field
 
+
 class ContextData(BaseModel):
     """
     上下文数据模型
@@ -10,6 +11,7 @@ class ContextData(BaseModel):
     """
 
     current_user_id: int | None = Field(default=None, description="当前登录用户ID")
+    trace_id: str | None = Field(default=None, description="请求唯一ID")
 
 
 class AppContext:
@@ -60,3 +62,24 @@ class AppContext:
         """
         ctx = cls._get_context()
         return ctx.current_user_id
+
+    @classmethod
+    def set_trace_id(cls, trace_id: str | None) -> None:
+        """设置请求唯一ID
+        
+        Args:
+            trace_id: 请求唯一ID
+        """
+        ctx = cls._get_context()
+        ctx.trace_id = trace_id
+        cls._context_var.set(ctx)
+    
+    @classmethod
+    def get_trace_id(cls) -> str | None:
+        """获取请求唯一ID
+        
+        Returns:
+            请求唯一ID
+        """
+        ctx = cls._get_context()
+        return ctx.trace_id
