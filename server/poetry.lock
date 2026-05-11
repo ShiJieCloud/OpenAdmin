@@ -1261,6 +1261,67 @@ url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 reference = "mirrors"
 
 [[package]]
+name = "ua-parser"
+version = "1.0.2"
+description = "Python port of Browserscope's user agent parser"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "ua_parser-1.0.2-py3-none-any.whl", hash = "sha256:0f8e6d0484af2a9ff804bba5a4fe696e87c028eaba98ad9a7dfae873fef7788a"},
+    {file = "ua_parser-1.0.2.tar.gz", hash = "sha256:bab404ad42fb37f943107da2f6003ffc79724d11cc95076a7a539513371779da"},
+]
+
+[package.dependencies]
+ua-parser-builtins = "*"
+
+[package.extras]
+re2 = ["google-re2"]
+regex = ["ua-parser-rs"]
+yaml = ["PyYaml"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+reference = "mirrors"
+
+[[package]]
+name = "ua-parser-builtins"
+version = "202605"
+description = "Precompiled rules for User Agent Parser"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "ua_parser_builtins-202605-py3-none-any.whl", hash = "sha256:a86976baa4b7c69a54269fe54091e3f0c7666f15a0f893855ff907a3bb6d878c"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+reference = "mirrors"
+
+[[package]]
+name = "user-agents"
+version = "2.2.0"
+description = "A library to identify devices (phones, tablets) and their capabilities by parsing browser user agent strings."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "user-agents-2.2.0.tar.gz", hash = "sha256:d36d25178db65308d1458c5fa4ab39c9b2619377010130329f3955e7626ead26"},
+    {file = "user_agents-2.2.0-py3-none-any.whl", hash = "sha256:a98c4dc72ecbc64812c4534108806fb0a0b3a11ec3fd1eafe807cee5b0a942e7"},
+]
+
+[package.dependencies]
+ua-parser = ">=0.10.0"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+reference = "mirrors"
+
+[[package]]
 name = "uvicorn"
 version = "0.40.0"
 description = "The lightning-fast ASGI server."
@@ -1287,4 +1348,4 @@ reference = "mirrors"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "eeefe57777c135f69f0b6d28dee3d7d4ec64dedcb6f78f87155ac0989fdb9699"
+content-hash = "7f536366737e704793f71395eafd62d4081c7ffffeb7e519b9961e6b9b0d6a87"
