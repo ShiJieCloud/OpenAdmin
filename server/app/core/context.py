@@ -11,6 +11,7 @@ class ContextData(BaseModel):
     """
 
     current_user_id: int | None = Field(default=None, description="当前登录用户ID")
+    current_username: str | None = Field(default=None, description="当前登录用户名")
     trace_id: str | None = Field(default=None, description="请求唯一ID")
 
 
@@ -83,3 +84,24 @@ class AppContext:
         """
         ctx = cls._get_context()
         return ctx.trace_id
+
+    @classmethod
+    def set_current_username(cls, username: str | None) -> None:
+        """设置当前登录用户名
+        
+        Args:
+            username: 用户名
+        """
+        ctx = cls._get_context()
+        ctx.current_username = username
+        cls._context_var.set(ctx)
+    
+    @classmethod
+    def get_current_username(cls) -> str | None:
+        """获取当前登录用户名
+        
+        Returns:
+            当前登录用户名
+        """
+        ctx = cls._get_context()
+        return ctx.current_username

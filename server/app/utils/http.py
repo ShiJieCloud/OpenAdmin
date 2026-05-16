@@ -1,7 +1,8 @@
 from typing import Optional
 from fastapi import Request
 from user_agents import parse
-from app.schemas.common import UserAgentInfo
+from app.schemas.common import UserAgentInfo, IPLocationInfo
+import httpx
 
 
 class HttpUtils:
@@ -62,13 +63,13 @@ class HttpUtils:
         if ua.is_pc:
             device_type = "PC"
         elif ua.is_mobile:
-            device_type = "Mobile"
+            device_type = "PHONE"
         elif ua.is_tablet:
-            device_type = "Tablet"
+            device_type = "PAD"
         elif ua.is_bot:
-            device_type = "Bot"
+            device_type = "ROBOT"
         else:
-            device_type = "Unknown"
+            device_type = "UNKNOWN"
         
         return UserAgentInfo(
             user_agent=ua_str,
@@ -91,3 +92,40 @@ class HttpUtils:
         """
         ua_str = request.headers.get("user-agent", "")
         return HttpUtils.parse_user_agent(ua_str)
+
+    @staticmethod
+    def get_ip_location(ip: str) -> IPLocationInfo:
+        """根据 IP 地址获取归属地信息
+        
+        使用 ip-api.com 接口获取 IP 归属地和运营商信息。
+        
+        Args:
+            ip: IP 地址字符串
+        
+        Returns:
+            IPLocationInfo 对象，包含国家、省份、城市、区县和运营商信息
+        """
+
+        url = f"http://ip-api.com/json/{ip}?lang=zh-CN"
+
+        # 127.0.0.1 特殊处理
+        if ip == "127.0.0.1":
+            return IPLocationInfo(ip=ip)
+        
+        try:
+            response = httpx.get(url, timeout=10)
+            data = response.json()
+
+            if data.get("status") != "success":
+                return IPLocationInfo(ip=ip)
+            ip_location = IPLocationInfo(
+                ip=ip,
+                country=data.get("country", ""),
+                province=data.get("regionName", ""),
+                city=data.get("city", "")
+            )
+
+            return ip_location
+        except Exception:
+            return IPLocationInfo(ip=ip)
+        

@@ -17,7 +17,6 @@ class MenuCRUD(BaseCRUD):
         """
         menu = Menu(**menu_data)
         self.db_session.add(menu)
-        await self.db_session.commit()
         await self.db_session.refresh(menu)
         return menu
 
