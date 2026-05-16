@@ -5,5 +5,15 @@ from app.services.role import RoleService
 from app.services.post import PostService
 from app.services.menu import MenuService
 from app.services.login_log import LoginLogService
+from app.services.oper_log import OperLogService
 
-__all__ = ["BaseService", "UserService", "PermissionService", "RoleService", "PostService", "MenuService", "LoginLogService"]
+__all__ = [
+    "BaseService", 
+    "UserService", 
+    "PermissionService", 
+    "RoleService", 
+    "PostService", 
+    "MenuService", 
+    "LoginLogService", 
+    "OperLogService"
+]

@@ -2,6 +2,8 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.config.database import database_config
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 # 创建数据库URL
 DB_URL = URL.create(
@@ -33,3 +35,18 @@ AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False
 )
+
+@asynccontextmanager
+async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    🔥 异步数据库会话
+    - 支持非接口上下文: async with get_async_db_session() as db:
+    - 自动提交 / 回滚
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise

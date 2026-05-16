@@ -4,10 +4,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import BaseModel
 
 
-class OperateLog(BaseModel):
+class OperLog(BaseModel):
     """操作日志模型"""
 
-    __tablename__ = "sys_operate_log"
+    __tablename__ = "sys_oper_log"
     __table_args__ = (
         {"comment": "系统操作日志表"},
     )
@@ -73,4 +73,24 @@ class OperateLog(BaseModel):
         String(32),
         nullable=True,
         comment="终端类型"
+    )
+    ip_country: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+        comment="国家"
+    )
+    ip_province: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+        comment="省份/直辖市"
+    )
+    ip_city: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+        comment="城市"
+    )
+    ip_location: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        comment="完整属地(展示用：国家-省-市)"
     )

@@ -4,6 +4,7 @@ from .menu_type import MenuTypeEnum
 from .user_status import UserStatusEnum
 from .perm_type import PermTypeEnum
 from .perm_code import PermCode
+from .device_type import DeviceTypeEnum
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "PermTypeEnum",
     "PermCode",
     "MenuTypeEnum",
+    "DeviceTypeEnum",
 ]

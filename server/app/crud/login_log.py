@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 
 from app.crud.base import BaseCRUD
 from app.models import LoginLog
-from app.schemas.login_log import LoginLogListQueryRequest
+from app.schemas.login_log import LoginLogCreateRequest, LoginLogListQueryRequest
 
 
 class LoginLogCRUD(BaseCRUD):
@@ -62,5 +62,20 @@ class LoginLogCRUD(BaseCRUD):
         )
         list_result = await self.db_session.execute(list_stmt)
         logs = list(list_result.scalars().all())
-
         return logs, total, pages, query.page_num
+
+    async def create_login_log(self, login_log: dict) -> LoginLog:
+        """
+        创建登录日志记录
+
+        :param login_log: 登录日志创建请求对象
+        :return: 创建后的登录日志对象
+        """
+        if not login_log:
+            return None
+        login_log = LoginLog(**login_log)
+        self.db_session.add(login_log)
+        await self.db_session.flush()
+        await self.db_session.refresh(login_log)
+        return login_log
+

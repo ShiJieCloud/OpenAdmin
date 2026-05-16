@@ -10,6 +10,7 @@ from app.models.post_role import PostRole
 from app.models.user_role import UserRole
 from app.models.role_permission import RolePermission
 from app.models.login_log import LoginLog
+from app.models.oper_log import OperLog
 
 __all__ = [
     "BaseModel",
@@ -25,4 +26,5 @@ __all__ = [
     "UserRole",
     "RolePermission",
     "LoginLog",
+    "OperLog"
 ]

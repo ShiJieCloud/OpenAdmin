@@ -17,23 +17,26 @@ class LoginLogListQueryRequest(BaseModel):
     end_time: datetime | None = Field(None, description="结束时间")
 
 
-class LoginLogResponse(BaseModel):
-    """登录日志响应"""
-
+class LoginLogCreateRequest(BaseModel):
+    """登录日志创建请求"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: int = Field(..., description="日志ID")
-    user_id: int = Field(..., description="用户ID")
-    username: str = Field(..., description="登录账号（手机号/邮箱/用户名）")
-    operate_type: int = Field(..., description="操作类型：1-登录 2-登出")
-    login_type: int = Field(..., description="登录类型：1-账号密码 2-短信 3-第三方 4-扫码 5-邮箱")
-    login_status: int = Field(..., description="状态：0-成功 1-失败")
+    user_id: int | None = Field(None, description="用户ID")
+    username: str = Field(..., description="登录账号")
+    login_type: int | None = Field(None, description="登录类型 1-账号密码 2-短信 3-第三方 4-扫码 5-单点（登出时为NULL）")
+    operate_type: int = Field(..., description="操作类型 1-登录 2-登出")
+    operate_status: int = Field(..., description="状态 0-失败 1-成功")
     fail_reason: str | None = Field(None, description="失败原因")
-    login_ip: str = Field(..., description="IP地址")
-    login_location: str | None = Field(None, description="登录地点")
-    device_type: int | None = Field(None, description="设备：0-未知 1-PC 2-移动端 3-平板")
-    os_name: str | None = Field(None, description="操作系统")
-    browser_name: str | None = Field(None, description="浏览器")
-    user_agent: str | None = Field(None, description="UA信息")
-    operate_time: datetime = Field(..., description="操作时间（登录/登出时间）")
-    remark: str | None = Field(None, description="备注")
+    client_ip: str = Field(..., description="客户端IP")
+    ip_country: str | None = Field(None, description="国家")
+    ip_province: str | None = Field(None, description="省份/直辖市")
+    ip_city: str | None = Field(None, description="城市")
+    ip_location: str | None = Field(None, description="完整属地：国家-省-市")
+    device_type: str | None = Field(None, description="设备类型")
+    browser: str | None = Field(None, description="浏览器")
+    trace_id: str = Field(..., description="链路追踪ID")
+
+
+class LoginLogResponse(BaseModel):
+    """登录日志响应"""
+    pass
