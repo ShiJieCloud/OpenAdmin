@@ -11,6 +11,7 @@ from app.schemas.user import UserCreateRequest, UserResetPasswordRequest
 from app.services.base import BaseService
 from app.core.redis import RedisClient
 from datetime import datetime
+from app.core.context import AppContext
 
 
 class UserService(BaseService):
@@ -58,9 +59,11 @@ class UserService(BaseService):
         """
 
         # 1. 查询用户
+        AppContext.set_current_username(req.username)
         user = await self.user_crud.get_user(username=req.username)
         if user is None:
             raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+        AppContext.set_current_user_id(user.id)
 
         # 2. 检查账户状态
         if user.status == UserStatusEnum.LOCKED:

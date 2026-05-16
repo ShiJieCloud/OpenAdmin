@@ -19,6 +19,9 @@ class AppConfig(BaseConfig):
     DOCS_URL: str = "/docs"
     REDOC_URL: str = "/redoc"
     
+    # API 配置
+    API_PREFIX: str = "/api"  # API 接口前缀
+    
     # CORS 跨域配置
     CORS_ALLOW_ORIGINS: list[str] = ["*"]  # 允许的来源域名列表
     CORS_ALLOW_CREDENTIALS: bool = True  # 是否允许携带凭证

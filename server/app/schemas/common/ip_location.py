@@ -3,10 +3,10 @@ from pydantic import BaseModel, Field
 
 class IPLocationInfo(BaseModel):
     """IP归属地信息"""
-    ip: str | None = Field(None, description="IP地址")
-    country: str | None = Field(None, description="国家")
-    province: str | None = Field(None, description="省份")
-    city: str | None = Field(None, description="城市")
+    client_ip: str | None = Field(None, description="IP地址")
+    ip_country: str | None = Field(None, description="国家")
+    ip_province: str | None = Field(None, description="省份")
+    ip_city: str | None = Field(None, description="城市")
 
     @property
     def full_location(self) -> str:
@@ -20,16 +20,16 @@ class IPLocationInfo(BaseModel):
         location_parts = []
         
         # 添加国家
-        if self.country:
-            location_parts.append(self.country)
+        if self.ip_country:
+            location_parts.append(self.ip_country)
         
         # 添加省份
-        if self.province:
-            location_parts.append(self.province)
+        if self.ip_province:
+            location_parts.append(self.ip_province)
         
         # 添加城市
-        if self.city:
-            location_parts.append(self.city)
+        if self.ip_city:
+            location_parts.append(self.ip_city)
         
         # 如果没有地域信息，返回空
         if not location_parts:

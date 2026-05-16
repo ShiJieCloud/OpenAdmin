@@ -8,7 +8,6 @@ from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenRes
 from app.schemas.base.response import ApiResponse
 from app.schemas.user import UserInfoResponse
 from app.services.user import UserService
-from app.core.context import AppContext
 
 router = APIRouter()
 
@@ -24,7 +23,6 @@ async def password_login(
     user_service: UserService = Depends(get_user_service)
 ):
     """账号密码登录"""
-    AppContext.set_current_username(req.username)
     token = await user_service.login_password(req)
     return ResponseBuilder.success(token)
 
