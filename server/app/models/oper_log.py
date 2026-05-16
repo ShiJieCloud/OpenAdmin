@@ -49,31 +49,6 @@ class OperLog(BaseModel):
         nullable=False,
         comment="客户端IP（兼容IPv6）"
     )
-    response_code: Mapped[str | None] = mapped_column(
-        String(32),
-        nullable=True,
-        comment="响应码"
-    )
-    response_msg: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
-        comment="响应信息/错误描述"
-    )
-    cost_time: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        comment="请求耗时（毫秒）"
-    )
-    user_agent: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
-        comment="客户端标识"
-    )
-    terminal_type: Mapped[str | None] = mapped_column(
-        String(32),
-        nullable=True,
-        comment="终端类型"
-    )
     ip_country: Mapped[str | None] = mapped_column(
         String(32),
         nullable=True,
@@ -89,8 +64,38 @@ class OperLog(BaseModel):
         nullable=True,
         comment="城市"
     )
-    ip_location: Mapped[str | None] = mapped_column(
-        String(128),
+    response_code: Mapped[str | None] = mapped_column(
+        String(32),
         nullable=True,
-        comment="完整属地(展示用：国家-省-市)"
+        comment="响应码"
+    )
+    response_msg: Mapped[str | None] = mapped_column(
+        String(512),
+        nullable=True,
+        comment="响应信息/错误描述"
+    )
+    cost_time: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        comment="请求耗时（毫秒）"
+    )
+
+    # -------------------------- 请求参数字段 --------------------------
+    path_params: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True),
+        default=None,
+        nullable=True,
+        comment="路径参数（如/api/user/{id}中的id）"
+    )
+    query_params: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True),
+        default=None,
+        nullable=True,
+        comment="查询参数（如/api/user?name=test中的name）"
+    )
+    request_body: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True),
+        default=None,
+        nullable=True,
+        comment="POST/PUT请求体数据"
     )
