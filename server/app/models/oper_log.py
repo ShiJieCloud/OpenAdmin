@@ -2,6 +2,7 @@ from sqlalchemy import String, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
+from sqlalchemy import JSON
 
 
 class OperLog(BaseModel):
