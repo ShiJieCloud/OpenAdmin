@@ -1,8 +1,10 @@
-from typing import Optional
-from fastapi import Request
+from typing import Dict, Optional, Any
+from fastapi import Request, Response
 from user_agents import parse
 from app.schemas.common import UserAgentInfo, IPLocationInfo
 import httpx
+import json
+from starlette.datastructures import FormData, UploadFile
 
 
 class HttpUtils:
@@ -110,22 +112,193 @@ class HttpUtils:
 
         # 127.0.0.1 特殊处理
         if ip == "127.0.0.1":
-            return IPLocationInfo(ip=ip)
+            return IPLocationInfo(client_ip=ip)
         
         try:
             response = httpx.get(url, timeout=10)
             data = response.json()
 
             if data.get("status") != "success":
-                return IPLocationInfo(ip=ip)
+                return IPLocationInfo(client_ip=ip)
             ip_location = IPLocationInfo(
-                ip=ip,
-                country=data.get("country", ""),
-                province=data.get("regionName", ""),
-                city=data.get("city", "")
+                client_ip=ip,
+                ip_country=data.get("country", ""),
+                ip_province=data.get("regionName", ""),
+                ip_city=data.get("city", "")
             )
 
             return ip_location
         except Exception:
-            return IPLocationInfo(ip=ip)
-        
+            return IPLocationInfo(client_ip=ip)
+    
+
+    @classmethod
+    async def get_response_body(
+            cls,
+            response: Response,
+            encoding: str = "utf-8"
+    ) -> Optional[dict[str, any]]:
+        """
+        【公共方法】安全解析FastAPI响应体为字典格式
+        :param response: FastAPI的Response对象
+        :param encoding: 默认解码编码
+        :return: 解析后的JSON字典，非JSON/解析失败返回None
+        """
+        body_bytes: bytes = b""
+
+        try:
+            # 1. 读取响应体字节数据（兼容普通/流式响应）
+            body_bytes = await cls._read_response_bytes(response)
+
+            # 2. 非JSON响应直接返回None
+            if not cls._is_json_response(response):
+                return None
+
+            # 3. 安全解码字节数据
+            body_str = cls._safe_decode_bytes(body_bytes, encoding)
+            if not body_str:
+                return None
+
+            # 4. 安全解析JSON为字典（仅做解析，不提取字段）
+            body_json = json.loads(body_str.strip())
+            # 确保返回值是字典（避免JSON是数组/字符串等情况）
+            return body_json if isinstance(body_json, dict) else None
+
+        except Exception as e:
+            print(f"Exception: {e}")
+            return None
+
+    @staticmethod
+    async def _read_response_bytes(response: Response) -> bytes:
+        """【内部公共方法】读取响应体字节数据（兼容普通/流式响应）"""
+        # 优先读取已缓存的body
+        if hasattr(response, "body") and response.body is not None:
+            return response.body
+
+        # 处理流式响应：消费迭代器并重建（避免后续读取耗尽）
+        body_bytes = b""
+        if hasattr(response, "body_iterator") and response.body_iterator is not None:
+            async for chunk in response.body_iterator:
+                if isinstance(chunk, bytes):
+                    body_bytes += chunk
+                else:
+                    body_bytes += str(chunk).encode("utf-8")
+
+            # 重建异步迭代器
+            async def rebuild_iterator():
+                yield body_bytes
+
+            response.body_iterator = rebuild_iterator()
+
+        return body_bytes
+
+    @staticmethod
+    def _is_json_response(response: Response) -> bool:
+        """判断是否为JSON响应"""
+        content_type = response.headers.get("Content-Type", "").lower()
+        return "application/json" in content_type
+
+    @staticmethod
+    def _safe_decode_bytes(
+            body_bytes: bytes,
+            encoding: str
+    ) -> Optional[str]:
+        """解码字节数据"""
+        if not body_bytes:
+            return None
+
+        try:
+            return body_bytes.decode(encoding)
+        except UnicodeDecodeError as e:
+            print(f"UnicodeDecodeError: {e}")
+            return None
+
+    @classmethod
+    async def get_request_params(cls, request: Request) -> Dict[str, Any]:
+        """
+        解析 FastAPI Request 对象的所有参数：路径参数 + 查询参数 + 请求体
+
+        Args:
+            request: FastAPI的Request对象
+        Returns:
+            完整参数字典（无参数则过滤对应键），格式：
+            {
+                "query_params": {},   # 查询参数（无则剔除）
+                "request_body": Any   # 请求体（无则剔除，文件仅存文件名）
+            }
+        """
+        params = {}
+
+        # 1. 解析查询参数：非空则加入返回结果
+        query_params = dict(request.query_params)
+        if query_params:
+            params["query_params"] = query_params
+
+        # 2. 解析请求体：仅处理有请求体的方法，无有效内容则不加入
+        if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+            content_type = request.headers.get("Content-Type", "").lower()
+            body = None
+            try:
+                # multipart/form-data 需要特殊处理，不能先调用 request.body()
+                # 因为 request.form() 会消耗流，只能调用一次
+                if "multipart/form-data" in content_type:
+                    form_data = await request.form()
+                    body = cls._parse_form_data(form_data)
+                else:
+                    # 保存原始请求体以便重置
+                    raw_body = await request.body()
+                    
+                    if "application/json" in content_type and raw_body:
+                        body = cls._parse_json_body(raw_body)
+                    elif "application/x-www-form-urlencoded" in content_type and raw_body:
+                        body = cls._parse_form_body(raw_body)
+                    elif raw_body and raw_body.strip():
+                        # 其他类型的请求体，直接返回原始字符串
+                        body = raw_body.decode("utf-8")
+                    
+                    # 重置请求体，确保后续处理可以重新读取
+                    if raw_body:
+                        request._body = raw_body
+            except Exception as e:
+                body = f"请求体解析失败：{str(e)}"
+                print(f"[HTTPUtils] 解析请求体失败: {str(e)}")
+
+            # 请求体非空/非None时加入返回结果
+            if body is not None and body != "":
+                params["request_body"] = body
+
+        return params
+    
+    @staticmethod
+    def _parse_json_body(raw_body: bytes) -> Optional[Dict[str, Any]]:
+        """解析JSON请求体"""
+        try:
+            import json
+            return json.loads(raw_body.decode("utf-8"))
+        except Exception:
+            return None
+    
+    @staticmethod
+    def _parse_form_body(raw_body: bytes) -> Dict[str, str]:
+        """解析表单请求体"""
+        try:
+            from urllib.parse import parse_qs
+            form_data = raw_body.decode("utf-8")
+            parsed = parse_qs(form_data, keep_blank_values=True)
+            # 将列表值转换为单个值
+            return {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _parse_form_data(form_data: FormData) -> Dict[str, Any]:
+        """解析multipart/form-data：仅保留文件名，不存储文件内容/类型/大小"""
+        parsed = {}
+        for key, value in form_data.items():
+            if isinstance(value, UploadFile):
+                # 仅存储文件名（核心修改：删除其他文件信息）
+                parsed[key] = value.filename or "未知文件名"
+            else:
+                # 普通表单字段正常存储
+                parsed[key] = value
+        return parsed

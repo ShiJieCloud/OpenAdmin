@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, Body
+from fastapi import APIRouter, Depends, Path, Body, Query
 
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
@@ -9,6 +9,18 @@ from app.schemas.login_log import LoginLogResponse, LoginLogListQueryRequest
 from app.services import LoginLogService
 
 router = APIRouter()
+
+# 创建一个query参数的测试接口
+@router.get(
+    "/test",
+    response_model=ApiResponse,
+    summary="测试接口",
+    description="用于测试登录日志接口"
+)
+async def test_login_log(
+    query: LoginLogListQueryRequest = Query(..., description="查询条件"),
+):
+    return ResponseBuilder.success(query)
 
 
 @router.post(

@@ -1,8 +1,7 @@
-from sqlalchemy import String, Integer
+from sqlalchemy import Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
-from sqlalchemy import JSON
 
 
 class OperLog(BaseModel):
@@ -13,12 +12,15 @@ class OperLog(BaseModel):
         {"comment": "系统操作日志表"},
     )
 
+    # ==================== 核心标识字段 ====================
     trace_id: Mapped[str] = mapped_column(
         String(64),
         nullable=False,
         index=True,
         comment="分布式链路追踪ID"
     )
+
+    # ==================== 接口基础信息 ====================
     request_method: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
@@ -40,11 +42,15 @@ class OperLog(BaseModel):
         nullable=True,
         comment="所属业务模块"
     )
+
+    # ==================== 操作员信息 ====================
     operator_id: Mapped[str | None] = mapped_column(
         String(64),
         nullable=True,
         comment="操作员ID"
     )
+
+    # ==================== 客户端信息 ====================
     client_ip: Mapped[str] = mapped_column(
         String(46),
         nullable=False,
@@ -65,6 +71,13 @@ class OperLog(BaseModel):
         nullable=True,
         comment="城市"
     )
+
+    # ==================== 请求耗时与响应结果 ====================
+    cost_time: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        comment="请求耗时（毫秒）"
+    )
     response_code: Mapped[str | None] = mapped_column(
         String(32),
         nullable=True,
@@ -75,13 +88,14 @@ class OperLog(BaseModel):
         nullable=True,
         comment="响应信息/错误描述"
     )
-    cost_time: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        comment="请求耗时（毫秒）"
+    response_data: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True),
+        default=None,
+        nullable=True,
+        comment="响应数据"
     )
 
-    # -------------------------- 请求参数字段 --------------------------
+    # ==================== 请求参数大字段 ====================
     path_params: Mapped[dict | None] = mapped_column(
         JSON(none_as_null=True),
         default=None,
