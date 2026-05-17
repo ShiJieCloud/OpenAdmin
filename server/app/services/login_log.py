@@ -31,5 +31,22 @@ class LoginLogService(BaseService):
         :param query: 查询条件
         :return: (日志列表, 总条数, 总页数, 当前页码)
         """
-        logs, total, pages, page_num = await self.login_log_crud.get_login_log_list(query)
+        query = query.model_dump(exclude_unset=True)
+        login_log = LoginLog(
+            trace_id=query.trace_id,
+            request_method=query.request_method,
+            api_path=query.api_path,
+            api_name=query.api_name,
+            module=query.module,
+            operator_id=query.operator_id,
+            client_ip=query.client_ip,
+            response_code=query.response_code,
+        )
+        logs, total, pages, page_num = await self.login_log_crud.get_login_log_list(
+                login_log,
+                query.page_num,
+                query.page_size,
+                query.start_time,
+                query.end_time,
+            )
         return logs, total, pages, page_num

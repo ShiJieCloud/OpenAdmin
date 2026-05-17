@@ -56,23 +56,27 @@ class AppContextMiddleware(BaseHTTPMiddleware):
             # 4. 执行核心请求处理，获取响应
             response: Response = await call_next(request)
 
-            # 5. 计算请求耗时（毫秒）
+            # 5. 过滤 GET 请求
+            if request.method == "GET":
+                return response
+
+            # 6. 计算请求耗时（毫秒）
             cost_time = self._calculate_cost_time(start_time)
             
-            # 6. 收集路径参数（路径参数由路由匹配后生成，必须在 call_next 之后获取）
+            # 7. 收集路径参数（路径参数由路由匹配后生成，必须在 call_next 之后获取）
             path_params = dict(request.path_params)
             if path_params and len(path_params) > 0:
                 request_params["path_params"] = path_params
                 logger.debug(f"收集路径参数完成，params={path_params}")
             
-            # 7. 收集响应信息（状态码、消息、数据）
+            # 8. 收集响应信息（状态码、消息、数据） 
             response_info = await self._collect_response_info(response)
 
-            # 8. 收集 IP 归属地信息
+            # 9. 收集 IP 归属地信息
             ip_location_info = HttpUtils.get_ip_location(AppContext.get_client_ip())
             logger.debug(f"收集 IP 归属地信息完成，ip_location_info={ip_location_info.model_dump()}")
 
-            # 9. 记录日志（登录日志/操作日志）
+            # 10. 记录日志（登录日志/操作日志）
             if LOGIN_PATH in api_path:
                 # 登录接口 → 记录登录日志
                 logger.debug(f"登录接口，记录登录日志")
