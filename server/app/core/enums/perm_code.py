@@ -72,15 +72,21 @@ class MenuPermEnum(BasePermEnum):
     UPDATE = "system:menu:update"
     DELETE = "system:menu:delete"
 
-
-class LogPermEnum(BasePermEnum):
+class LoginLogPermEnum(BasePermEnum):
     """
-    日志模块权限码
+    登录日志模块权限码
     """
-    READ = "system:log:read"
-    EXPORT = "system:log:export"
-    DELETE = "system:log:delete"
+    LIST = "system:login_log:list" # 分页查询登录日志列表
+    EXPORT = "system:login_log:export" # 导出登录日志
+    DELETE = "system:login_log:delete" # 删除登录日志
 
+class OperLogPermEnum(BasePermEnum):
+    """
+    操作志模块权限码
+    """
+    LIST = "system:oper_log:list" # 分页查询操作日志列表
+    EXPORT = "system:oper_log:export" # 导出操作日志
+    DELETE = "system:oper_log:delete" # 删除操作日志
 
 class SystemPermEnum(BasePermEnum):
     """
@@ -99,5 +105,6 @@ class PermCode:
     Dept = DeptPermEnum
     Post = PostPermEnum
     Menu = MenuPermEnum
-    Log = LogPermEnum
+    LoginLog = LoginLogPermEnum
+    OperLog = OperLogPermEnum
     System = SystemPermEnum

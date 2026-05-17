@@ -25,23 +25,14 @@ class LoginLogCRUD(BaseCRUD):
         if query.username:
             conditions.append(LoginLog.username.like(f"%{query.username}%"))
         
-        if query.operate_type is not None:
-            conditions.append(LoginLog.operate_type == query.operate_type)
-        
-        if query.login_type is not None:
-            conditions.append(LoginLog.login_type == query.login_type)
-        
-        if query.login_status is not None:
-            conditions.append(LoginLog.login_status == query.login_status)
-        
-        if query.login_ip:
-            conditions.append(LoginLog.login_ip.like(f"%{query.login_ip}%"))
+        if query.client_ip:
+            conditions.append(LoginLog.client_ip.like(f"%{query.client_ip}%"))
         
         if query.start_time:
-            conditions.append(LoginLog.operate_time >= query.start_time)
+            conditions.append(LoginLog.create_time >= query.start_time)
         
         if query.end_time:
-            conditions.append(LoginLog.operate_time <= query.end_time)
+            conditions.append(LoginLog.create_time <= query.end_time)
 
         # 查询总条数
         count_stmt = select(func.count(LoginLog.id)).where(*conditions)
@@ -56,7 +47,7 @@ class LoginLogCRUD(BaseCRUD):
         list_stmt = (
             select(LoginLog)
             .where(*conditions)
-            .order_by(LoginLog.operate_time.desc())
+            .order_by(LoginLog.create_time.desc())
             .offset(offset)
             .limit(query.page_size)
         )
