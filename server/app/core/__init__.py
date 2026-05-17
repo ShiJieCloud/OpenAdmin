@@ -11,6 +11,7 @@ from .security import (
     verify_refresh_token,
 )
 from .context import AppContext, ContextData
+from .logger import logger
 
 __all__ = [
     "RespCodeEnum",
@@ -25,4 +26,5 @@ __all__ = [
     "verify_refresh_token",
     "AppContext",
     "ContextData",
+    "logger",
 ]

@@ -13,6 +13,9 @@ class ContextData(BaseModel):
     current_user_id: int | None = Field(default=None, description="当前登录用户ID")
     current_username: str | None = Field(default=None, description="当前登录用户名")
     trace_id: str | None = Field(default=None, description="请求唯一ID")
+    client_ip: str | None = Field(default=None, description="客户端IP地址")
+    request_method: str | None = Field(default=None, description="请求方法")
+    request_path: str | None = Field(default=None, description="请求路径")
 
 
 class AppContext:
@@ -105,3 +108,66 @@ class AppContext:
         """
         ctx = cls._get_context()
         return ctx.current_username
+
+    @classmethod
+    def set_client_ip(cls, client_ip: str | None) -> None:
+        """设置客户端IP地址
+        
+        Args:
+            client_ip: 客户端IP地址
+        """
+        ctx = cls._get_context()
+        ctx.client_ip = client_ip
+        cls._context_var.set(ctx)
+    
+    @classmethod
+    def get_client_ip(cls) -> str | None:
+        """获取客户端IP地址
+        
+        Returns:
+            客户端IP地址
+        """
+        ctx = cls._get_context()
+        return ctx.client_ip
+
+    @classmethod
+    def set_request_method(cls, request_method: str | None) -> None:
+        """设置请求方法
+        
+        Args:
+            request_method: 请求方法
+        """
+        ctx = cls._get_context()
+        ctx.request_method = request_method
+        cls._context_var.set(ctx)
+    
+    @classmethod
+    def get_request_method(cls) -> str | None:
+        """获取请求方法
+        
+        Returns:
+            请求方法
+        """
+        ctx = cls._get_context()
+        return ctx.request_method
+
+    @classmethod
+    def set_request_path(cls, request_path: str | None) -> None:
+        """设置请求路径
+        
+        Args:
+            request_path: 请求路径
+        """
+        ctx = cls._get_context()
+        ctx.request_path = request_path
+        cls._context_var.set(ctx)
+    
+    @classmethod
+    def get_request_path(cls) -> str | None:
+        """获取请求路径
+        
+        Returns:
+            请求路径
+        """
+        ctx = cls._get_context()
+        return ctx.request_path
