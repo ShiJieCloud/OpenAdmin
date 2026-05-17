@@ -4,7 +4,7 @@ from .auth import (
     RefreshTokenRequest,
     PasswordLoginRequest
 )
-from .oper_log import OperLogCreateRequest
+from .oper_log import OperLogCreateRequest, OperLogListQueryRequest, OperLogResponse
 
 from .login_log import LoginLogListQueryRequest, LoginLogCreateRequest
 
@@ -15,6 +15,8 @@ __all__ = [
     "RefreshTokenRequest",
     "PasswordLoginRequest",
     "OperLogCreateRequest",
+    "OperLogListQueryRequest",
+    "OperLogResponse",
     "LoginLogListQueryRequest",
     "LoginLogCreateRequest",
 ]
