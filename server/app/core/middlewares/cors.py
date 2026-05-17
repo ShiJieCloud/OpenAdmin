@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config.app import app_config
+from app.core.logger import logger
 
 
 def setup_cors(app: FastAPI):
@@ -19,6 +20,7 @@ def setup_cors(app: FastAPI):
     - expose_headers: 暴露后端自定义响应头给前端
     - max_age: 预检请求的缓存时间（秒），减少预检请求次数
     """
+    logger.info("正在注册 [CORSMiddleware] 跨域中间件")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_config.CORS_ALLOW_ORIGINS,
@@ -28,3 +30,4 @@ def setup_cors(app: FastAPI):
         expose_headers=app_config.CORS_EXPOSE_HEADERS,
         max_age=app_config.CORS_MAX_AGE,
     )
+    logger.info("[CORSMiddleware] 跨域中间件注册完成")
