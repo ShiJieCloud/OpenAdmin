@@ -26,3 +26,16 @@ server/.env/*
 logs/
 */logs/
 */*/logs/
+
+# Frontend
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.*.local
