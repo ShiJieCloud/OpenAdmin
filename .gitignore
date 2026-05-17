@@ -21,3 +21,8 @@ __pycache__/
 server/.env/*
 !server/.env/.env
 !server/.env/.env.example
+
+# Logs
+logs/
+*/logs/
+*/*/logs/
