@@ -5,10 +5,14 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Icons from 'unplugin-icons/vite'
 import Components from 'unplugin-vue-components/vite'
 import IconsResolver from 'unplugin-icons/resolver'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [
     vue(),
+
+    // 配置 Tailwind CSS 插件
+    tailwindcss(),
 
     // 自动导入 API
     AutoImport({
