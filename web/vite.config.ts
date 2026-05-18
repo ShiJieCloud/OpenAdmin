@@ -6,6 +6,7 @@ import Icons from 'unplugin-icons/vite'
 import Components from 'unplugin-vue-components/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import tailwindcss from '@tailwindcss/vite'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -43,4 +44,11 @@ export default defineConfig({
       scale: 1, // 图标缩放比例
     }),
   ],
+
+  // 配置路径别名
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
 })
