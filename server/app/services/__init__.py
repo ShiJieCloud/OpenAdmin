@@ -6,6 +6,7 @@ from app.services.post import PostService
 from app.services.menu import MenuService
 from app.services.login_log import LoginLogService
 from app.services.oper_log import OperLogService
+from app.services.captcha import CaptchaService
 
 __all__ = [
     "BaseService", 
@@ -15,5 +16,6 @@ __all__ = [
     "PostService", 
     "MenuService", 
     "LoginLogService", 
-    "OperLogService"
+    "OperLogService",
+    "CaptchaService"
 ]

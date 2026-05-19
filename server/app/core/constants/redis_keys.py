@@ -10,6 +10,7 @@ class RedisKey:
     # ==================== 认证授权相关 ====================
     REFRESH_TOKEN_PREFIX = "refresh_token"
     ACCOUNT_LOCK_PREFIX = "account_lock"
+    CAPTCHA_PREFIX = "captcha"
 
 class RedisKeyTemplate:
     """
@@ -26,3 +27,8 @@ class RedisKeyTemplate:
     def account_lock(user_id: int) -> str:
         """账号锁定标记键（值：锁定结束时间戳）"""
         return f"{RedisKey.PREFIX}:{RedisKey.ACCOUNT_LOCK_PREFIX}:{user_id}"
+
+    @staticmethod
+    def captcha(captcha_id: str) -> str:
+        """验证码缓存键（值：验证码字符串）"""
+        return f"{RedisKey.PREFIX}:{RedisKey.CAPTCHA_PREFIX}:{captcha_id}"

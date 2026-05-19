@@ -2,12 +2,18 @@ from fastapi import APIRouter, Depends
 
 from app.core.response import ResponseBuilder
 from app.deps.auth import get_current_active_user
-from app.deps.service import get_user_service
+from app.deps.service import get_user_service, get_captcha_service
 from app.models.user import User
-from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.schemas.base.response import ApiResponse
-from app.schemas.user import UserInfoResponse
-from app.services.user import UserService
+from app.schemas import (
+    UserInfoResponse,
+    PasswordLoginRequest, 
+    RefreshTokenRequest, 
+    TokenResponse, 
+    CaptchaVerifyRequest, 
+    CaptchaResponse
+)
+from app.services import UserService, CaptchaService
 
 router = APIRouter()
 
@@ -45,6 +51,25 @@ async def logout(
     """退出登录"""
     await user_service.logout(user.id)
     return ResponseBuilder.success(message="退出登录成功")
+
+
+@router.get("/captcha", response_model=ApiResponse[CaptchaResponse])
+async def get_captcha(
+    captcha_service: CaptchaService = Depends(get_captcha_service)
+):
+    """获取验证码"""
+    captcha = await captcha_service.generate_captcha()
+    return ResponseBuilder.success(captcha)
+
+
+@router.post("/captcha/verify", response_model=ApiResponse[None])
+async def verify_captcha(
+    req: CaptchaVerifyRequest,
+    captcha_service: CaptchaService = Depends(get_captcha_service)
+):
+    """验证验证码"""
+    await captcha_service.verify_captcha(req.captcha_id, req.captcha_code)
+    return ResponseBuilder.success(message="验证码验证成功")
 
 
 @router.get("/me", response_model=ApiResponse[UserInfoResponse])

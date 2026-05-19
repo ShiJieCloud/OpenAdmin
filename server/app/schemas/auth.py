@@ -3,6 +3,16 @@ from pydantic import BaseModel, Field, field_serializer, field_validator
 from typing import Optional, Any
 
 
+class CaptchaResponse(BaseModel):
+    """验证码响应"""
+    captcha_id: str = Field(..., description="验证码唯一标识")
+    captcha_image: str = Field(..., description="验证码图片Base64编码")
+
+class CaptchaVerifyRequest(BaseModel):
+    """验证码验证请求"""
+    captcha_id: str = Field(..., description="验证码唯一标识")
+    captcha_code: str = Field(..., description="验证码")
+
 class TokenPayload(BaseModel):
     """Token有效载荷"""
     sub: str = Field(..., description="用户ID")

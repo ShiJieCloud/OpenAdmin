@@ -9,7 +9,8 @@ from app.services import (
     PostService,
     MenuService,
     LoginLogService,
-    OperLogService
+    OperLogService,
+    CaptchaService
 )
 from app.core.redis import RedisClient
 
@@ -20,6 +21,13 @@ async def get_user_service(
 ) -> UserService:
     """用户服务依赖注入，返回 UserService 实例"""
     return UserService(db_session, redis_client)
+
+
+async def get_captcha_service(
+    redis_client: RedisClient = Depends(get_redis)
+) -> CaptchaService:
+    """验证码服务依赖注入，返回 CaptchaService 实例"""
+    return CaptchaService(redis_client)
 
 
 async def get_permission_service(
