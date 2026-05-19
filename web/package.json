@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
+    "axios": "^1.16.1",
     "element-plus": "^2.14.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@iconify-json/ep": "^1.2.4",
+    "@iconify-json/mdi": "^1.2.3",
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",

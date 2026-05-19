@@ -32,7 +32,7 @@ export default defineConfig({
         IconsResolver({
           prefix: 'i', // 图标组件前缀，例如：i-ep-edit
           // 加载指定的图标集合：element-plus/icons-vue
-          enabledCollections: ['ep'],
+          enabledCollections: ['ep','mdi'],
         }),
       ],
     }),

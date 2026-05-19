@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useUserStore } from '@/store/modules/user'
 
 interface LoginFormData {
   username: string
   password: string
-  remember: boolean
+  captcha_code: string
 }
 
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
+const userStore = useUserStore()
+const captchaUrl = ref('')
 
 const loginForm = reactive<LoginFormData>({
   username: '',
   password: '',
-  remember: false
+  captcha_code: ''
 })
 
 const rules: FormRules<LoginFormData> = {
@@ -25,7 +28,16 @@ const rules: FormRules<LoginFormData> = {
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
+  ],
+  captcha_code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { min: 4, max: 4, message: '验证码长度为4位', trigger: 'blur' }
   ]
+}
+
+const refreshCaptcha = () => {
+  const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
+  captchaUrl.value = `${baseURL}/api/v1/auth/captcha?timestamp=${Date.now()}`
 }
 
 const handleLogin = async (formEl: FormInstance | undefined) => {
@@ -34,14 +46,23 @@ const handleLogin = async (formEl: FormInstance | undefined) => {
   try {
     await formEl.validate()
     loading.value = true
-
+    await userStore.login({
+      username: loginForm.username,
+      password: loginForm.password,
+      captcha_code: loginForm.captcha_code
+    })
+    
     setTimeout(() => {
       loading.value = false
       ElMessage.success('登录成功')
-      console.log('login form data:', loginForm)
+      window.location.href = '/'
     }, 1500)
   } catch (error) {
-    ElMessage.error('请完善登录信息')
+    const err = error as Error
+    ElMessage.error(err.message || '登录失败')
+    refreshCaptcha()
+    loginForm.captcha_code = ''
+    loading.value = false
     return false
   }
 }
@@ -49,7 +70,12 @@ const handleLogin = async (formEl: FormInstance | undefined) => {
 const handleReset = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.resetFields()
+  refreshCaptcha()
 }
+
+onMounted(() => {
+  refreshCaptcha()
+})
 </script>
 
 <template>
@@ -78,7 +104,7 @@ const handleReset = (formEl: FormInstance | undefined) => {
         </el-input>
       </el-form-item>
 
-      <el-form-item prop="password" class="form-item password-item">
+      <el-form-item prop="password" class="form-item">
         <el-input
           v-model="loginForm.password"
           type="password"
@@ -92,9 +118,29 @@ const handleReset = (formEl: FormInstance | undefined) => {
         </el-input>
       </el-form-item>
 
+      <el-form-item prop="captcha_code" class="form-item">
+        <div class="captcha-row">
+          <el-input
+            v-model="loginForm.captcha_code"
+            placeholder="验证码"
+            clearable
+            class="captcha-input"
+          >
+            <template #prefix>
+              <i-mdi-shield-check-outline />
+            </template>
+          </el-input>
+          <img
+            :src="captchaUrl"
+            alt="验证码"
+            class="captcha-img"
+            @click="refreshCaptcha"
+          />
+        </div>
+      </el-form-item>
+
       <el-form-item class="form-item">
-        <div class="remember-row">
-          <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
+        <div class="forgot-row">
           <a href="#" class="forgot-link">忘记密码？</a>
         </div>
       </el-form-item>
@@ -141,10 +187,27 @@ const handleReset = (formEl: FormInstance | undefined) => {
   font-size: 12px;
 }
 
-.remember-row {
+.captcha-row {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   align-items: center;
+}
+
+.captcha-input {
+  flex: 1;
+}
+
+.captcha-img {
+  width: 120px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #f5f5f5;
+}
+
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
   width: 100%;
 }
 
@@ -170,9 +233,5 @@ const handleReset = (formEl: FormInstance | undefined) => {
   width: 100%;
   height: 40px;
   border-radius: 8px;
-}
-
-.password-item {
-  margin-bottom: 10px;
 }
 </style>
