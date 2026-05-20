@@ -1,7 +1,8 @@
 export interface PasswordLoginRequest {
   username: string
   password: string
-  captcha_code?: string
+  captcha_id: string
+  captcha_code: string
 }
 
 export interface TokenResponse {
@@ -15,9 +16,7 @@ export interface RefreshTokenRequest {
   refresh_token: string
 }
 
-export interface ApiResponse<T = any> {
-  code: string
-  message: string
-  timestamp: number
-  data: T
+export interface CaptchaResponse {
+  captcha_id: string
+  captcha_image: string
 }

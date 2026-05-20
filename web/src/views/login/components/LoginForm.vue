@@ -2,25 +2,25 @@
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
+import { getCaptcha } from '@/api/modules/auth'
+import type { PasswordLoginRequest } from '@/types'
 
-interface LoginFormData {
-  username: string
-  password: string
-  captcha_code: string
-}
+
 
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
 const userStore = useUserStore()
 const captchaUrl = ref('')
+const captchaId = ref('')
 
-const loginForm = reactive<LoginFormData>({
+const loginForm = reactive<PasswordLoginRequest>({
   username: '',
   password: '',
+  captcha_id: '',
   captcha_code: ''
 })
 
-const rules: FormRules<LoginFormData> = {
+const rules: FormRules<PasswordLoginRequest> = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
@@ -31,39 +31,54 @@ const rules: FormRules<LoginFormData> = {
   ],
   captcha_code: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
-    { min: 4, max: 4, message: '验证码长度为4位', trigger: 'blur' }
+    { min: 6, max: 6, message: '验证码长度为 6 位', trigger: 'blur' }
   ]
 }
 
-const refreshCaptcha = () => {
-  const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
-  captchaUrl.value = `${baseURL}/api/v1/auth/captcha?timestamp=${Date.now()}`
+const refreshCaptcha = async () => {
+  try {
+    const data = await getCaptcha()
+    captchaUrl.value = data.captcha_image
+    captchaId.value = data.captcha_id
+    loginForm.captcha_code = ''
+  } catch (error) {
+
+  }
 }
 
 const handleLogin = async (formEl: FormInstance | undefined) => {
+  // 1. 触发全量表单校验（修复你原来的异步问题）
   if (!formEl) return
+  const valid = await formEl.validate()
+  if (!valid) return
 
   try {
-    await formEl.validate()
     loading.value = true
+
+    // 2. 发起登录请求
     await userStore.login({
       username: loginForm.username,
       password: loginForm.password,
+      captcha_id: captchaId.value,
       captcha_code: loginForm.captcha_code
     })
-    
+
+    // 3. 登录成功
+    ElMessage.success('登录成功')
     setTimeout(() => {
-      loading.value = false
-      ElMessage.success('登录成功')
       window.location.href = '/'
-    }, 1500)
+    }, 800)
+
   } catch (error) {
+    // 4. 登录失败：提示 + 清空验证码
     const err = error as Error
-    ElMessage.error(err.message || '登录失败')
-    refreshCaptcha()
-    loginForm.captcha_code = ''
-    loading.value = false
+    loginForm.captcha_code = '' // 清空验证码输入框
+
     return false
+
+  } finally {
+    // 5. 无论成功失败，关闭 loading
+    loading.value = false
   }
 }
 
@@ -127,10 +142,11 @@ onMounted(() => {
             class="captcha-input"
           >
             <template #prefix>
-              <i-mdi-shield-check-outline />
+              <i-mdi-shield-outline />
             </template>
           </el-input>
           <img
+            v-if="captchaUrl"
             :src="captchaUrl"
             alt="验证码"
             class="captcha-img"
@@ -148,13 +164,13 @@ onMounted(() => {
       <el-form-item class="form-item">
         <el-button
           type="primary"
-          native-type="submit"
           :loading="loading"
           class="submit-btn"
           @click="handleLogin(loginFormRef)"
         >
           {{ loading ? '登录中...' : '登 录' }}
         </el-button>
+        
       </el-form-item>
 
       <el-form-item class="form-item">

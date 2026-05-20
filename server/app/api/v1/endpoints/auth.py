@@ -26,9 +26,11 @@ router = APIRouter()
 )
 async def password_login(
     req: PasswordLoginRequest,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    captcha_service: CaptchaService = Depends(get_captcha_service)
 ):
     """账号密码登录"""
+    await captcha_service.verify_captcha(req.captcha_id, req.captcha_code)
     token = await user_service.login_password(req)
     return ResponseBuilder.success(token)
 
@@ -60,16 +62,6 @@ async def get_captcha(
     """获取验证码"""
     captcha = await captcha_service.generate_captcha()
     return ResponseBuilder.success(captcha)
-
-
-@router.post("/captcha/verify", response_model=ApiResponse[None])
-async def verify_captcha(
-    req: CaptchaVerifyRequest,
-    captcha_service: CaptchaService = Depends(get_captcha_service)
-):
-    """验证验证码"""
-    await captcha_service.verify_captcha(req.captcha_id, req.captcha_code)
-    return ResponseBuilder.success(message="验证码验证成功")
 
 
 @router.get("/me", response_model=ApiResponse[UserInfoResponse])

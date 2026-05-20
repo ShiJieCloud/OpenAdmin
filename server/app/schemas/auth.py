@@ -49,4 +49,5 @@ class PasswordLoginRequest(BaseModel):
     """密码登录请求"""
     username: str = Field(..., description="用户名")
     password: str = Field(..., description="密码")
+    captcha_id: Optional[str] = Field(None, description="验证码唯一标识")
     captcha_code: Optional[str] = Field(None, description="验证码")

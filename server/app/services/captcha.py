@@ -84,16 +84,18 @@ class CaptchaService:
         return ''.join(random.choice(chars) for _ in range(length))
 
     def _generate_captcha_image(self, code: str) -> str:
-        """生成验证码SVG图片
+        """生成验证码 SVG 图片
         
         Args:
             code: 验证码字符串
             
         Returns:
-            str: Base64编码的SVG图片
+            str: Base64 编码的 SVG 图片
         """
-        width = 120
-        height = 40
+        # 根据验证码长度动态调整图片宽度（6 位验证码需要更宽）
+        width = 160
+        height = 50
+        char_spacing = 22  # 字符间距
         
         # 生成随机颜色
         def random_color():
@@ -105,8 +107,8 @@ class CaptchaService:
         # 生成字符位置和角度
         chars_data = []
         for i, char in enumerate(code):
-            x = 15 + i * 25 + random.randint(-3, 3)
-            y = 28 + random.randint(-3, 3)
+            x = 12 + i * char_spacing + random.randint(-2, 2)
+            y = 32 + random.randint(-3, 3)
             rotate = random.randint(-15, 15)
             chars_data.append({
                 'char': char,
@@ -114,12 +116,12 @@ class CaptchaService:
                 'y': y,
                 'rotate': rotate,
                 'color': random_color(),
-                'font_size': random.randint(22, 28)
+                'font_size': random.randint(24, 30)
             })
         
-        # 生成干扰线
+        # 生成干扰线（增加数量）
         lines = []
-        for _ in range(4):
+        for _ in range(5):
             x1 = random.randint(0, width)
             y1 = random.randint(0, height)
             x2 = random.randint(0, width)
@@ -130,9 +132,9 @@ class CaptchaService:
                 'stroke_width': random.randint(1, 2)
             })
         
-        # 生成干扰点
+        # 生成干扰点（增加数量）
         dots = []
-        for _ in range(20):
+        for _ in range(30):
             dots.append({
                 'cx': random.randint(0, width),
                 'cy': random.randint(0, height),
@@ -140,7 +142,7 @@ class CaptchaService:
                 'color': random_color()
             })
         
-        # 构建SVG
+        # 构建 SVG
         svg_template = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" style="background: #f5f5f5;">
             <rect width="100%" height="100%" fill="#f5f5f5"/>
             {''.join(f'<line x1="{l["x1"]}" y1="{l["y1"]}" x2="{l["x2"]}" y2="{l["y2"]}" stroke="{l["color"]}" stroke-width="{l["stroke_width"]}" opacity="0.5"/>' for l in lines)}
@@ -148,5 +150,5 @@ class CaptchaService:
             {''.join(f'<text x="{c["x"]}" y="{c["y"]}" font-family="Arial, sans-serif" font-size="{c["font_size"]}" font-weight="bold" fill="{c["color"]}" transform="rotate({c["rotate"]} {c["x"]} {c["y"]})">{c["char"]}</text>' for c in chars_data)}
         </svg>'''
         
-        # Base64编码
+        # Base64 编码
         return base64.b64encode(svg_template.encode('utf-8')).decode('utf-8')

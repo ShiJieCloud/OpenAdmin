@@ -1,30 +1,24 @@
 import request from '@/utils/request'
-import type { PasswordLoginRequest, TokenResponse, ApiResponse } from './type'
+import type { PasswordLoginRequest, TokenResponse, CaptchaResponse, RefreshTokenRequest } from '@/types'
 
-export const passwordLogin = (
-  req: PasswordLoginRequest,
-): Promise<TokenResponse> => {
+export const passwordLogin = (req: PasswordLoginRequest): Promise<TokenResponse> => {
   return request.post(
-    '/api/v1/auth/login/password',
+    '/auth/login/password',
     req,
     { ignoreToken: true }
   )
 }
 
-export const refreshToken = (
-  refreshToken: string
+export const refreshTokenApi = (
+  req: RefreshTokenRequest
 ): Promise<TokenResponse> => {
   return request.post(
-    '/api/v1/auth/refresh-token',
-    { refresh_token: refreshToken },
+    '/auth/refresh-token',
+    req,
     { ignoreToken: true }
   )
 }
 
-export const logout = (): Promise<void> => {
-  return request.post('/api/v1/auth/logout')
-}
-
-export const getCurrentUser = (): Promise<ApiResponse<any>> => {
-  return request.get('/api/v1/auth/me')
+export const getCaptcha = (): Promise<CaptchaResponse> => {
+  return request.get('/auth/captcha')
 }
