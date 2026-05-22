@@ -1,9 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router'
+import Layout from '@/layout/index.vue'
 
 export const staticRoutes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/dashboard'
   },
   {
     path: '/login',
@@ -12,5 +13,19 @@ export const staticRoutes: RouteRecordRaw[] = [
     meta: {
       title: '登录'
     }
-  }
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Layout,
+    meta: {
+      title: '首页'
+    },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/dashboard/index.vue')
+      }
+    ]
+  },
 ]
