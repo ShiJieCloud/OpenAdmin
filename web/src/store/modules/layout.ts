@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { LAYOUT, type LayoutMode } from '@/types/modules/layout'
+
 
 export const useLayoutStore = defineStore(
     'layout',
     () => {
-        const layoutMode = ref('default')
+        const layoutMode = ref<LayoutMode>(LAYOUT.CLASSIC)
 
-        function setLayoutMode(newLayoutMode: 'default' | 'mobile') {
-            layoutMode.value = newLayoutMode
+        function setLayoutMode(mode: LayoutMode) {
+            layoutMode.value = mode
         }
 
         return {
@@ -16,5 +18,4 @@ export const useLayoutStore = defineStore(
         }
     }, {
     persist: true
-    }
-)
+})
