@@ -1,0 +1,162 @@
+/* 全局布局样式 */
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  /* 用 Element 的页面背景变量 */
+  background-color: var(--el-bg-color-page);
+  box-sizing: border-box;
+}
+
+.layout-container {
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 通用侧边栏基础样式 */
+.layout-sidebar {
+  position: fixed;
+  left: 0;
+  background: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color);
+  /* 隐藏子菜单的默认样式（除分栏布局外） */
+  .layout-sidebar-submenu {
+    display: none;
+  }
+}
+
+/* 去掉侧边栏中的 el-menu 去掉右边框 */
+.layout-sidebar .el-menu {
+  border-right: none !important;
+}
+
+/* 通用头部基础样式 */
+.layout-header {
+  position: fixed;
+  top: 0;
+  height: var(--header-height);
+  width: 100%;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color);
+}
+
+/* 通用标签栏基础样式 */
+.layout-tagsview {
+  position: fixed;
+  top: var(--header-height);
+  height: var(--tagsview-height);
+  background: var(--el-bg-color);
+  z-index: 1000;
+}
+
+/* 通用主内容区基础样式 */
+.layout-main {
+  position: relative;
+  margin-top: calc(var(--header-height) + var(--tagsview-height));
+  height: calc(100vh - var(--header-height) - var(--tagsview-height));
+}
+
+/* ====================== */
+/* 1. 经典布局（classic） + 超级菜单（mega） */
+/* ====================== */
+.layout-container.classic,
+.layout-container.mega {
+  .layout-sidebar {
+    top: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+
+    .sidebar-logo {
+      height: var(--header-height);
+      width: var(--logo-width);
+    }
+  }
+
+  .layout-header {
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .layout-tagsview {
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .layout-main {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+}
+
+/* ======================== */
+/* 2. 混合布局（mix） */
+/* ======================== */
+.layout-container.mix {
+  .layout-sidebar {
+    top: var(--header-height);
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height));
+  }
+
+  .layout-header {
+    left: 0;
+    width: 100%;
+  }
+
+  .layout-tagsview {
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .layout-main {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+}
+
+/* ======================== */
+/* 3. 分栏布局（column） */
+/* ======================== */
+.layout-container.column {
+    --sidebar-width: 180px;
+    --sub-sidebar-width: 220px;
+    --double-sidebar-width: calc(var(--sidebar-width) + var(--sub-sidebar-width));
+        
+  .layout-sidebar {
+    top: var(--header-height);
+    width: var(--double-sidebar-width);
+    height: calc(100vh - var(--header-height));
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    background-color: var(--el-bg-color-page);
+
+    .layout-sidebar-menu {
+      height: 100%;
+      width: var(--sidebar-width);
+      background: var(--el-bg-color);
+    }
+
+    .layout-sidebar-submenu {
+      display: block; /* 覆盖默认隐藏 */
+      height: 100%;
+      width: var(--sub-sidebar-width);
+      background: var(--el-bg-color);
+    }
+  }
+
+  .layout-tagsview {
+    left: var(--double-sidebar-width);
+    width: calc(100% - var(--double-sidebar-width));
+  }
+
+  .layout-main {
+    margin-left: var(--double-sidebar-width);
+    width: calc(100% - var(--double-sidebar-width));
+  }
+}

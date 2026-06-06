@@ -1,36 +1,19 @@
-/* 全局布局 CSS 变量 */
+/* 全局 CSS 变量 */
 :root {
-  /* ========== 侧边栏 ========== */
+
+  /* ========== 布局尺寸 ========== */
   --sidebar-width: 240px;
   --sidebar-collapse-width: 64px;
-
-  /* ========== 分栏布局：二级菜单 ========== */
-  --sidebar-width: 240px;       /* 一级菜单 */
-  --sub-sidebar-width: 200px;   /* 二级菜单 */
-  --double-sidebar-width: 440px;/* 240 + 200 双栏总宽度 */
-
-  /* ========== 顶部 Header ========== */
+  --sidebar-width: 240px;
+  --sub-sidebar-width: 180px;
+  --double-sidebar-width: calc(var(--sidebar-width) + var(--sub-sidebar-width));
+  --logo-width: 240px;
   --header-height: 56px;
-
-  /* ========== 标签页 TagView ========== */
-  --tagsview-height: 40px; 
-
-  /* ========== 底部 Footer ========== */
+  --tagsview-height: 40px;
   --footer-height: 48px;
-
-  /* ========== 内容区间距 ========== */
   --content-padding: 12px;
 
-  /* ========== 过渡动画（全局统一） ========== */
+  /* ========== 过渡动画 ========== */
   --transition-all: all 0.3s ease;
   
-}
-
-@media screen and (max-width: 768px) {
-  /* 移动端布局调整变量 */
-  :root {
-    --sidebar-width: 0px;
-    --sub-sidebar-width: 200px;
-    --double-sidebar-width: 440px;
-  }
 }

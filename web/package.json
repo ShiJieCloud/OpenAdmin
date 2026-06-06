@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@iconify-vue/iconamoon": "^1.0.3",
+    "@iconify-vue/meteor-icons": "^1.0.3",
+    "@iconify/vue": "^5.0.1",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
     "element-plus": "^2.14.0",
@@ -21,6 +24,9 @@
   "devDependencies": {
     "@iconify-json/ep": "^1.2.4",
     "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/meteor-icons": "^1.2.1",
+    "@iconify-json/mi": "^1.2.2",
+    "@iconify-json/tabler": "^1.2.35",
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
