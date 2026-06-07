@@ -36,7 +36,7 @@ onMounted(() => {
            justify-center rounded-full border border-gray-200 bg-white 
            shadow-md transition-all hover:-translate-y-1 hover:bg-gray-50 
            hover:scale-105">
-        <i-ep-setting class="text-2xl text-gray-600 hover:animate-spin hover:text-blue-500" />
+        <i-ep-setting class="text-2xl text-gray-600 hover:animate-spin hover:text-(--el-color-primary)" />
     </button>
 
     <!-- Element Plus 抽屉组件 -->
