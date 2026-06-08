@@ -3,9 +3,32 @@ import Logo from './logo.vue'
 import { useLayoutStore, useMenuStore } from '@/store'
 import { LAYOUT } from '@/types/modules/layout'
 import MenuItem from '@/components/menu/MenuItem.vue'
+import { useRoute } from 'vue-router'
+import { ref, watch } from 'vue'
+
+import type { RouteLocationMatched } from 'vue-router'
+
 
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()
+
+const route = useRoute()
+// 面包屑数组
+const breadcrumbList = ref<RouteLocationMatched[]>([])
+
+// 监听路由变化，更新面包屑
+watch(
+  () => route.path,
+  () => {
+    // 过滤掉布局壳等不需要展示的路由，根据 meta 控制显隐
+    breadcrumbList.value = route.matched.filter(
+      item => item.meta?.title && !item.meta?.hidden
+    )
+    console.log(breadcrumbList.value)
+  },
+  { immediate: true }
+)
+
 
 </script>
 

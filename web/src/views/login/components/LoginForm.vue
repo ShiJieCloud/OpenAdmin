@@ -4,8 +4,11 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
 import { getCaptcha } from '@/api/modules/auth'
 import type { PasswordLoginRequest } from '@/types'
+import { useMenuStore } from '@/store/modules/menu'
+import { useRouter } from 'vue-router'
 
-
+const menuStore = useMenuStore()
+const router = useRouter()
 
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
@@ -46,16 +49,24 @@ const refreshCaptcha = async () => {
   }
 }
 
-const handleLogin = async (formEl: FormInstance | undefined) => {
-  // 1. 触发全量表单校验（修复你原来的异步问题）
-  if (!formEl) return
-  const valid = await formEl.validate()
-  if (!valid) return
+/**
+ * 登录提交处理函数
+ * @param formEl 表单实例
+ * @returns Promise<boolean> 校验/登录结果
+ * @description 表单校验 -> 登录接口请求 -> 加载动态菜单路由 -> 页面跳转
+ */
+const handleLogin = async (formEl: FormInstance | undefined): Promise<boolean> => {
+  // 表单实例不存在，直接终止
+  if (!formEl) return false
+
+  // 执行全量表单校验
+  const isValid = await formEl.validate()
+  if (!isValid) return false
 
   try {
     loading.value = true
 
-    // 2. 发起登录请求
+    // 调用登录接口
     await userStore.login({
       username: loginForm.username,
       password: loginForm.password,
@@ -63,21 +74,30 @@ const handleLogin = async (formEl: FormInstance | undefined) => {
       captcha_code: loginForm.captcha_code
     })
 
-    // 3. 登录成功
+    // 加载用户权限菜单 & 动态路由数据
+    await menuStore.loadUserMenu()
+
     ElMessage.success('登录成功')
+
+    // 路由跳转（替换原生 location，保留路由上下文）
     setTimeout(() => {
-      window.location.href = '/'
+      router.replace('/')
     }, 800)
 
-  } catch (error) {
-    // 4. 登录失败：提示 + 清空验证码
-    const err = error as Error
-    loginForm.captcha_code = '' // 清空验证码输入框
+    return true
+  } catch (err) {
+    // 登录异常处理
+    const error = err as Error
+    // 清空验证码输入框
+    loginForm.captcha_code = ''
+    // 刷新验证码（根据项目补充验证码刷新逻辑）
+    // refreshCaptcha()
 
+    // 展示后端返回错误信息，兜底默认文案
+    ElMessage.error(error.message || '登录失败，请检查账号密码或验证码')
     return false
-
   } finally {
-    // 5. 无论成功失败，关闭 loading
+    // 无论成功/失败，关闭加载状态
     loading.value = false
   }
 }

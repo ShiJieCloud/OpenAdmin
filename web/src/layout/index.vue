@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import Settings from './components/Settings.vue'
-import Sidebar from './components/Sidebar.vue'
+
+import { onMounted } from 'vue'
+
 import Header from './components/Header.vue'
-import { useLayoutStore } from '@/store'
+import Sidebar from './components/Sidebar.vue'
+import Settings from './components/Settings.vue'
 
+import { useLayoutStore, useMenuStore } from '@/store'
+
+// 实例化 Store
 const layoutStore = useLayoutStore()
+const menuStore = useMenuStore()
 
+onMounted(() => {
+  // 页面挂载完成，加载用户菜单数据
+  menuStore.loadUserMenu()
+})
 </script>
 
 <template>

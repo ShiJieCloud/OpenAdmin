@@ -1,40 +1,16 @@
 import type { RouteLocationNormalized } from 'vue-router'
 
 /**
- * 全局后置钩子
- * 在路由跳转完成后执行，不影响导航本身
- * 常用于页面统计、日志记录、页面滚动等
+ * 全局路由后置守卫
+ * @param to 目标路由对象，即将进入的路由
+ * @param from 来源路由对象，当前离开的路由
+ * @returns void
+ * @description 路由跳转完成后执行，统一重置页面滚动条至顶部，保证新页面从顶部开始展示
  */
 export const afterEach = (
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized
+  from: RouteLocationNormalized,
 ): void => {
-  // 记录导航完成日志
-  console.log("全局后置钩子 afterEach")
-
-  // 页面滚动到顶部
-  // window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-/**
- * 全局解析守卫
- * 在所有组件内守卫和异步路由组件被解析之后执行
- */
-export const beforeResolve = async (
-  to: RouteLocationNormalized,
-  from: RouteLocationNormalized
-): Promise<boolean | RouteLocationNormalized | undefined> => {
-  // 可以在这里处理一些需要等待异步操作完成的逻辑
-  // 例如：获取用户信息、加载必要的配置等
-   console.log("全局解析守卫 beforeResolve")
-
-  return true
-}
-
-/**
- * 路由错误处理
- * 捕获导航过程中的错误
- */
-export const onError = (error: Error): void => {
-  console.error("全局错误处理 onError", error)
+  // 路由切换后，将页面滚动条重置到顶部
+  window.scrollTo(0, 0)
 }

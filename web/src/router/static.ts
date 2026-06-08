@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import Layout from '@/layout/index.vue'
 
 export const staticRoutes: RouteRecordRaw[] = [
-  
+
   {
     path: '/login',
     name: 'Login',
@@ -15,6 +15,7 @@ export const staticRoutes: RouteRecordRaw[] = [
     path: '/',
     redirect: '/dashboard',
     component: Layout,
+    name: 'Layout',
     children: [
       {
         path: '/dashboard',
@@ -24,42 +25,6 @@ export const staticRoutes: RouteRecordRaw[] = [
           title: '首页'
         },
       },
-      {
-        path: '/system',
-        name: 'System',
-        redirect: '/system/user',
-        meta: {
-          title: '系统管理'
-        },
-        children: [
-          {
-            path: '/system/user',
-            name: 'User',
-            redirect: '/system/user/online',
-            meta: {
-              title: '用户管理'
-            },
-            children: [
-              {
-                path: '/system/user/online',
-                name: 'UserOnline',
-                component: () => import('@/views/system/user/OnlineUser.vue'),
-                meta: {
-                  title: '在线用户'
-                },
-              }
-            ]
-          }
-        ]
-      },
-      {
-        path: '/data',
-        name: 'Data',
-        component: () => import('@/views/data/index.vue'),
-        meta: {
-          title: '数据管理'
-        },
-      }
     ]
   },
 ]
