@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import Logo from './logo.vue'
-import { useLayoutStore, useMenuStore } from '@/store'
+import { useLayoutStore, useMenuStore, useThemeStore } from '@/store'
 import { LAYOUT } from '@/types/modules/layout'
 import MenuItem from '@/components/menu/MenuItem.vue'
 import { useRoute } from 'vue-router'
 import { ref, watch } from 'vue'
 
 import type { RouteLocationMatched } from 'vue-router'
-
+import Breadcrumb from './Breadcrumb.vue'
 
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()
+const themeStore = useThemeStore()
 
 const route = useRoute()
 // 面包屑数组
@@ -29,7 +30,6 @@ watch(
   { immediate: true }
 )
 
-
 </script>
 
 <template>
@@ -37,6 +37,11 @@ watch(
     <!-- Logo区域 -->
     <div v-show="layoutStore.layoutMode === LAYOUT.COLUMN || layoutStore.layoutMode === LAYOUT.MIX" class="header-logo">
       <Logo />
+    </div>
+
+    <!-- 面包屑区域 -->
+    <div v-if="layoutStore.layoutMode !== LAYOUT.MIX && themeStore.switchBreadcrumb" class="header-breadcrumb">
+      <Breadcrumb />
     </div>
 
     <el-menu class="header-menu" mode="horizontal" :active="String(menuStore.activeRootMenuId)"
@@ -56,6 +61,10 @@ watch(
 
   .header-menu {
     height: var(--header-height);
+  }
+
+  .header-breadcrumb {
+    margin: 0 16px;
   }
 }
 

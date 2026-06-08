@@ -3,18 +3,15 @@ import { ref, onMounted } from 'vue'
 import { ElDrawer, ElButton, ElColorPicker, ElSwitch, ElSelect, ElOption } from 'element-plus'
 import { LAYOUT, layoutList } from '@/types/modules/layout'
 
-import { useLayoutStore } from '@/store/modules/layout'
-import { useThemeStore } from '@/store/modules/theme'
+import { useLayoutStore, useThemeStore } from '@/store'
 
-const themeStore = useThemeStore()
 const layoutStore = useLayoutStore()
-
+const themeStore = useThemeStore()
 
 const settingsDrawerVisible = ref(false)
 const themeMode = ref('light')
 const fontType = ref('')
 const showTags = ref(true)
-const showBreadcrumb = ref(true)
 
 const toggleSettings = () => {
     settingsDrawerVisible.value = !settingsDrawerVisible.value
@@ -185,7 +182,7 @@ onMounted(() => {
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">显示面包屑</span>
-                            <ElSwitch v-model="showBreadcrumb" />
+                            <ElSwitch v-model="themeStore.switchBreadcrumb" />
                         </div>
                     </div>
 

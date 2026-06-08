@@ -22,8 +22,16 @@ export const useThemeStore = defineStore(
     () => {
         const primaryColor = ref('#409EFF')
 
+        // 是否显示面包屑
+        const switchBreadcrumb = ref(true)
+
         const setPrimaryColor = (color: string) => {
             primaryColor.value = color
+        }
+
+        // 设置是否显示面包屑
+        const setSwitchBreadcrumb = (show: boolean) => {
+            switchBreadcrumb.value = show
         }
 
         const resetPrimaryColor = () => {
@@ -40,7 +48,9 @@ export const useThemeStore = defineStore(
 
         return {
             primaryColor,
+            switchBreadcrumb,
             setPrimaryColor,
+            setSwitchBreadcrumb,
             resetPrimaryColor,
             initTheme,
         }
