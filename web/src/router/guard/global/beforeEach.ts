@@ -40,14 +40,14 @@ export const beforeEach = async (
     // 获取状态管理实例
     const userStore = useUserStore()
     const menuStore = useMenuStore()
-
-    // 未登录状态：拦截并跳转到登录页
-    if (!userStore.accessToken) {
-        return to.path === '/login' ? next() : next('/login')
-    } else if (to.path === '/login') {
-        // 已登录用户访问登录页：重定向到之前访问的页面
-        return next('/')
-    }
+ 
+    // // 未登录状态：拦截并跳转到登录页
+    // if (!userStore.accessToken) {
+    //     return to.path === '/login' ? next() : next('/login')
+    // } else if (to.path === '/login') {
+    //     // 已登录用户访问登录页：重定向到之前访问的页面
+    //     return next('/')
+    // }
 
     // 动态路由未加载：首次登录或刷新后加载动态路由
     if (!menuStore.isRouteLoaded) {

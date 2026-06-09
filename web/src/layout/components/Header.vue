@@ -5,6 +5,7 @@ import { LAYOUT } from '@/types/modules/layout'
 import MenuItem from '@/components/menu/MenuItem.vue'
 import { useRoute } from 'vue-router'
 import { ref, watch } from 'vue'
+import UserAvatar from './UserAvatar.vue'
 
 import type { RouteLocationMatched } from 'vue-router'
 import Breadcrumb from './Breadcrumb.vue'
@@ -51,6 +52,9 @@ watch(
       >
       <MenuItem v-for="menu in menuStore.rootMenuList" :key="menu.id" :item="menu" />
     </el-menu>
+
+    <!-- 用户头像区域 -->
+    <UserAvatar />
   </header>
 </template>
 

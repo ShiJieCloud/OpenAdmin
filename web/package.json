@@ -11,6 +11,7 @@
   "dependencies": {
     "@iconify-vue/iconamoon": "^1.0.3",
     "@iconify-vue/meteor-icons": "^1.0.3",
+    "@iconify-vue/solar": "^1.0.4",
     "@iconify/vue": "^5.0.1",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
@@ -26,6 +27,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/meteor-icons": "^1.2.1",
     "@iconify-json/mi": "^1.2.2",
+    "@iconify-json/solar": "^1.2.5",
     "@iconify-json/tabler": "^1.2.35",
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
