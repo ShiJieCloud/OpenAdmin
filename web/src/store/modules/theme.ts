@@ -25,6 +25,9 @@ export const useThemeStore = defineStore(
         // 是否显示面包屑
         const switchBreadcrumb = ref(true)
 
+        // 设置面板是否可见
+        const switchSettingsPanel = ref(false)
+
         const setPrimaryColor = (color: string) => {
             primaryColor.value = color
         }
@@ -42,6 +45,11 @@ export const useThemeStore = defineStore(
             generateElementTheme(primaryColor.value)
         }
 
+        // 切换设置面板显示状态
+        const toggleSettingsPanel = () => {
+            switchSettingsPanel.value = !switchSettingsPanel.value
+        }
+
         watch(primaryColor, (val) => {
             generateElementTheme(val)
         })
@@ -49,10 +57,12 @@ export const useThemeStore = defineStore(
         return {
             primaryColor,
             switchBreadcrumb,
+            switchSettingsPanel,
             setPrimaryColor,
             setSwitchBreadcrumb,
             resetPrimaryColor,
             initTheme,
+            toggleSettingsPanel,
         }
     },
     {

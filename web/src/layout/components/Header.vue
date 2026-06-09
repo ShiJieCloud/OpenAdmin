@@ -46,12 +46,15 @@ watch(
     </div>
 
     <el-menu class="header-menu" mode="horizontal" :active="String(menuStore.activeRootMenuId)"
-      :default-active="String(menuStore.activeRootMenuId)"
-      v-if="layoutStore.layoutMode === LAYOUT.MIX"
-      @select="menuStore.handleMenuClick"
-      >
+      :default-active="String(menuStore.activeRootMenuId)" v-if="layoutStore.layoutMode === LAYOUT.MIX"
+      @select="menuStore.handleMenuClick">
       <MenuItem v-for="menu in menuStore.rootMenuList" :key="menu.id" :item="menu" />
     </el-menu>
+
+    <!-- 设置面板按钮 -->
+    <el-icon class="header-settings-btn settings-icon" @click="themeStore.toggleSettingsPanel">
+      <i-ep-setting />
+    </el-icon>
 
     <!-- 用户头像区域 -->
     <UserAvatar />
@@ -77,5 +80,28 @@ watch(
   align-items: center;
   height: var(--header-height);
   width: var(--logo-width);
+}
+
+.header-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.settings-icon {
+  font-size: 18px;
+  color: var(--el-text-color-secondary);
 }
 </style>

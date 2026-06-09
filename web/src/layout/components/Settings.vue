@@ -8,14 +8,9 @@ import { useLayoutStore, useThemeStore } from '@/store'
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
 
-const settingsDrawerVisible = ref(false)
 const themeMode = ref('light')
 const fontType = ref('')
 const showTags = ref(true)
-
-const toggleSettings = () => {
-    settingsDrawerVisible.value = !settingsDrawerVisible.value
-}
 
 const handleReset = () => {
     themeStore.resetPrimaryColor()
@@ -28,17 +23,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <!-- 悬浮设置按钮 -->
-    <button @click="toggleSettings" class="fixed bottom-8 right-8 z-50 flex h-12 w-12 items-center 
-           justify-center rounded-full border border-gray-200 bg-white 
-           shadow-md transition-all hover:-translate-y-1 hover:bg-gray-50 
-           hover:scale-105">
-        <i-ep-setting class="text-2xl text-gray-600 hover:animate-spin hover:text-(--el-color-primary)" />
-    </button>
-
     <!-- Element Plus 抽屉组件 -->
     <div class="settings-drawer">
-        <ElDrawer v-model="settingsDrawerVisible" direction="rtl" size="320px">
+        <ElDrawer v-model="themeStore.switchSettingsPanel" direction="rtl" size="320px">
             <template #header>
                 <span class="text-lg font-medium">系统设置</span>
             </template>
