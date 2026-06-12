@@ -9,6 +9,7 @@ import UserAvatar from './components/UserAvatar.vue'
 
 import type { RouteLocationMatched } from 'vue-router'
 import Breadcrumb from '@/layout/components/Breadcrumb.vue'
+import FullScreen from '@/components/common/FullScreen.vue'
 
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()
@@ -51,10 +52,19 @@ watch(
       <MenuItem v-for="menu in menuStore.rootMenuList" :key="menu.id" :item="menu" />
     </el-menu>
 
+    <!-- 全屏按钮 -->
+    <div class="header-settings-btn">
+      <FullScreen />
+    </div>
+
     <!-- 设置面板按钮 -->
-    <el-icon class="header-settings-btn settings-icon" @click="themeStore.toggleSettingsPanel">
-      <i-ep-setting />
-    </el-icon>
+    <div >
+      <el-tooltip content="主题设置" placement="bottom-end">
+        <el-icon class="header-settings-btn" @click="themeStore.toggleSettingsPanel">
+          <i-solar-palette-broken />
+        </el-icon>
+      </el-tooltip>
+    </div>
 
     <!-- 用户头像区域 -->
     <UserAvatar />
@@ -93,15 +103,10 @@ watch(
   border-radius: 8px;
   background: transparent;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
   }
-}
-
-.settings-icon {
-  font-size: 18px;
-  color: var(--el-text-color-secondary);
 }
 </style>

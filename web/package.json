@@ -14,6 +14,7 @@
     "@iconify-vue/solar": "^1.0.4",
     "@iconify/vue": "^5.0.1",
     "@tailwindcss/vite": "^4.3.0",
+    "@vueuse/core": "^14.3.0",
     "axios": "^1.16.1",
     "element-plus": "^2.14.0",
     "pinia": "^3.0.4",
