@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import Logo from './logo.vue'
+import Logo from '@/layout/components/logo.vue'
 import { useLayoutStore, useMenuStore, useThemeStore } from '@/store'
 import { LAYOUT } from '@/types/modules/layout'
 import MenuItem from '@/components/menu/MenuItem.vue'
 import { useRoute } from 'vue-router'
 import { ref, watch } from 'vue'
-import UserAvatar from './UserAvatar.vue'
+import UserAvatar from './components/UserAvatar.vue'
 
 import type { RouteLocationMatched } from 'vue-router'
-import Breadcrumb from './Breadcrumb.vue'
+import Breadcrumb from '@/layout/components/Breadcrumb.vue'
 
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()

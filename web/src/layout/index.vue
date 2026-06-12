@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 
-import Header from './components/Header.vue'
+import Header from './components/header/index.vue'
 import Sidebar from './components/Sidebar.vue'
 import Settings from './components/Settings.vue'
 import PageTabs from './components/PageTabs.vue'
