@@ -24,6 +24,7 @@ body,
   left: 0;
   background: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color);
+
   /* 隐藏子菜单的默认样式（除分栏布局外） */
   .layout-sidebar-submenu {
     display: none;
@@ -52,6 +53,60 @@ body,
   height: var(--tagsview-height);
   background: var(--el-bg-color);
   z-index: 1000;
+}
+
+/* 标签栏容器 */
+.tabs-container {
+  .tabs-wrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding-left: 16px;
+    overflow: hidden;
+  }
+
+  .tab-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    height: 36px;
+    padding: 0 24px;
+    margin: 0 -12px;
+    font-size: 14px;
+
+    cursor: pointer;
+  }
+
+  .tab-item:hover {
+    z-index: 1;
+    background-color: var(--el-color-primary-light-9);
+
+    mask-image:
+      url("data:image/svg+xml,%3Csvg width='100' height='80' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M100 100C44.772 100 0 55.228 0 0v100h100z' fill='%23000'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg width='100' height='80' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M0 100c55.228 0 100-44.772 100-100v100H0z' fill='%23000'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect rx='12' width='100%' height='100%' fill='%23000'/%3E%3C/svg%3E");
+    mask-size: 12px 12px, 12px 12px, calc(100% - 24px) calc(100% + 12px);
+    mask-position: right bottom, left bottom, center top;
+    mask-repeat: no-repeat;
+  }
+
+  .tab-item.active {
+    z-index: 2;
+    background-color: var(--el-bg-color-page);
+    color: var(--el-color-primary);
+
+    mask-image:
+      url("data:image/svg+xml,%3Csvg width='100' height='80' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M100 100C44.772 100 0 55.228 0 0v100h100z' fill='%23000'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg width='100' height='80' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M0 100c55.228 0 100-44.772 100-100v100H0z' fill='%23000'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect rx='12' width='100%' height='100%' fill='%23000'/%3E%3C/svg%3E");
+    mask-size: 12px 12px, 12px 12px, calc(100% - 24px) calc(100% + 12px);
+    mask-position: right bottom, left bottom, center top;
+    mask-repeat: no-repeat;
+  }
 }
 
 /* 通用主内容区基础样式 */
@@ -123,10 +178,10 @@ body,
 /* 3. 分栏布局（column） */
 /* ======================== */
 .layout-container.column {
-    --sidebar-width: 180px;
-    --sub-sidebar-width: 220px;
-    --double-sidebar-width: calc(var(--sidebar-width) + var(--sub-sidebar-width));
-        
+  --sidebar-width: 180px;
+  --sub-sidebar-width: 220px;
+  --double-sidebar-width: calc(var(--sidebar-width) + var(--sub-sidebar-width));
+
   .layout-sidebar {
     top: var(--header-height);
     width: var(--double-sidebar-width);
@@ -143,7 +198,8 @@ body,
     }
 
     .layout-sidebar-submenu {
-      display: block; /* 覆盖默认隐藏 */
+      display: block;
+      /* 覆盖默认隐藏 */
       height: 100%;
       width: var(--sub-sidebar-width);
       background: var(--el-bg-color);

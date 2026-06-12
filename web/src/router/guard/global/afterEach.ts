@@ -1,4 +1,5 @@
 import type { RouteLocationNormalized } from 'vue-router'
+import { useTabsStore, useMenuStore } from '@/store'
 
 /**
  * 全局路由后置守卫
@@ -13,4 +14,13 @@ export const afterEach = (
 ): void => {
   // 路由切换后，将页面滚动条重置到顶部
   window.scrollTo(0, 0)
+
+  // 非登录页面且有 title 的路由，自动添加到标签页
+  if (to.path !== '/login' && to.meta?.title) {
+    const tabsStore = useTabsStore()
+    const menuStore = useMenuStore()
+    tabsStore.addTab(to)
+    menuStore.setActiveRootMenuId(to.meta?.id as number)
+    menuStore.setActiveSubMenuId(to.meta?.id as number)
+  }
 }

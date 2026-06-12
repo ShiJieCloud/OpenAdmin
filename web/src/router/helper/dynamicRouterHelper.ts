@@ -60,7 +60,7 @@ export function registerRoutes(
  */
 function createRouteFromMenu(menu: IMenuItem): RouteRecordRaw {
   // 解构菜单项字段，并设置默认值，避免空值报错
-  const { name, path = '', component = '', label = '', icon = '', children = [] } = menu
+  const { id, name, path = '', component = '', label = '', icon = '', children = [] } = menu
 
   // 匹配预加载的组件模块，component为后端返回的@/views路径
   const routeComponent = viewModules[component] || ''
@@ -70,7 +70,7 @@ function createRouteFromMenu(menu: IMenuItem): RouteRecordRaw {
     name,
     path,
     component: routeComponent,
-    meta: { title: label, icon }, // 路由元信息：页面标题、菜单图标
+    meta: { title: label, icon, id: id }, // 路由元信息：页面标题、菜单图标
     children: []
   }
 

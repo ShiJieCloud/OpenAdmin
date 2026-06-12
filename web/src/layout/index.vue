@@ -1,19 +1,18 @@
 <script setup lang="ts">
-
 import { onMounted } from 'vue'
 
 import Header from './components/Header.vue'
 import Sidebar from './components/Sidebar.vue'
 import Settings from './components/Settings.vue'
+import PageTabs from './components/PageTabs.vue'
 
-import { useLayoutStore, useMenuStore } from '@/store'
+import { useLayoutStore, useMenuStore, useTabsStore } from '@/store'
 
-// 实例化 Store
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()
+const tabsStore = useTabsStore()
 
 onMounted(() => {
-  // 页面挂载完成，加载用户菜单数据
   menuStore.loadUserMenu()
 })
 </script>
@@ -28,7 +27,19 @@ onMounted(() => {
       <Header />
     </div>
 
-    <div class="layout-tagsview">TAGS View</div>
+    <div class="layout-tagsview">
+      <PageTabs
+        :tab-list="tabsStore.visitedTabs"
+        :active-path="tabsStore.activePath"
+        @tab-click="tabsStore.clickTab"
+        @tab-close="tabsStore.removeTab"
+        @tab-close-left="tabsStore.removeLeftTabs"
+        @tab-close-right="tabsStore.removeRightTabs"
+        @tab-close-others="tabsStore.removeOtherTabs"
+        @tab-close-all="tabsStore.removeAllTabs"
+        @tab-refresh="tabsStore.refreshTab"
+      />
+    </div>
 
     <div class="layout-main flex-1">
       <router-view />
@@ -37,6 +48,6 @@ onMounted(() => {
     <Settings />
   </div>
 </template>
-<style scoped>
 
+<style scoped>
 </style>

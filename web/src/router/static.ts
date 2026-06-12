@@ -22,7 +22,8 @@ export const staticRoutes: RouteRecordRaw[] = [
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: {
-          title: '首页'
+          title: '首页',
+          id: 1
         },
       },
     ]
