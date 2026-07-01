@@ -20,7 +20,9 @@ export const afterEach = (
     const tabsStore = useTabsStore()
     const menuStore = useMenuStore()
     tabsStore.addTab(to)
-    menuStore.setActiveRootMenuId(to.meta?.id as number)
+
+    const rootId = menuStore.traceRootId(to.meta?.id as number)
+    menuStore.setActiveRootMenuId(rootId)
     menuStore.setActiveSubMenuId(to.meta?.id as number)
   }
 }
