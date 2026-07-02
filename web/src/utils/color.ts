@@ -78,3 +78,20 @@ export function shade(color: string, percentage: number): string {
     const b = Math.round(rgb.b * (1 - ratio))
     return rgbToHex(r, g, b)
 }
+
+/**
+ * 两种颜色按比例混合
+ * @param color1 第一个颜色
+ * @param color2 第二个颜色
+ * @param weight color2 的权重百分比 (0-100)，color1 的权重为 100-weight
+ * @returns 混合后的十六进制颜色
+ */
+export function mix(color1: string, color2: string, weight: number): string {
+    const rgb1 = hexToRgb(color1)
+    const rgb2 = hexToRgb(color2)
+    const ratio = weight / 100
+    const r = Math.round(rgb1.r * (1 - ratio) + rgb2.r * ratio)
+    const g = Math.round(rgb1.g * (1 - ratio) + rgb2.g * ratio)
+    const b = Math.round(rgb1.b * (1 - ratio) + rgb2.b * ratio)
+    return rgbToHex(r, g, b)
+}
