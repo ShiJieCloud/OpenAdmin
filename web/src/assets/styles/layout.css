@@ -12,6 +12,42 @@ body,
   box-sizing: border-box;
 }
 
+/* Firefox 标准滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+}
+
+/* Chrome、Edge、Safari */
+::-webkit-scrollbar {
+  /* 整体滚动条宽度（垂直）/高度（水平） */
+  width: 8px;
+  height: 8px;
+}
+
+/* 滚动条轨道（背景槽） */
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+/* 滚动滑块 */
+::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+/* 滑块hover加深，还原谷歌交互 */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a8a8a8;
+}
+
+/* 水平/垂直角落拼接处 */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .layout-container {
   min-height: 100vh;
   display: flex;
@@ -117,10 +153,9 @@ body,
 }
 
 /* ====================== */
-/* 1. 经典布局（classic） + 超级菜单（mega） */
+/* 1. 经典布局（classic） */
 /* ====================== */
-.layout-container.classic,
-.layout-container.mega {
+.layout-container.classic {
   .layout-sidebar {
     top: 0;
     width: var(--sidebar-width);
@@ -145,6 +180,38 @@ body,
   .layout-main {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
+  }
+}
+
+/* ====================== */
+/* 1.1 超级菜单布局（mega） */
+/* ====================== */
+.layout-container.mega {
+
+  .layout-sidebar {
+    top: 0;
+    width: var(--sidebar-collapse-width);
+    height: 100vh;
+
+    .sidebar-logo {
+      height: var(--header-height);
+      width: var(--sidebar-collapse-width);
+    }
+  }
+
+  .layout-header {
+    left: var(--sidebar-collapse-width);
+    width: calc(100% - var(--sidebar-collapse-width));
+  }
+
+  .layout-tagsview {
+    left: var(--sidebar-collapse-width);
+    width: calc(100% - var(--sidebar-collapse-width));
+  }
+
+  .layout-main {
+    margin-left: var(--sidebar-collapse-width);
+    width: calc(100% - var(--sidebar-collapse-width));
   }
 }
 

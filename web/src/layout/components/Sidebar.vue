@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import Logo from './logo.vue'
 import { LAYOUT } from '@/types/modules/layout'
 import MenuItem from '@/components/menu/MenuItem.vue'
+import MegaMenu from '@/components/menu/MegaMenu.vue'
 
 import { useLayoutStore, useMenuStore } from '@/store'
 
@@ -38,16 +39,23 @@ const renderMenuList = computed(() => {
     <!-- 左侧菜单 -->
     <div class="layout-sidebar-menu">
 
-      <el-menu class="sidebar-menu"
+      <el-menu v-if="layoutStore.layoutMode !== LAYOUT.MEGA" 
+        class="sidebar-menu"
         :default-active="layoutStore.layoutMode === LAYOUT.COLUMN ? String(menuStore.activeRootMenuId) : String(menuStore.activeSubMenuId)"
         @select="menuStore.handleMenuClick">
         <MenuItem v-for="menu in renderMenuList" :key="menu.id" :item="menu" />
       </el-menu>
 
-      <div v-show="layoutStore.layoutMode === LAYOUT.MEGA">
-        自定义菜单
-      </div>
+      <!-- MegaMenu - 仅在超级菜单布局下显示 -->
+      <MegaMenu v-else 
+        :treeMenuList="menuStore.treeMenuList" 
+        :currentRootMenuId="menuStore.activeRootMenuId"
+        :currentSubMenuId="menuStore.activeSubMenuId" 
+        @root-click="menuStore.handleMenuClick"
+        @item-click="menuStore.handleMenuClick" />
+
     </div>
+
 
     <!-- 右侧菜单 - 仅在分栏布局下显示 -->
     <div v-if="layoutStore.layoutMode === LAYOUT.COLUMN" class="layout-sidebar-submenu">
