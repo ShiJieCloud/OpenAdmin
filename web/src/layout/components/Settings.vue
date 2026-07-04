@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { ElDrawer, ElButton, ElColorPicker, ElSwitch, ElSelect, ElOption } from 'element-plus'
 import { LAYOUT, layoutList } from '@/types/modules/layout'
 
@@ -8,18 +8,14 @@ import { useLayoutStore, useThemeStore } from '@/store'
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
 
-const themeMode = ref('light')
 const fontType = ref('')
 const showTags = ref(true)
 
 const handleReset = () => {
-    themeStore.resetPrimaryColor()
+    themeStore.resetTheme()
     layoutStore.setLayoutMode(LAYOUT.CLASSIC)
 }
 
-onMounted(() => {
-    themeStore.initTheme()
-})
 </script>
 
 <template>
@@ -43,7 +39,7 @@ onMounted(() => {
                                     <button @click="layoutStore.setLayoutMode(layout.value)"
                                         class="group relative flex flex-col items-center rounded-lg border-2 p-2 transition-all hover:shadow-md w-full"
                                         :class="layout.value === layoutStore.layoutMode ? 'border-(--el-color-primary)'
-                                            : 'border-gray-200 bg-white hover:border-gray-300'">
+                                            : 'border-(--el-color-primary-light-6) hover:border-(--el-color-primary-light-4)'">
 
                                         <!-- 选中指示器 -->
                                         <div v-if="layout.value === layoutStore.layoutMode"
@@ -109,7 +105,7 @@ onMounted(() => {
                                                         <div class="w-3 h-1 rounded-sm bg-(--el-color-primary-light-3)">
                                                         </div>
                                                     </div>
-                                                    <div class="flex-1 bg-white border rounded-sm p-1 grid grid-cols-3 gap-0.5 border-(--el-color-primary-light-8)">
+                                                    <div class="flex-1 border rounded-sm p-1 grid grid-cols-3 gap-0.5 border-(--el-color-primary-light-8)">
                                                         <div class="flex flex-col gap-0.5" v-for="i in 3" :key="i">
                                                             <div class="h-1 rounded-sm bg-(--el-color-primary-light-5)">
                                                             </div>
@@ -143,7 +139,7 @@ onMounted(() => {
                         <div class="flex items-center justify-between">
                             <p class="text-sm text-gray-600">主题模式</p>
                             <div class="w-40">
-                                <ElSelect v-model="themeMode" placeholder="请选择主题">
+                                <ElSelect v-model="themeStore.themeMode" placeholder="请选择主题">
                                     <ElOption label="浅色模式" value="light" />
                                     <ElOption label="深色模式" value="dark" />
                                     <ElOption label="跟随系统" value="system" />
