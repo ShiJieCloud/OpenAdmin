@@ -1,6 +1,4 @@
-/* 全局 CSS 变量 */
 :root {
-
   /* ========== 布局尺寸 ========== */
   --sidebar-width: 240px;
   --sidebar-collapse-width: 64px;
@@ -15,5 +13,7 @@
 
   /* ========== 过渡动画 ========== */
   --transition-all: all 0.3s ease;
+
+  --font-family: '';
   
 }

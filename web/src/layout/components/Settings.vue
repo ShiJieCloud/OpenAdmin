@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElDrawer, ElButton, ElColorPicker, ElSwitch, ElSelect, ElOption } from 'element-plus'
 import { LAYOUT, layoutList } from '@/types/modules/layout'
-
 import { useLayoutStore, useThemeStore } from '@/store'
+import { FONT_LABEL } from '@/types/modules/theme'
 
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
 
-const fontType = ref('')
 const showTags = ref(true)
 
 const handleReset = () => {
@@ -32,7 +30,7 @@ const handleReset = () => {
                     
                     <!-- 布局模式：经典 / 混合 / 超级 / 分栏 -->
                     <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-700">布局模式</h3>
+                        <h3 class="text-sm font-semibold var(--el-text-color-primary)">布局模式</h3>
                         <div class="grid grid-cols-2 gap-3">
                             <div v-for="layout in layoutList" :key="layout.value" class="flex flex-col items-center">
                                 <el-tooltip :content="layout.desc" placement="top">
@@ -123,7 +121,7 @@ const handleReset = () => {
 
                                 <!-- 布局名称 -->
                                 <span class="text-xs font-medium mt-2"
-                                    :class="layout.value === layoutStore.layoutMode ? 'text-(--el-color-primary)' : 'text-gray-700'">
+                                    :class="layout.value === layoutStore.layoutMode ? 'text-(--el-color-primary)' : 'var(--el-text-color-primary)'">
                                     {{ layout.label }}
                                 </span>
 
@@ -133,11 +131,11 @@ const handleReset = () => {
 
                     <!-- 主题设置 -->
                     <div class="space-y-4">
-                        <h3 class="text-sm font-semibold text-gray-700">主题设置</h3>
+                        <h3 class="text-sm font-semibold var(--el-text-color-primary)">主题设置</h3>
 
                         <!-- 主题模式：左右布局 -->
                         <div class="flex items-center justify-between">
-                            <p class="text-sm text-gray-600">主题模式</p>
+                            <p class="text-sm var(--el-text-color-regular)">主题模式</p>
                             <div class="w-40">
                                 <ElSelect v-model="themeStore.themeMode" placeholder="请选择主题">
                                     <ElOption label="浅色模式" value="light" />
@@ -150,7 +148,7 @@ const handleReset = () => {
 
                         <!-- 主题色：左右布局 -->
                         <div class="flex items-center justify-between">
-                            <p class="text-sm text-gray-600">主题色</p>
+                            <p class="text-sm var(--el-text-color-regular)">主题色</p>
                             <ElColorPicker v-model="themeStore.primaryColor" class="w-[160px]" />
                         </div>
 
@@ -158,25 +156,22 @@ const handleReset = () => {
 
                     <!-- 显示设置 -->
                     <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-700">显示设置</h3>
+                        <h3 class="text-sm font-semibold var(--el-text-color-primary)">显示设置</h3>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">显示标签</span>
+                            <span class="text-sm var(--el-text-color-regular)">显示标签</span>
                             <ElSwitch v-model="showTags" />
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">显示面包屑</span>
+                            <span class="text-sm var(--el-text-color-regular)">显示面包屑</span>
                             <ElSwitch v-model="themeStore.switchBreadcrumb" />
                         </div>
                     </div>
 
                     <!-- 字体设置 -->
                     <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-700">字体设置</h3>
-                        <ElSelect v-model="fontType" placeholder="请选择字体">
-                            <ElOption label="默认字体" value="default" />
-                            <ElOption label="微软雅黑" value="microsoft" />
-                            <ElOption label="宋体" value="songti" />
-                            <ElOption label="黑体" value="heiti" />
+                        <h3 class="text-sm font-semibold var(--el-text-color-primary)">字体设置</h3>
+                        <ElSelect v-model="themeStore.fontType" placeholder="请选择字体">
+                            <ElOption v-for="[value, label] in Object.entries(FONT_LABEL)" :label="label" :key="value" :value="value" />
                         </ElSelect>
                     </div>
                 </div>

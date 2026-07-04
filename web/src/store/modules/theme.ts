@@ -9,18 +9,19 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { tint, shade, mix } from '@/utils/color'
-import type { ThemeMode } from '@/types/modules/theme'
-import { THEME_MODE } from '@/types/modules/theme'
+import type { ThemeMode, FontType, ThemeConfig } from '@/types/modules/theme'
+import { THEME_MODE, FONT_TYPE } from '@/types/modules/theme'
 
 /**
  * @constant DEFAULT_THEME
  * @desc 默认主题配置
  */
-const DEFAULT_THEME = {
+const DEFAULT_THEME: ThemeConfig = {
   primaryColor: '#409EFF',
   themeMode: THEME_MODE.Light,
   showBreadcrumb: true,
-  showSettingsPanel: false
+  showSettingsPanel: false,
+  fontType: FONT_TYPE.Default
 }
 
 /**
@@ -28,6 +29,20 @@ const DEFAULT_THEME = {
  * @desc 系统暗黑模式媒体查询
  */
 const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+
+/**
+ * @constant fontMap
+ * @desc 字体类型与自定义字体名字符串映射表
+ */
+const fontMap: Record<FontType, string> = {
+  [FONT_TYPE.Default]: '',
+  [FONT_TYPE.JetBrainsMono]: 'JetBrains Mono',
+  [FONT_TYPE.HuiWenMingChao]: 'HuiWenMingChao',
+  [FONT_TYPE.SlideXiaxing]: 'Slide Xiaxing',
+  [FONT_TYPE.OPPOSans]: 'OPPO Sans',
+  [FONT_TYPE.HarmonyOSSansSC]: 'HarmonyOS Sans',
+  [FONT_TYPE.AlibabaPuHuiTi]: 'Alibaba PuHuiTi'
+}
 
 /**
  * @function generateElementTheme
@@ -90,6 +105,12 @@ export const useThemeStore = defineStore(
      * @desc 当前是否为暗黑模式（实际生效的模式）
      */
     const isDarkMode = ref(darkModeMedia.matches)
+
+    /**
+     * @var fontType
+     * @desc 当前字体类型
+     */
+    const fontType = ref<FontType>(DEFAULT_THEME.fontType)
     // #endregion
 
     // #region Action
@@ -121,6 +142,29 @@ export const useThemeStore = defineStore(
     }
 
     /**
+     * @method setFontType
+     * @desc 设置字体类型
+     * @param {FontType} type 字体类型
+     */
+    const setFontType = (type: FontType) => {
+      fontType.value = type
+    }
+
+    /**
+     * @method applyFont
+     * @desc 应用字体样式到根元素
+     */
+    const applyFont = () => {
+      const root = document.documentElement
+      const fontFamily = fontMap[fontType.value]
+      if (fontFamily) {
+        root.style.setProperty('--font-family', fontFamily)
+      } else {
+        root.style.removeProperty('--font-family')
+      }
+    }
+
+    /**
      * @method resetPrimaryColor
      * @desc 重置主题主色为默认值
      */
@@ -137,6 +181,7 @@ export const useThemeStore = defineStore(
       themeMode.value = DEFAULT_THEME.themeMode
       switchBreadcrumb.value = DEFAULT_THEME.showBreadcrumb
       switchSettingsPanel.value = DEFAULT_THEME.showSettingsPanel
+      fontType.value = DEFAULT_THEME.fontType
     }
 
     /**
@@ -203,6 +248,14 @@ export const useThemeStore = defineStore(
       generateElementTheme(color, isDark)
     }, { immediate: true })
 
+    /**
+     * @watch fontType
+     * @desc 监听字体类型变化，应用字体样式
+     */
+    watch(fontType, () => {
+      applyFont()
+    }, { immediate: true })
+
     return {
       // State
       primaryColor,
@@ -210,10 +263,12 @@ export const useThemeStore = defineStore(
       switchBreadcrumb,
       switchSettingsPanel,
       isDarkMode,
+      fontType,
       // Action
       setPrimaryColor,
       setThemeMode,
       setSwitchBreadcrumb,
+      setFontType,
       resetPrimaryColor,
       resetTheme,
       toggleSettingsPanel,

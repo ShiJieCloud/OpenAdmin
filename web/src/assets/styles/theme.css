@@ -1,5 +1,8 @@
 @import 'element-plus/theme-chalk/dark/css-vars.css';
 
+html {
+  font-family: var(--font-family), system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
 
 html.gray {
     filter: grayscale(1);
