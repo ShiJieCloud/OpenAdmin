@@ -29,7 +29,7 @@ const menuList = computed(() => readonly(props.treeMenuList))
         <!-- 触发源：一级菜单项 -->
         <template #reference>
           <div class="mega-menu__root-item"
-            :class="{ 'mega-menu__root-item--active': menu.id === props.currentRootMenuId }"
+            :class="{ 'active': menu.id === props.currentRootMenuId }"
             @click="emit('root-click', String(menu.id))">
             <div class="mega-menu__root-icon">
               <el-icon>
@@ -53,7 +53,7 @@ const menuList = computed(() => readonly(props.treeMenuList))
                     @click="emit('item-click', String(child.id))">
                     <div class="mega-menu__item-content">
                       <div class="mega-menu__item-label"
-                        :class="{ 'mega-menu__item-label--active': child.id === props.currentSubMenuId }">
+                        :class="{ 'active': child.id === props.currentSubMenuId }">
                         {{ child.label }}
                       </div>
                       <div v-if="child.desc" class="mega-menu__item-desc">
@@ -123,13 +123,13 @@ const menuList = computed(() => readonly(props.treeMenuList))
   background: var(--el-color-primary-light-9);
 }
 
-/* 一级菜单项激活状态 - BEM 修饰符 */
-.mega-menu__root-item--active {
+/* 一级菜单项激活状态 */
+.mega-menu__root-item.active {
   background: var(--el-color-primary-light-8);
 }
 
 /* 激活状态左侧指示条 */
-.mega-menu__root-item--active::before {
+.mega-menu__root-item.active::before {
   content: '';
   position: absolute;
   left: 0;
@@ -148,7 +148,7 @@ const menuList = computed(() => readonly(props.treeMenuList))
 }
 
 /* 激活状态图标颜色 */
-.mega-menu__root-item--active .mega-menu__root-icon {
+.mega-menu__root-item.active .mega-menu__root-icon {
   color: var(--el-color-primary);
 }
 
@@ -162,8 +162,8 @@ const menuList = computed(() => readonly(props.treeMenuList))
 }
 
 /* 激活状态文字颜色 */
-.mega-menu__root-item--active .mega-menu__root-label {
-  color: var(--el-text-color-primary);
+.mega-menu__root-item.active .mega-menu__root-label {
+  color: var(--el-color-primary);
 }
 
 /* 弹窗容器 */
@@ -232,13 +232,13 @@ const menuList = computed(() => readonly(props.treeMenuList))
   transition: color 0.2s ease;
 }
 
-/* 子菜单项激活状态 - BEM 修饰符 */
-.mega-menu__item-label--active {
+/* 子菜单项激活状态 */
+.mega-menu__item-label.active {
   color: var(--el-color-primary-light-3);
 }
 
 /* 子菜单项 hover 状态 */
-.mega-menu__item-label:hover {
+.mega-menu__item-label:hover:not(.active) {
   color: var(--el-color-primary);
 }
 
