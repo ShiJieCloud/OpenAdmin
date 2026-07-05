@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted, nextTick, watch } from 'vue'
 import type { ITabItem } from '@/types/modules/tabs'
 
 const props = defineProps<{
@@ -6,7 +7,6 @@ const props = defineProps<{
   activePath: string
 }>()
 
-// 抽离事件类型，便于复用、注释
 type TabEmits = {
   /** 点击标签 */
   'tab-click': [path: string]
@@ -25,6 +25,35 @@ type TabEmits = {
 }
 
 const emit = defineEmits<TabEmits>()
+
+const tabsWrapRef = ref<HTMLElement | null>(null)
+
+const scrollLeft = () => {
+  if (tabsWrapRef.value) {
+    tabsWrapRef.value.scrollBy({ left: -200, behavior: 'smooth' })
+  }
+}
+
+const scrollRight = () => {
+  if (tabsWrapRef.value) {
+    tabsWrapRef.value.scrollBy({ left: 200, behavior: 'smooth' })
+  }
+}
+
+const handleWheel = (e: WheelEvent) => {
+  if (!tabsWrapRef.value) return
+  e.preventDefault()
+  tabsWrapRef.value.scrollBy({ left: e.deltaY, behavior: 'auto' })
+}
+
+watch(() => props.activePath, () => {
+  nextTick(() => {
+    const activeTab = tabsWrapRef.value?.querySelector('.tab-item.active')
+    if (activeTab) {
+      activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    }
+  })
+})
 
 const handleTabClick = (path: string) => {
   emit('tab-click', path)
@@ -61,24 +90,33 @@ const handleRefresh = (path: string) => {
 </script>
 
 <template>
-  <div class="tabs-container w-full h-full flex items-center justify-between">
-    <div class="tabs-wrap">
-      <div v-for="item in tabList" :key="item.path" class="tab-item" :class="{ active: item.path === activePath }"
-        @click="handleTabClick(item.path)">
-        <div class="flex-center-gap">
-          <el-icon><i-ep-setting /></el-icon>
-          <span>{{ item.title }}</span>
-        </div>
+  <div class="tabs-container">
+    <div class="tabs-scroll-container">
+      <div class="scroll-btn" @click="scrollLeft">
+        <el-icon><i-ep-arrow-left /></el-icon>
+      </div>
 
-        <el-icon @click.stop="handleClose(item.path)" class="close-icon">
-          <i-ep-close />
-        </el-icon>
+      <div ref="tabsWrapRef" class="tabs-wrap" @wheel="handleWheel">
+        <div v-for="item in tabList" :key="item.path" class="tab-item" :class="{ active: item.path === activePath }"
+          @click="handleTabClick(item.path)">
+          <div class="flex-center-gap">
+            <el-icon><i-ep-setting /></el-icon>
+            <span>{{ item.title }}</span>
+          </div>
+
+          <el-icon @click.stop="handleClose(item.path)" class="close-icon">
+            <i-ep-close />
+          </el-icon>
+        </div>
+      </div>
+
+      <div class="scroll-btn" @click="scrollRight">
+        <el-icon><i-ep-arrow-right /></el-icon>
       </div>
     </div>
 
-    <!-- 标签页更多操作下拉菜单 -->
-    <el-dropdown placement="bottom-end">
-      <span class="w-12 h-12 flex items-center justify-center cursor-pointer outline-none">
+    <el-dropdown class="tabs-dropdown" placement="bottom-end">
+      <span class="w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
         <i-ep-more-filled />
       </span>
 
@@ -144,6 +182,12 @@ const handleRefresh = (path: string) => {
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
+  white-space: nowrap;
+  /* 文字不自动换行 */
+  overflow: hidden;
+  /* 超出部分隐藏 */
+  text-overflow: ellipsis;
+  /* 超出显示省略号 ... */
 }
 
 .close-icon {

@@ -93,13 +93,64 @@ body,
 
 /* 标签栏容器 */
 .tabs-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+
+  .tabs-scroll-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    min-width: 0;
+    height: 100%;
+  }
+
+  .tabs-dropdown {
+    position: relative;
+  }
+
+  .tabs-dropdown::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 24px;
+    background-color: var(--el-border-color);
+  }
+
+  .scroll-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    transition: color 0.2s ease;
+    border: none;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
   .tabs-wrap {
-    width: 100%;
+    flex: 1;
     height: 100%;
     display: flex;
     align-items: flex-end;
-    padding-left: 16px;
-    overflow: hidden;
+    padding-left: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .tab-item {
@@ -117,9 +168,20 @@ body,
     cursor: pointer;
   }
 
+  .tab-item:not(:first-child)::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 16px;
+    background-color: var(--el-border-color);
+  }
+
   .tab-item:hover {
     z-index: 1;
-    background-color: var(--el-color-primary-light-9);
+    background-color: var(--el-bg-color-page);
 
     mask-image:
       url("data:image/svg+xml,%3Csvg width='100' height='80' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M100 100C44.772 100 0 55.228 0 0v100h100z' fill='%23000'/%3E%3C/svg%3E"),
