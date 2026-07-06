@@ -38,31 +38,33 @@ const renderMenuList = computed(() => {
 
     <!-- 左侧菜单 -->
     <div class="layout-sidebar-menu">
+      <el-scrollbar class="sidebar-scrollbar">
+        <el-menu v-if="layoutStore.layoutMode !== LAYOUT.MEGA" 
+          class="sidebar-menu"
+          :default-active="layoutStore.layoutMode === LAYOUT.COLUMN ? String(menuStore.activeRootMenuId) : String(menuStore.activeSubMenuId)"
+          @select="menuStore.handleMenuClick">
+          <MenuItem v-for="menu in renderMenuList" :key="menu.id" :item="menu" />
+        </el-menu>
 
-      <el-menu v-if="layoutStore.layoutMode !== LAYOUT.MEGA" 
-        class="sidebar-menu"
-        :default-active="layoutStore.layoutMode === LAYOUT.COLUMN ? String(menuStore.activeRootMenuId) : String(menuStore.activeSubMenuId)"
-        @select="menuStore.handleMenuClick">
-        <MenuItem v-for="menu in renderMenuList" :key="menu.id" :item="menu" />
-      </el-menu>
-
-      <!-- MegaMenu - 仅在超级菜单布局下显示 -->
-      <MegaMenu v-else 
-        :treeMenuList="menuStore.treeMenuList" 
-        :currentRootMenuId="menuStore.activeRootMenuId"
-        :currentSubMenuId="menuStore.activeSubMenuId" 
-        @root-click="menuStore.handleMenuClick"
-        @item-click="menuStore.handleMenuClick" />
-
+        <!-- MegaMenu - 仅在超级菜单布局下显示 -->
+        <MegaMenu v-else 
+          :treeMenuList="menuStore.treeMenuList" 
+          :currentRootMenuId="menuStore.activeRootMenuId"
+          :currentSubMenuId="menuStore.activeSubMenuId" 
+          @root-click="menuStore.handleMenuClick"
+          @item-click="menuStore.handleMenuClick" />
+      </el-scrollbar>
     </div>
 
 
     <!-- 右侧菜单 - 仅在分栏布局下显示 -->
     <div v-if="layoutStore.layoutMode === LAYOUT.COLUMN" class="layout-sidebar-submenu">
-      <el-menu class="sidebar-menu" :default-active="String(menuStore.activeSubMenuId)"
-        @select="menuStore.handleMenuClick">
-        <MenuItem v-for="menu in menuStore.currentSubMenu" :key="menu.id" :item="menu" />
-      </el-menu>
+      <el-scrollbar class="sidebar-scrollbar">
+        <el-menu class="sidebar-menu" :default-active="String(menuStore.activeSubMenuId)"
+          @select="menuStore.handleMenuClick">
+          <MenuItem v-for="menu in menuStore.currentSubMenu" :key="menu.id" :item="menu" />
+        </el-menu>
+      </el-scrollbar>
     </div>
 
   </aside>
