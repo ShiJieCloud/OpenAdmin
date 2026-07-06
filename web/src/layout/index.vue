@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import Header from './components/header/index.vue'
 import Sidebar from './components/Sidebar.vue'
 import Settings from './components/Settings.vue'
 import PageTabs from './components/PageTabs.vue'
+import MainContent from './components/MainContent.vue'
 
 import { useLayoutStore, useMenuStore, useTabsStore } from '@/store'
 
@@ -15,6 +16,7 @@ const tabsStore = useTabsStore()
 onMounted(() => {
   menuStore.loadUserMenu()
 })
+
 </script>
 
 <template>
@@ -42,7 +44,7 @@ onMounted(() => {
     </div>
 
     <div class="layout-main flex-1">
-      <router-view />
+      <MainContent />
     </div>
 
     <Settings />
