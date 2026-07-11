@@ -159,18 +159,7 @@ class MenuService(BaseService):
         for menu in menus:
             if menu.parent_id == parent_id:
                 children = self._build_menu_tree(menus, menu.id)
-                menu_tree = MenuTreeResponse(
-                    id=menu.id,
-                    menu_name=menu.menu_name,
-                    parent_id=menu.parent_id,
-                    sort=menu.sort,
-                    path=menu.path,
-                    component=menu.component,
-                    menu_type=menu.menu_type,
-                    icon=menu.icon,
-                    is_hidden=menu.is_hidden,
-                    is_frame=menu.is_frame,
-                    children=children
-                )
+                menu_tree = MenuTreeResponse.model_validate(menu)
+                menu_tree.children = children
                 tree.append(menu_tree)
         return tree

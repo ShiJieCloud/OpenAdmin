@@ -99,30 +99,9 @@ async def delete_menu(
 
 
 @router.get(
-    "/{menu_id}",
-    response_model=ApiResponse[MenuResponse],
-    dependencies=[Depends(has_perm(PermCode.Menu.READ))],
-    summary="获取菜单详情",
-    description="获取菜单详情（需具备菜单读取权限）"
-)
-async def get_menu_detail(
-    menu_id: int = Path(..., description="菜单ID", gt=0),
-    menu_service: MenuService = Depends(get_menu_service)
-):
-    """获取菜单详情
-
-    权限：`system:menu:read`
-    """
-    menu = await menu_service.get_menu(menu_id)
-    menu_info = MenuResponse.model_validate(menu)
-    return ResponseBuilder.success(
-        data=menu_info
-    )
-
-
-@router.get(
     "/tree",
     dependencies=[Depends(has_perm(PermCode.Menu.READ))],
+    response_model=ApiResponse[list[MenuTreeResponse]],
     summary="获取全系统菜单树",
     description="获取所有菜单的完整树结构（管理员查看所有）"
 )
@@ -177,3 +156,24 @@ async def get_user_menu_tree(
     menu_tree = await menu_service.get_user_menu_tree(role_codes, is_superuser=False)
 
     return ResponseBuilder.success(data=menu_tree)
+
+@router.get(
+    "/{menu_id}",
+    response_model=ApiResponse[MenuResponse],
+    dependencies=[Depends(has_perm(PermCode.Menu.READ))],
+    summary="获取菜单详情",
+    description="获取菜单详情（需具备菜单读取权限）"
+)
+async def get_menu_detail(
+    menu_id: int = Path(..., description="菜单ID", gt=0),
+    menu_service: MenuService = Depends(get_menu_service)
+):
+    """获取菜单详情
+
+    权限：`system:menu:read`
+    """
+    menu = await menu_service.get_menu(menu_id)
+    menu_info = MenuResponse.model_validate(menu)
+    return ResponseBuilder.success(
+        data=menu_info
+    )

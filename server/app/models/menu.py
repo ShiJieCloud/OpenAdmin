@@ -12,10 +12,16 @@ class Menu(BaseModel):
         {"comment": "菜单表(目录+页面)"},
     )
 
-    menu_name: Mapped[str] = mapped_column(
-        String(64),
+    name: Mapped[str] = mapped_column(
+        String(128),
         nullable=False,
-        comment="菜单名称"
+        unique=True,
+        comment="菜单唯一标识（程序使用：路由名/权限编码，全局不可重复）"
+    )
+    label: Mapped[str] = mapped_column(
+        String(128),
+        nullable=False,
+        comment="菜单展示名称（前端页面显示给用户看，可中文，允许重复）"
     )
     parent_id: Mapped[int] = mapped_column(
         BigInteger,
@@ -39,10 +45,15 @@ class Menu(BaseModel):
         nullable=True,
         comment="前端组件路径"
     )
-    menu_type: Mapped[int] = mapped_column(
+    type: Mapped[int] = mapped_column(
         TINYINT,
         nullable=False,
         comment="菜单类型：0=目录 1=页面"
+    )
+    desc: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="菜单说明"
     )
     icon: Mapped[str] = mapped_column(
         String(128),
