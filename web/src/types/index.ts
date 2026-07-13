@@ -1,3 +1,5 @@
 export * from './common/api'
 export * from './modules/auth'
 export * from './modules/menu'
+export * from './modules/role'
+export * from './modules/permission'

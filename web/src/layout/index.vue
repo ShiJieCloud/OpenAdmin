@@ -43,7 +43,7 @@ onMounted(() => {
       />
     </div>
 
-    <div class="layout-main flex-1">
+    <div class="layout-main">
       <MainContent />
     </div>
 

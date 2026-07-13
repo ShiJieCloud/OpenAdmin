@@ -190,7 +190,5 @@ const handleReset = () => {
 </template>
 
 <style scoped>
-.settings-drawer:deep(.el-drawer__header) {
-    margin-bottom: 0 !important;
-}
+
 </style>

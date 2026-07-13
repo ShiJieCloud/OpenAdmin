@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { IRoleInfo, RoleCreateRequest, RoleUpdateRequest, RoleUpdateStatusRequest, IRoleListQueryParam, IPageResult, IRoleAssignPermsRequest, IRolePermission } from '@/types'
+import type { IRoleInfo, RoleCreateRequest, RoleUpdateRequest, IRoleListQueryParam, IPageResult, IRoleAssignPermsRequest, IPermissionInfo } from '@/types'
 
 export const getRoleInfo = (role_id: number): Promise<IRoleInfo> => {
   return request.get(`/role/${role_id}`)
@@ -26,6 +26,6 @@ export const assignRolePermissions = (role_id: number, req: IRoleAssignPermsRequ
   return request.post(`/role/${role_id}/permissions`, req)
 }
 
-export const getRolePermissions = (role_id: number): Promise<IRolePermission[]> => {
+export const getRolePermissions = (role_id: number): Promise<IPermissionInfo[]> => {
   return request.get(`/role/${role_id}/permissions`)
 }

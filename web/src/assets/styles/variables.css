@@ -15,5 +15,8 @@
   --transition-all: all 0.3s ease;
 
   --font-family: '';
-  
+
+  --el-card-border-radius: 16px;
+
+  --page-gap: 8px;
 }
