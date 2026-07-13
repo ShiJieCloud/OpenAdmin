@@ -40,6 +40,26 @@ class RoleListQueryRequest(BaseModel):
     status: int | None = Field(None, description="状态：0=启用 1=禁用", ge=0, le=1)
 
 
+class RoleAssignPermsRequest(BaseModel):
+    """给角色分配权限请求"""
+
+    perm_ids: list[int] = Field(..., description="权限ID列表", example=[1, 2, 3])
+
+
+class RolePermissionInfoResponse(BaseModel):
+    """角色关联的权限信息响应"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int = Field(..., description="权限ID")
+    menu_id: int = Field(..., description="所属菜单ID")
+    name: str = Field(..., description="权限名称")
+    code: str = Field(..., description="权限标识")
+    type: int = Field(..., description="权限类型：0=按钮 1=接口")
+    description: str | None = Field(None, description="权限描述")
+    sort: int = Field(..., description="排序")
+
+
 class RoleInfoResponse(BaseModel):
     """角色信息响应"""
 

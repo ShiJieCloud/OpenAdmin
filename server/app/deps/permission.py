@@ -56,7 +56,7 @@ async def get_current_user_perms(
     perms = await perm_service.get_perms_by_role_codes(role_codes)
 
     # 3. 提取权限码并返回
-    return {p.perm_code for p in perms}
+    return {p.code for p in perms}
 
 
 class PermChecker:

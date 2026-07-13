@@ -144,3 +144,37 @@ class RoleService(BaseService):
             tuple[list[Role], int, int, int]: (角色列表, 总条数, 总页数, 当前页)
         """
         return await self.role_crud.get_role_list(query)
+
+    async def assign_permissions(self, role_id: int, perm_ids: list[int]) -> None:
+        """分配角色权限
+
+        Args:
+            role_id: 角色ID
+            perm_ids: 权限ID列表
+
+        Raises:
+            BusinessError: 角色不存在
+        """
+        role = await self.role_crud.get_role(role_id)
+        if not role:
+            raise BusinessError(RespCodeEnum.ROLE_NOT_EXIST)
+
+        await self.role_crud.assign_permissions(role_id, perm_ids)
+
+    async def get_role_permissions(self, role_id: int) -> list:
+        """获取角色关联的权限列表
+
+        Args:
+            role_id: 角色ID
+
+        Returns:
+            list[Permission]: 权限对象列表
+
+        Raises:
+            BusinessError: 角色不存在
+        """
+        role = await self.role_crud.get_role(role_id)
+        if not role:
+            raise BusinessError(RespCodeEnum.ROLE_NOT_EXIST)
+
+        return await self.role_crud.get_role_permissions(role_id)

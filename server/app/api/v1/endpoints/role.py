@@ -5,7 +5,7 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_role_service
 from app.schemas.base.response import ApiResponse, PaginationResponse
-from app.schemas.role import RoleInfoResponse, RoleCreateRequest, RoleUpdateRequest, RoleUpdateStatusRequest, RoleListQueryRequest
+from app.schemas.role import RoleInfoResponse, RoleCreateRequest, RoleUpdateRequest, RoleUpdateStatusRequest, RoleListQueryRequest, RoleAssignPermsRequest, RolePermissionInfoResponse
 from app.services import RoleService
 
 router = APIRouter()
@@ -168,3 +168,56 @@ async def update_role_status(
     role = await role_service.update_role_status(req)
     role_info = RoleInfoResponse.model_validate(role)
     return ResponseBuilder.success(role_info)
+
+
+@router.post(
+    "/{role_id}/permissions",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.Role.UPDATE))],
+    summary="分配角色权限",
+    description="给指定角色分配权限（需要具备角色编辑权限）"
+)
+async def assign_role_permissions(
+    role_id: int = Path(..., description="角色ID", ge=1, examples=[1]),
+    req: RoleAssignPermsRequest = Body(..., description="权限ID列表"),
+    role_service: RoleService = Depends(get_role_service)
+):
+    """
+    分配角色权限
+
+    全量覆盖指定角色的权限列表。
+    接口需要用户登录并拥有角色编辑权限方可访问。
+
+    :param role_id: 目标角色的唯一标识ID
+    :param req: 权限ID列表
+    :return: 无返回数据
+    :raises BusinessError: 角色不存在
+    """
+    await role_service.assign_permissions(role_id, req.perm_ids)
+    return ResponseBuilder.success(message="分配成功")
+
+
+@router.get(
+    "/{role_id}/permissions",
+    response_model=ApiResponse[list[RolePermissionInfoResponse]],
+    dependencies=[Depends(has_perm(PermCode.Role.READ))],
+    summary="获取角色权限列表",
+    description="获取指定角色关联的权限列表（需要具备角色查看权限）"
+)
+async def get_role_permissions(
+    role_id: int = Path(..., description="角色ID", ge=1, examples=[1]),
+    role_service: RoleService = Depends(get_role_service)
+):
+    """
+    获取角色权限列表
+
+    查询指定角色关联的所有权限对象。
+    接口需要用户登录并拥有角色查看权限方可访问。
+
+    :param role_id: 目标角色的唯一标识ID
+    :return: 返回权限对象列表
+    :raises BusinessError: 角色不存在
+    """
+    permissions = await role_service.get_role_permissions(role_id)
+    perm_list = [RolePermissionInfoResponse.model_validate(perm) for perm in permissions]
+    return ResponseBuilder.success(perm_list)

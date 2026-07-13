@@ -11,6 +11,10 @@ class PermissionService(BaseService):
         super().__init__(db_session)
         self.permission_crud = PermissionCRUD(db_session)
 
+    async def get_all_permissions(self) -> list[Permission]:
+        """获取所有权限列表"""
+        return await self.permission_crud.get_all_permissions()
+
     async def get_perms_by_role_codes(
         self,
         role_codes: list[str],

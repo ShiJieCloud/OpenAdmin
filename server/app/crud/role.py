@@ -2,7 +2,7 @@ from math import ceil
 from sqlalchemy import select, func, update, delete
 
 from app.crud.base import BaseCRUD
-from app.models import Role, UserRole, PostRole
+from app.models import Role, UserRole, PostRole, RolePermission
 from app.schemas.role import RoleListQueryRequest
 
 
@@ -160,3 +160,40 @@ class RoleCRUD(BaseCRUD):
         roles = list_result.scalars().all()
 
         return roles, total, pages, query.page_num
+
+    async def assign_permissions(self, role_id: int, perm_ids: list[int]) -> None:
+        """分配角色权限
+
+        全量覆盖指定角色的权限列表。
+
+        Args:
+            role_id: 角色ID
+            perm_ids: 权限ID列表
+        """
+        stmt = delete(RolePermission).where(RolePermission.role_id == role_id)
+        await self.db_session.execute(stmt)
+
+        if perm_ids:
+            objs = [RolePermission(role_id=role_id, perm_id=pid) for pid in perm_ids]
+            self.db_session.add_all(objs)
+
+        await self.db_session.flush()
+
+    async def get_role_permissions(self, role_id: int) -> list:
+        """获取角色关联的权限列表
+
+        Args:
+            role_id: 角色ID
+
+        Returns:
+            list[Permission]: 权限对象列表
+        """
+        from app.models import Permission
+        stmt = (
+            select(Permission)
+            .join(RolePermission, RolePermission.perm_id == Permission.id)
+            .where(RolePermission.role_id == role_id)
+            .order_by(Permission.sort.asc())
+        )
+        result = await self.db_session.execute(stmt)
+        return list(result.scalars().all())

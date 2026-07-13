@@ -50,7 +50,7 @@ class Menu(BaseModel):
         nullable=False,
         comment="菜单类型：0=目录 1=页面"
     )
-    desc: Mapped[str | None] = mapped_column(
+    description: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
         comment="菜单说明"

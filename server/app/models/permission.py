@@ -17,21 +17,26 @@ class Permission(BaseModel):
         nullable=False,
         comment="所属菜单ID"
     )
-    perm_name: Mapped[str] = mapped_column(
+    name: Mapped[str] = mapped_column(
         String(64),
         nullable=False,
         comment="权限名称"
     )
-    perm_code: Mapped[str] = mapped_column(
+    code: Mapped[str] = mapped_column(
         String(128),
         nullable=False,
         unique=True,
         comment="权限标识"
     )
-    perm_type: Mapped[int] = mapped_column(
+    type: Mapped[int] = mapped_column(
         TINYINT,
         default=0,
         comment="权限类型：0=按钮 1=接口"
+    )
+    description: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="权限描述"
     )
     sort: Mapped[int] = mapped_column(
         Integer,

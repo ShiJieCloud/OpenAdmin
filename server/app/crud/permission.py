@@ -8,6 +8,12 @@ from app.models import Permission, Role, RolePermission
 class PermissionCRUD(BaseCRUD):
     """权限 CRUD 操作类"""
 
+    async def get_all_permissions(self) -> list[Permission]:
+        """获取所有权限列表（按 sort 升序）"""
+        stmt = select(Permission).order_by(Permission.sort.asc())
+        result = await self.db_session.execute(stmt)
+        return result.scalars().all()
+
     async def get_perms_by_role_codes(
         self,
         role_codes: list[str],
@@ -26,7 +32,7 @@ class PermissionCRUD(BaseCRUD):
 
         conditions = [Role.role_code.in_(role_codes)]
         if perm_type is not None:
-            conditions.append(Permission.perm_type == perm_type)
+            conditions.append(Permission.type == perm_type)
 
         stmt = (
             select(Permission)
