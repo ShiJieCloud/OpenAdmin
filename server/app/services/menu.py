@@ -123,6 +123,26 @@ class MenuService(BaseService):
         """
         return await self.menu_crud.get_menus()
 
+    async def get_user_menu_list(self, role_codes: list[str], is_superuser: bool = False) -> list[Menu]:
+        """获取当前用户的权限菜单列表（扁平结构）
+
+        Args:
+            role_codes: 用户的角色编码列表
+            is_superuser: 是否超级管理员
+
+        Returns:
+            list[Menu]: 用户的权限菜单列表
+        """
+        if is_superuser:
+            return await self.menu_crud.get_menus()
+
+        user_menus = await self.menu_crud.get_menus_by_role_codes(role_codes)
+        if not user_menus:
+            return []
+
+        menu_ids = [m.id for m in user_menus]
+        return await self.menu_crud.get_menus_with_parents(menu_ids)
+
     async def get_user_menu_tree(self, role_codes: list[str], is_superuser: bool = False) -> List[MenuTreeResponse]:
         """获取当前用户的权限菜单树（用于前端侧边栏）
 

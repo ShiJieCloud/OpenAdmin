@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator, field_serializer, SerializationInfo
 
 
 class LoginLogListQueryRequest(BaseModel):
@@ -9,10 +9,22 @@ class LoginLogListQueryRequest(BaseModel):
     page_size: int = Field(10, description="每页条数", ge=1, le=100, example=10)
     user_id: int | None = Field(None, description="用户ID", ge=1)
     username: str | None = Field(None, description="登录账号（模糊查询）", max_length=64)
+    response_code: str | None = Field(None, description="响应码（精确匹配）", max_length=32)
     client_ip: str | None = Field(None, description="登录IP（模糊查询）", max_length=50)
+    os: str | None = Field(None, description="操作系统（模糊查询）", max_length=30)
+    browser: str | None = Field(None, description="浏览器（模糊查询）", max_length=100)
+    ip_country: str | None = Field(None, description="国家（模糊查询）", max_length=32)
+    ip_province: str | None = Field(None, description="省份（模糊查询）", max_length=32)
+    ip_city: str | None = Field(None, description="城市（模糊查询）", max_length=32)
     start_time: datetime | None = Field(None, description="开始时间")
     end_time: datetime | None = Field(None, description="结束时间")
 
+    @field_validator("start_time", "end_time", mode="before")
+    def empty_str_to_none(cls, v):
+        # 空字符串直接返回None，跳过日期解析
+        if v in ("", None):
+            return None
+        return v
 
 class LoginLogCreateRequest(BaseModel):
     """登录日志创建请求"""
@@ -50,3 +62,9 @@ class LoginLogResponse(BaseModel):
     browser: str | None = Field(None, description="浏览器")
     user_agent: str | None = Field(None, description="客户端标识")
     create_time: datetime = Field(..., description="创建时间")
+
+    @field_serializer("create_time")
+    def format_datetime(dt: datetime | None, _info: SerializationInfo):
+        if dt is None:
+            return None
+        return dt.strftime("%Y-%m-%d %H:%M:%S")

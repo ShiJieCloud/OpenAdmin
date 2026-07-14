@@ -25,8 +25,26 @@ class LoginLogCRUD(BaseCRUD):
         if query.username:
             conditions.append(LoginLog.username.like(f"%{query.username}%"))
         
+        if query.response_code:
+            conditions.append(LoginLog.response_code == query.response_code)
+        
         if query.client_ip:
             conditions.append(LoginLog.client_ip.like(f"%{query.client_ip}%"))
+        
+        if query.os:
+            conditions.append(LoginLog.os.like(f"%{query.os}%"))
+        
+        if query.browser:
+            conditions.append(LoginLog.browser.like(f"%{query.browser}%"))
+        
+        if query.ip_country:
+            conditions.append(LoginLog.ip_country.like(f"%{query.ip_country}%"))
+        
+        if query.ip_province:
+            conditions.append(LoginLog.ip_province.like(f"%{query.ip_province}%"))
+        
+        if query.ip_city:
+            conditions.append(LoginLog.ip_city.like(f"%{query.ip_city}%"))
         
         if query.start_time:
             conditions.append(LoginLog.create_time >= query.start_time)

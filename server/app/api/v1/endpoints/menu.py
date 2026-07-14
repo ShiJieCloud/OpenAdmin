@@ -119,26 +119,28 @@ async def get_all_menu_tree(
 
 
 @router.get(
-    "/tree/user",
-    response_model=ApiResponse[list[MenuTreeResponse]],
-    summary="获取当前用户的权限菜单树",
-    description="获取当前登录用户的权限菜单树（前端侧边栏使用）"
+    "/list/user",
+    dependencies=[Depends(has_perm(PermCode.Menu.READ))],
+    response_model=ApiResponse[list[MenuResponse]],
+    summary="获取当前用户的权限菜单列表",
+    description="获取当前登录用户的权限菜单列表（扁平结构）"
 )
-async def get_user_menu_tree(
+async def get_user_menu_list(
     current_user: User = Depends(get_current_active_user),
     menu_service: MenuService = Depends(get_menu_service),
     user_service: UserService = Depends(get_user_service),
     post_service: PostService = Depends(get_post_service),
 ):
     """
-    获取当前用户权限菜单树
+    获取当前用户权限菜单列表
     - 超级管理员：返回全部菜单
     - 普通用户：根据角色自动获取权限菜单（自动补全父级目录）
     """
     # 超级管理员直接返回全量菜单
     if current_user.is_superuser:
-        menu_tree = await menu_service.get_user_menu_tree([], is_superuser=True)
-        return ResponseBuilder.success(data=menu_tree)
+        menus = await menu_service.get_user_menu_list([], is_superuser=True)
+        menu_list = [MenuResponse.model_validate(m) for m in menus]
+        return ResponseBuilder.success(data=menu_list)
 
     # 1. 获取用户角色 + 岗位角色
     user_roles = await user_service.get_user_roles(current_user.id)
@@ -151,11 +153,12 @@ async def get_user_menu_tree(
 
     # 2. 提取角色编码
     role_codes = [role.role_code for role in all_roles]
-    
-    # 3. 直接获取菜单树
-    menu_tree = await menu_service.get_user_menu_tree(role_codes, is_superuser=False)
 
-    return ResponseBuilder.success(data=menu_tree)
+    # 3. 获取菜单列表
+    menus = await menu_service.get_user_menu_list(role_codes, is_superuser=False)
+    menu_list = [MenuResponse.model_validate(m) for m in menus]
+
+    return ResponseBuilder.success(data=menu_list)
 
 @router.get(
     "/{menu_id}",
