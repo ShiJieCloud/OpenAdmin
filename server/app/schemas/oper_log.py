@@ -1,6 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Any, Dict
+from pydantic import BaseModel, Field, ConfigDict, field_validator, field_serializer, SerializationInfo
 
 
 class OperLogCreateRequest(BaseModel):
@@ -31,7 +30,7 @@ class OperLogListQueryRequest(BaseModel):
     page_num: int = Field(1, description="当前页码", ge=1, example=1)
     page_size: int = Field(10, description="每页条数", ge=1, le=100, example=100)
     trace_id: str | None = Field(None, description="分布式链路追踪ID", max_length=64)
-    request_method: str | None = Field(None, description="HTTP请求方法", max_length=16)
+    request_method: list[str] | None = Field(None, description="HTTP请求方法列表")
     api_path: str | None = Field(None, description="API接口路径（模糊查询）", max_length=255)
     api_name: str | None = Field(None, description="API接口名称（模糊查询）", max_length=128)
     module: str | None = Field(None, description="所属业务模块", max_length=64)
@@ -40,6 +39,13 @@ class OperLogListQueryRequest(BaseModel):
     response_code: str | None = Field(None, description="响应码", max_length=32)
     start_time: datetime | None = Field(None, description="开始时间")
     end_time: datetime | None = Field(None, description="结束时间")
+
+    @field_validator("start_time", "end_time", mode="before")
+    def empty_str_to_none(cls, v):
+        # 空字符串直接返回None，跳过日期解析
+        if v in ("", None):
+            return None
+        return v
 
 
 class OperLogResponse(BaseModel):
@@ -61,6 +67,13 @@ class OperLogResponse(BaseModel):
     ip_location: str | None = Field(None, description="IP归属地")
     response_code: str | None = Field(None, description="响应码")
     response_msg: str | None = Field(None, description="响应信息/错误描述")
+    request_body: dict | list | None = Field(None, description="请求数据/完整请求内容")
     response_data: dict | list | None = Field(None, description="响应数据/完整响应内容")
     cost_time: int = Field(..., description="请求耗时（毫秒）")
     create_time: datetime = Field(..., description="创建时间")
+
+    @field_serializer("create_time")
+    def format_datetime(dt: datetime | None, _info: SerializationInfo):
+        if dt is None:
+            return None
+        return dt.strftime("%Y-%m-%d %H:%M:%S")

@@ -34,7 +34,7 @@ class OperLogCRUD(BaseCRUD):
         :param page_num: 当前页码
         :param page_size: 每页条数
         :param trace_id: 链路追踪ID（精确匹配）
-        :param request_method: HTTP请求方法（精确匹配）
+        :param request_method: HTTP请求方法列表（IN查询）
         :param api_path: API接口路径（模糊查询）
         :param api_name: API接口名称（模糊查询）
         :param module: 业务模块（精确匹配）
@@ -50,11 +50,13 @@ class OperLogCRUD(BaseCRUD):
         if oper_log.trace_id:
             conditions.append(OperLog.trace_id == oper_log.trace_id)
 
+        print('request_method', oper_log.request_method)
+
         if oper_log.request_method:
-            conditions.append(OperLog.request_method == oper_log.request_method)
+            conditions.append(OperLog.request_method.in_(oper_log.request_method))
 
         if oper_log.api_path:
-            conditions.append(OperLog.api_path.like(f"%{_path}%"))
+            conditions.append(OperLog.api_path.like(f"%{oper_log.api_path}%"))
 
         if oper_log.api_name:
             conditions.append(OperLog.api_name.like(f"%{oper_log.api_name}%"))

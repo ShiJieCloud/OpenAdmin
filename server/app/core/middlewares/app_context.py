@@ -56,8 +56,8 @@ class AppContextMiddleware(BaseHTTPMiddleware):
             # 4. 执行核心请求处理，获取响应
             response: Response = await call_next(request)
 
-            # 5. 过滤 GET 请求
-            if request.method == "GET":
+            # 5. 过滤 GET 和 OPTIONS 请求
+            if request.method in ["GET", "OPTIONS"]:
                 return response
 
             # 6. 计算请求耗时（毫秒）
@@ -184,7 +184,7 @@ class AppContextMiddleware(BaseHTTPMiddleware):
                 service = OperLogService(db_session)
                 log_data = OperLogCreateRequest(
                     trace_id=AppContext.get_trace_id(),
-                    operator_id=AppContext.get_current_user_id(),
+                    operator_id=str(AppContext.get_current_user_id()),
                     **api_metadata,
                     **ip_location_info.model_dump(),
                     cost_time=cost_time,
