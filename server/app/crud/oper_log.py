@@ -50,8 +50,6 @@ class OperLogCRUD(BaseCRUD):
         if oper_log.trace_id:
             conditions.append(OperLog.trace_id == oper_log.trace_id)
 
-        print('request_method', oper_log.request_method)
-
         if oper_log.request_method:
             conditions.append(OperLog.request_method.in_(oper_log.request_method))
 
