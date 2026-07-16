@@ -119,7 +119,7 @@ async def get_all_menu_tree(
 
 
 @router.get(
-    "/list/user",
+    "/current/list",
     dependencies=[Depends(has_perm(PermCode.Menu.READ))],
     response_model=ApiResponse[list[MenuResponse]],
     summary="获取当前用户的权限菜单列表",
