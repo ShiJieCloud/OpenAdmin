@@ -48,10 +48,42 @@ export const THEME_MODE_LABEL: Record<ThemeMode, string> = {
   [THEME_MODE.Gray]: '灰度模式'
 }
 
+export const CODE_THEME_MODE = {
+  'github-light':'github-light',
+  'github-dark':'github-dark',
+  'solarized-light':'solarized-light',
+  'houston':'houston',
+} as const
+
+// 自动生成联合类型
+export type CodeThemeMode = typeof CODE_THEME_MODE[keyof typeof CODE_THEME_MODE]
+
+export const CODE_THEME_LABEL = {
+  '跟随系统':'system',
+  'github-light':'github-light',
+  'github-dark':'github-dark',
+  'solarized-light':'solarized-light',
+  'houston':'houston',
+} as const
+
+export type CodeThemeLabel = typeof CODE_THEME_LABEL[keyof typeof CODE_THEME_LABEL]
+
+export const CODE_LANGS = [
+  'javascript',
+  'typescript',
+  'vue',
+  'json',
+  'html',
+  'css',
+] as const
+
+export type CodeLang = typeof CODE_LANGS[number]
+
 export interface ThemeConfig {
   primaryColor: string
   themeMode: ThemeMode
   showBreadcrumb: boolean
   showSettingsPanel: boolean
   fontType: FontType
+  codeTheme: CodeThemeMode
 }

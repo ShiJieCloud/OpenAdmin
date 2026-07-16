@@ -56,8 +56,8 @@ class AppContextMiddleware(BaseHTTPMiddleware):
             # 4. 执行核心请求处理，获取响应
             response: Response = await call_next(request)
 
-            # 5. 过滤 GET 和 OPTIONS 请求
-            if request.method in ["GET", "OPTIONS"]:
+            # 5. 过滤 GET 和 OPTIONS 请求 （排除列表接口）
+            if request.method in ["GET", "OPTIONS"] and not api_path.endswith("/list"):
                 return response
 
             # 6. 计算请求耗时（毫秒）

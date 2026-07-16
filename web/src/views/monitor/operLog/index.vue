@@ -12,13 +12,16 @@
 -->
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useFullscreen } from '@vueuse/core'
 
 import type { IOperLogInfo, IOperLogListQueryParam } from '@/types'
 import type { IPageResult } from '@/types/common/api'
 
 import { getOperLogList } from '@/api/modules/operLog'
+
+import CodePreview from '@/components/common/CodePreview.vue'
+import { useThemeStore } from '@/store'
 
 // ===================== 1. 全局静态常量 =====================
 /** 分页每页条数可选项 */
@@ -76,6 +79,8 @@ const layoutPageRef = ref<HTMLElement | null>(null)
 
 /** 全屏状态及切换方法 */
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(layoutPageRef)
+
+const themeStore = useThemeStore()
 
 // ===================== 3. 接口请求方法 =====================
 /**
@@ -260,16 +265,10 @@ onMounted(() => fetchOperLogList())
                 </el-col>
                 <el-col :sm="12" :md="8" :lg="6">
                   <el-form-item label="请求方法">
-                    <el-select v-model="searchOperLogParams.request_method"
-                    multiple
-      collapse-tags
-      collapse-tags-tooltip placeholder="请选择请求方法" clearable>
-                      <el-option
-                        v-for="item in REQUEST_METHOD_OPTIONS"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                      />
+                    <el-select v-model="searchOperLogParams.request_method" multiple collapse-tags collapse-tags-tooltip
+                      placeholder="请选择请求方法" clearable>
+                      <el-option v-for="item in REQUEST_METHOD_OPTIONS" :key="item.value" :label="item.label"
+                        :value="item.value" />
                     </el-select>
                   </el-form-item>
                 </el-col>
@@ -388,11 +387,11 @@ onMounted(() => fetchOperLogList())
                   <el-descriptions-item label="IP归属地">
                     {{ row.ip_location || formatLocation(row) }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="请求数据">
-                    <code>{{ row.request_body || '-' }}</code>
+                  <el-descriptions-item label="请求数据" span="2">
+                    <CodePreview :key="themeStore.applyCodeTheme" :code="JSON.stringify(row.request_body, null, 2)" lang="json" :theme="themeStore.applyCodeTheme"/>
                   </el-descriptions-item>
-                  <el-descriptions-item label="响应数据">
-                    {{ row.response_data || '-' }}
+                  <el-descriptions-item label="响应数据" span="2">
+                    <CodePreview :key="themeStore.applyCodeTheme" :code="JSON.stringify(row.response_data, null, 2)" lang="json" :theme="themeStore.applyCodeTheme"/>
                   </el-descriptions-item>
                 </el-descriptions>
               </div>
@@ -424,7 +423,7 @@ onMounted(() => fetchOperLogList())
           </el-table-column>
 
           <!-- 客户端IP -->
-          <el-table-column prop="client_ip" label="客户端IP" width="100" />
+          <el-table-column prop="client_ip" label="客户端IP" width="100" align="center" />
 
           <!-- 请求耗时 -->
           <el-table-column label="请求耗时" width="100" align="center">
@@ -436,7 +435,7 @@ onMounted(() => fetchOperLogList())
           </el-table-column>
 
           <!-- 操作时间 -->
-          <el-table-column prop="create_time" label="操作时间" width="180" />
+          <el-table-column prop="create_time" label="操作时间" width="180" align="center" />
         </el-table>
 
         <div class="layout-pagination">

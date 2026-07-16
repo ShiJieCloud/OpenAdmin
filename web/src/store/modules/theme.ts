@@ -7,10 +7,10 @@
  * @remark 数据持久化pinia-plugin-persistedstate，刷新保留主题设置
  */
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { tint, shade, mix } from '@/utils/color'
-import type { ThemeMode, FontType, ThemeConfig } from '@/types/modules/theme'
-import { THEME_MODE, FONT_TYPE } from '@/types/modules/theme'
+import type { ThemeMode, FontType, ThemeConfig, CodeThemeMode, CodeThemeLabel } from '@/types/modules/theme'
+import { THEME_MODE, FONT_TYPE, CODE_THEME_MODE, CODE_THEME_LABEL } from '@/types/modules/theme'
 
 /**
  * @constant DEFAULT_THEME
@@ -21,7 +21,8 @@ const DEFAULT_THEME: ThemeConfig = {
   themeMode: THEME_MODE.Light,
   showBreadcrumb: true,
   showSettingsPanel: false,
-  fontType: FONT_TYPE.Default
+  fontType: FONT_TYPE.Default,
+  codeTheme: CODE_THEME_MODE['github-light'],
 }
 
 /**
@@ -111,6 +112,12 @@ export const useThemeStore = defineStore(
      * @desc 当前字体类型
      */
     const fontType = ref<FontType>(DEFAULT_THEME.fontType)
+
+    /**
+     * @var codeTheme
+     * @desc 代码高亮主题
+     */
+    const codeTheme = ref<CodeThemeLabel>(DEFAULT_THEME.codeTheme)
     // #endregion
 
     // #region Action
@@ -149,6 +156,23 @@ export const useThemeStore = defineStore(
     const setFontType = (type: FontType) => {
       fontType.value = type
     }
+
+    /**
+     * @method setCodeTheme
+     * @desc 设置代码高亮主题
+     * @param {CodeThemeMode} theme 代码高亮主题枚举值
+     */
+    const applyCodeTheme = computed((): CodeThemeMode => {
+
+      const SYSTEM_FLAG = CODE_THEME_LABEL['跟随系统']
+
+      // 1. 非跟随系统，直接映射
+      if (codeTheme.value !== SYSTEM_FLAG) {
+        return codeTheme.value as CodeThemeMode
+      }
+      // 2. 跟随系统：读取全局暗黑状态自动切换
+      return isDarkMode.value ? CODE_THEME_MODE['github-dark'] : CODE_THEME_MODE['github-light']
+    })
 
     /**
      * @method applyFont
@@ -264,11 +288,13 @@ export const useThemeStore = defineStore(
       switchSettingsPanel,
       isDarkMode,
       fontType,
+      codeTheme,
       // Action
       setPrimaryColor,
       setThemeMode,
       setSwitchBreadcrumb,
       setFontType,
+      applyCodeTheme,
       resetPrimaryColor,
       resetTheme,
       toggleSettingsPanel,

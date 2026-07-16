@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { LAYOUT, layoutList } from '@/types/modules/layout'
 import { useLayoutStore, useThemeStore } from '@/store'
-import { FONT_LABEL } from '@/types/modules/theme'
+import { FONT_LABEL, CODE_THEME_LABEL } from '@/types/modules/theme'
 
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
@@ -150,6 +150,16 @@ const handleReset = () => {
                         <div class="flex items-center justify-between">
                             <p class="text-sm var(--el-text-color-regular)">主题色</p>
                             <ElColorPicker v-model="themeStore.primaryColor" class="w-[160px]" />
+                        </div>
+
+                        <!-- 代码高亮主题：左右布局 -->
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm var(--el-text-color-regular)">代码高亮主题</p>
+                            <div class="w-40">
+                                <ElSelect v-model="themeStore.codeTheme" placeholder="请选择代码高亮主题">
+                                    <ElOption v-for="[label, value] in Object.entries(CODE_THEME_LABEL)" :label="label" :key="value" :value="value" />
+                                </ElSelect>
+                            </div>
                         </div>
 
                     </div>
