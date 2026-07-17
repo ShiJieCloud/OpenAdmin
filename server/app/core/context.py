@@ -3,6 +3,8 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, Field
 
+from app.schemas.common import UserAgentInfo, IPLocationInfo
+
 
 class ContextData(BaseModel):
     """
@@ -16,6 +18,8 @@ class ContextData(BaseModel):
     client_ip: str | None = Field(default=None, description="客户端IP地址")
     request_method: str | None = Field(default=None, description="请求方法")
     request_path: str | None = Field(default=None, description="请求路径")
+    user_agent_info: UserAgentInfo | None = Field(default=None, description="用户代理信息")
+    ip_location_info: dict | None = Field(default=None, description="IP定位信息")
 
 
 class AppContext:
@@ -119,6 +123,48 @@ class AppContext:
         ctx = cls._get_context()
         ctx.client_ip = client_ip
         cls._context_var.set(ctx)
+    
+    @classmethod
+    def set_user_agent_info(cls, user_agent_info: UserAgentInfo | None) -> None:
+        """设置用户代理信息
+        
+        Args:
+            user_agent_info: 用户代理信息
+        """
+        ctx = cls._get_context()
+        ctx.user_agent_info = user_agent_info or UserAgentInfo()
+        cls._context_var.set(ctx)
+
+    @classmethod
+    def set_ip_location_info(cls, ip_location_info: IPLocationInfo | None) -> None:
+        """设置IP定位信息
+        
+        Args:
+            ip_location_info: IP定位信息
+        """
+        ctx = cls._get_context()
+        ctx.ip_location_info = ip_location_info or IPLocationInfo()
+        cls._context_var.set(ctx)
+    
+    @classmethod
+    def get_ip_location_info(cls) -> IPLocationInfo | None:
+        """获取IP定位信息
+        
+        Returns:
+            IP定位信息
+        """
+        ctx = cls._get_context()
+        return ctx.ip_location_info or IPLocationInfo()
+    
+    @classmethod
+    def get_user_agent_info(cls) -> UserAgentInfo:
+        """获取用户代理信息
+        
+        Returns:
+            用户代理信息
+        """
+        ctx = cls._get_context()
+        return ctx.user_agent_info or UserAgentInfo()
     
     @classmethod
     def get_client_ip(cls) -> str | None:

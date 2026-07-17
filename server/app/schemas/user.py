@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_serializer, SerializationInfo, computed_field
 
 
 class UserRoleAssignRequest(BaseModel):
@@ -88,3 +88,42 @@ class UserInfoResponse(BaseModel):
     last_login_ip: str | None = Field(None, description="最后登录IP")
     last_login_date: datetime | None = Field(None, description="最后登录时间")
     create_time: datetime = Field(..., description="创建时间")
+
+class OnlineUserQueryRequest(BaseModel):
+    """在线用户列表查询请求"""
+
+    page_num: int = Field(1, description="当前页码", ge=1, example=1)
+    page_size: int = Field(10, description="每页条数", ge=1, le=100, example=10)
+
+class OnlineUserInfoResponse(BaseModel):
+    """在线用户列表响应"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int = Field(..., description="用户ID")
+    username: str = Field(..., description="登录账号")
+    nickname: str | None = Field(None, description="用户昵称/姓名")
+    avatar: str | None = Field(None, description="头像URL")
+    login_ip: str | None = Field(None, description="登录IP地址")
+    login_address: str | None = Field(None, description="登录地址")
+    login_time: datetime | None = Field(None, description="登录时间")
+    login_device: str | None = Field(None, description="登录设备")
+
+    @field_serializer("login_time")
+    def format_datetime(dt: datetime | None, _info: SerializationInfo):
+        if dt is None:
+            return None
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    
+    @computed_field(return_type=str | None)
+    @property
+    def online_duration(self) -> str | None:
+        """根据登录时间自动格式化在线时长，由Schema自行派生，业务层无需处理"""
+        if not self.login_time:
+            return None
+        delta = datetime.now() - self.login_time
+        if delta.days > 0:
+            return f"{delta.days} 天 {delta.seconds // 3600} 小时"
+        elif delta.seconds >= 3600:
+            return f"{delta.seconds // 3600} 小时 {delta.seconds % 3600} 分钟"
+        return f"{delta.seconds // 60} 分钟"

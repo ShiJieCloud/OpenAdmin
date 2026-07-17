@@ -51,7 +51,7 @@ async def logout(
     user_service: UserService = Depends(get_user_service)
 ):
     """退出登录"""
-    await user_service.logout(user.id)
+    await user_service.clean_user_online_session(user.id)
     return ResponseBuilder.success(message="退出登录成功")
 
 

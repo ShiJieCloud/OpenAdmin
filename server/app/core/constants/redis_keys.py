@@ -11,6 +11,8 @@ class RedisKey:
     REFRESH_TOKEN_PREFIX = "refresh_token"
     ACCOUNT_LOCK_PREFIX = "account_lock"
     CAPTCHA_PREFIX = "captcha"
+    ONLINE_USER_PREFIX = "online_user"
+    ONLINE_USER_ZSET_PREFIX = "online_user_zset"
 
 class RedisKeyTemplate:
     """
@@ -32,3 +34,13 @@ class RedisKeyTemplate:
     def captcha(captcha_id: str) -> str:
         """验证码缓存键（值：验证码字符串）"""
         return f"{RedisKey.PREFIX}:{RedisKey.CAPTCHA_PREFIX}:{captcha_id}"
+
+    @staticmethod
+    def online_user(user_id: int) -> str:
+        """在线用户缓存键（值：用户信息 JSON 字符串）"""
+        return f"{RedisKey.PREFIX}:{RedisKey.ONLINE_USER_PREFIX}:{user_id}"
+
+    @staticmethod
+    def online_user_zset() -> str:
+        """在线用户 ZSET 缓存键（值：用户ID 列表）"""
+        return f"{RedisKey.PREFIX}:{RedisKey.ONLINE_USER_ZSET_PREFIX}"

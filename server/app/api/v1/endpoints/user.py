@@ -1,11 +1,25 @@
-from fastapi import APIRouter, Depends, Path, Body
+from fastapi import APIRouter, Depends, Path, Body, Query
 
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_user_service
 from app.schemas.base.response import ApiResponse, PaginationResponse
-from app.schemas.user import UserInfoResponse, UserCreateRequest, UserResetPasswordRequest, UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest, UserRoleAssignRequest
+from app.schemas.user import (
+    # 查询入参
+    OnlineUserQueryRequest,
+    UserListQueryRequest,
+    # 新增/编辑/状态修改
+    UserCreateRequest,
+    UserUpdateRequest,
+    UserUpdateStatusRequest,
+    UserResetPasswordRequest,
+    # 分配角色
+    UserRoleAssignRequest,
+    # 响应实体
+    UserInfoResponse,
+    OnlineUserInfoResponse,
+)
 from app.services import UserService
 
 router = APIRouter()
@@ -206,3 +220,55 @@ async def assign_user_roles(
     """
     role_ids = await user_service.assign_roles_to_user(req.user_id, req.role_ids)
     return ResponseBuilder.success(role_ids)
+
+@router.get(
+    "/online/list",
+    response_model=PaginationResponse[OnlineUserInfoResponse],
+    dependencies=[Depends(has_perm(PermCode.User.VIEW))],
+    summary="获取在线用户列表",
+    description="获取所有在线用户的列表（需要具备用户查看权限）"
+)
+async def get_online_user_list(
+    query: OnlineUserQueryRequest = Query(..., description="查询条件"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    获取在线用户列表
+    
+    接口需要用户登录并拥有用户查看权限方可访问。
+    
+    :return: 返回所有在线用户的列表
+    """
+    users, total = await user_service.get_online_user_list(query)
+    return ResponseBuilder.pagination(users, total, query.page_num, query.page_size)
+
+@router.get(
+    "/online/kick/{user_id}",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.User.UPDATE))],
+    summary="踢出用户下线",
+    description="踢出指定用户下线（需要具备用户管理权限）"
+)
+async def kick_user_offline(
+    user_id: int = Path(..., description="用户ID", ge=1, examples=[1001]),
+    user_service: UserService = Depends(get_user_service)
+):
+    """强制指定用户下线，销毁全部登录会话与在线缓存
+
+    权限要求：执行该接口需要【用户管理】操作权限。
+    不可逆操作：操作后用户当前所有登录会话立即失效，无法恢复。
+
+    Args:
+        user_id: 需要强制下线的用户唯一ID
+
+    Warning:
+        操作会清理三处Redis缓存：
+        1. 删除用户 refresh_token 凭证，禁止续期登录；
+        2. 删除 `online_user:{user_id}` 在线会话Hash；
+        3. 从在线用户ZSet移除该用户索引，在线列表不再展示。
+
+    Since:
+        1.0.0
+    """
+    await user_service.clean_user_online_session(user_id)
+    return ResponseBuilder.success(message="用户已强制下线")

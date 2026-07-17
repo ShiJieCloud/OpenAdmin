@@ -72,21 +72,26 @@ class AppContextMiddleware(BaseHTTPMiddleware):
             # 8. 收集响应信息（状态码、消息、数据） 
             response_info = await self._collect_response_info(response)
 
-            # 9. 收集 IP 归属地信息
-            ip_location_info = HttpUtils.get_ip_location(AppContext.get_client_ip())
-            logger.debug(f"收集 IP 归属地信息完成，ip_location_info={ip_location_info.model_dump()}")
-
-            # 10. 记录日志（登录日志/操作日志）
+            # 9. 记录日志（登录日志/操作日志）
             if LOGIN_PATH in api_path:
                 # 登录接口 → 记录登录日志
                 logger.debug(f"登录接口，记录登录日志")
-                user_agent_info = HttpUtils.get_user_agent_info(request)
-                await self._record_login_log(response_info, user_agent_info, ip_location_info)
+                await self._record_login_log(
+                    response_info, 
+                    AppContext.get_user_agent_info(), 
+                    AppContext.get_ip_location_info()
+                )
             elif AUTH_PREFIX not in api_path:
                 # 非 auth 接口 → 记录操作日志
                 logger.debug(f"业务接口，记录操作日志")
                 api_metadata = self._get_api_metadata(request)
-                await self._record_oper_log(api_metadata, ip_location_info, cost_time, request_params, response_info)
+                await self._record_oper_log(
+                    api_metadata, 
+                    AppContext.get_ip_location_info(),
+                    cost_time, 
+                    request_params, 
+                    response_info
+                )
 
             logger.info(f"请求处理完成，耗时: {cost_time}ms")
             return response
@@ -99,6 +104,9 @@ class AppContextMiddleware(BaseHTTPMiddleware):
         AppContext.set_client_ip(HttpUtils.get_client_ip(request))
         AppContext.set_request_method(request.method)
         AppContext.set_request_path(request.url.path)
+        AppContext.set_user_agent_info(HttpUtils.get_user_agent_info(request))
+        AppContext.set_ip_location_info(HttpUtils.get_ip_location(AppContext.get_client_ip()))
+        
         logger.info("请求上下文初始化完成")
 
     async def _collect_response_info(self, response: Response) -> dict[str, Any]:

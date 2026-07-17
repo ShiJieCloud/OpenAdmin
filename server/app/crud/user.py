@@ -207,17 +207,18 @@ class UserCRUD(BaseCRUD):
         await self.db_session.execute(stmt)
         await self.db_session.flush()
 
-    async def update_login_time(self, user_id: int) -> None:
+    async def update_login_time(self, user_id: int, login_date: datetime) -> None:
         """
         更新用户登录时间
 
         :param user_id: 用户 ID
+        :param login_date: 登录时间
         :return: None
         """
         stmt = (
             update(User)
             .where(User.id == user_id)
-            .values(last_login_date=datetime.now())
+            .values(last_login_date=login_date)
         )
         await self.db_session.execute(stmt)
         await self.db_session.flush()
@@ -316,3 +317,16 @@ class UserCRUD(BaseCRUD):
             )
         )
         await self.db_session.execute(delete_stmt)
+
+    async def list_by_ids(self, user_ids: list[int]) -> list[User]:
+        """根据用户ID列表查询用户
+
+        Args:
+            user_ids: 用户ID列表
+
+        Returns:
+            list[User]: 用户列表
+        """
+        stmt = select(User).where(User.id.in_(user_ids))
+        result = await self.db_session.execute(stmt)
+        return list(result.scalars().all())

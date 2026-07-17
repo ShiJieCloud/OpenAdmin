@@ -1,17 +1,20 @@
+import json
 from app.config import auth_config
+from app.core import logger
 from app.core.constants import RedisKeyTemplate, TimeSec
 from app.core.enums import RespCodeEnum, UserStatusEnum
-from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest
+from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest, OnlineUserQueryRequest, OnlineUserInfoResponse
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
 from app.models import User, Role, Post
 from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
-from app.schemas.user import UserCreateRequest, UserResetPasswordRequest
+from app.schemas.user import UserCreateRequest, UserResetPasswordRequest, OnlineUserQueryRequest
 from app.services.base import BaseService
 from app.core.redis import RedisClient
 from datetime import datetime
 from app.core.context import AppContext
+import asyncio
 
 
 class UserService(BaseService):
@@ -107,7 +110,9 @@ class UserService(BaseService):
         await self.user_crud.reset_user_login_status(user.id)
 
         # 5. 登录成功 → 更新登录时间
-        await self.user_crud.update_login_time(user.id)
+
+        login_date = datetime.now()
+        await self.user_crud.update_login_time(user.id, login_date)
 
         # 6. 生成令牌
         access_token, refresh_token = create_tokens(user.id)
@@ -115,6 +120,31 @@ class UserService(BaseService):
             RedisKeyTemplate.refresh_token(user.id),
             refresh_token,
             auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
+        )
+
+        # 7. 登录成功 → 加入在线用户列表
+        # @description 使用 Redis ZSet 维护在线用户集合，score 为登录时间戳（秒）
+        # @note ZSet 按登录时间倒序排列，支持分页查询和自动去重
+        await self.redis_client.zadd(
+            RedisKeyTemplate.online_user_zset(),
+            {
+                user.id: int(login_date.timestamp())
+            }
+        )
+
+        # 8. 登录成功 → 更新用户在线信息缓存（使用 Redis Hash 存储用户详细的在线信息，包括登录时间、IP 地址等）
+        online_user_info = {
+            "id": user.id,
+            "login_time": int(login_date.timestamp()),
+            "login_ip": AppContext.get_client_ip(),
+            "login_address": AppContext.get_ip_location_info().full_location,
+            "login_device": AppContext.get_user_agent_info().device_type
+        }
+
+        await self.redis_client.hset(
+            RedisKeyTemplate.online_user(user.id),
+            mapping=online_user_info,
+            expire=auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
         )
 
         return TokenResponse(
@@ -169,14 +199,43 @@ class UserService(BaseService):
             expires_in=auth_config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * TimeSec.MINUTE
         )
 
-    async def logout(self, user_id: int) -> None:
-        """用户退出登录，销毁 Redis 中的刷新令牌
-        
+    async def clean_user_online_session(self, user_id: int) -> bool:
+        """清理用户全部在线会话相关缓存，使登录凭证完全失效。
+
+        统一工具方法，用户主动登出、强制踢人均可复用。
+
         Args:
-            user_id: 用户ID
+            user_id: 待清理会话的用户唯一ID
+
+        Returns:
+            bool: 缓存清理执行完成标记（仅代表指令下发成功，不代表键一定存在）
+
+        Note:
+            执行时会同步操作三处Redis缓存：
+            1. 移除在线用户有序集合 ZSet 内对应该用户的ID索引；
+            2. 删除存储登录IP、登录时间等信息的 Hash 键；
+            3. 删除用户刷新凭证 Refresh Token，阻断续期登录流程。
+
+        Usage:
+            - 用户主动调用登出接口
+            - 强制踢出用户下线操作
+            - 定时任务清理过期残留脏数据
+
+        Since:
+            1.0.0
         """
-        # 从 Redis 删除刷新令牌
+        # 1. 从在线用户 ZSet 中移除
+        await self.redis_client.zrem(RedisKeyTemplate.online_user_zset(), user_id)
+
+        # 2. 删除用户在线信息 Hash
+        await self.redis_client.delete(RedisKeyTemplate.online_user(user_id))
+
+        # 3. 删除 Refresh Token（阻止令牌刷新）
         await self.redis_client.delete(RedisKeyTemplate.refresh_token(user_id))
+
+        logger.info(f"用户 {user_id} 在线状态已清除")
+
+        return True
 
     async def get_user_roles(self, user_id: int) -> list[Role]:
         """
@@ -375,4 +434,51 @@ class UserService(BaseService):
             await self.user_crud.add_roles_to_user(user_id, list(to_add))
 
         return await self.user_crud.get_user_role_ids(user_id)
-        
+    
+    async def get_online_user_list(self, query: OnlineUserQueryRequest) -> tuple[list[OnlineUserInfoResponse], int]:
+        """
+        分页查询在线用户列表
+        1. ZSet倒序分页取在线uid；批量查库用户基础信息；并发读取Redis在线会话
+        2. 自动过滤已过期脏会话，组装分页响应实体
+        """
+        # 常量提取
+        page_start = (query.page_num - 1) * query.page_size
+        page_end = page_start + query.page_size - 1
+
+        # 1. Redis分页取uid、统计总数
+        str_uid_list = await self.redis_client.zrevrange(RedisKeyTemplate.online_user_zset(), page_start, page_end)
+        total = await self.redis_client.zcard(RedisKeyTemplate.online_user_zset())
+        int_uid_list = [int(uid) for uid in str_uid_list]
+        if not int_uid_list:
+            return [], int(total)
+
+        # 2. 批量查数据库用户，构建id->用户映射，方便匹配
+        user_list: list[User] = await self.user_crud.list_by_ids(int_uid_list)
+        user_map = {u.id: u for u in user_list}
+
+        # 3. 并发批量读取所有用户在线hash（解决循环串行IO慢问题）
+        tasks = [
+            self.redis_client.hgetall(RedisKeyTemplate.online_user(uid)) for uid in int_uid_list
+        ]
+        session_result_list = await asyncio.gather(*tasks)
+
+        # 4. 遍历组装响应，自动过滤空hash（会话已过期脏数据）
+        records = []
+        for uid, session_data in zip(int_uid_list, session_result_list):
+            user = user_map.get(uid)
+            if not user or not session_data:
+                continue
+
+            login_time = session_data.get("login_time")
+            records.append(OnlineUserInfoResponse(
+                id=user.id,
+                username=user.username,
+                nickname=user.nickname,
+                avatar=user.avatar,
+                login_ip=session_data.get("login_ip", ""),
+                login_address=session_data.get("login_address", ""),
+                login_time=datetime.fromtimestamp(int(login_time)) if login_time else None,
+                login_device=session_data.get("login_device", "")
+            ))
+
+        return records, int(total)
