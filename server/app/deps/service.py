@@ -8,6 +8,7 @@ from app.services import (
     RoleService,
     PostService,
     MenuService,
+    DeptService,
     LoginLogService,
     OperLogService,
     CaptchaService
@@ -56,6 +57,13 @@ async def get_menu_service(
 ) -> MenuService:
     """菜单服务依赖注入，返回 MenuService 实例"""
     return MenuService(db_session)
+
+
+async def get_dept_service(
+    db_session: AsyncSession = Depends(get_db_session)
+) -> DeptService:
+    """部门服务依赖注入，返回 DeptService 实例"""
+    return DeptService(db_session)
 
 
 async def get_login_log_service(

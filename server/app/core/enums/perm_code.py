@@ -47,7 +47,8 @@ class DeptPermEnum(BasePermEnum):
     """
     部门模块权限码
     """
-    READ = "system:dept:read"
+    LIST = "system:dept:list"
+    GET = "system:dept:get"
     CREATE = "system:dept:create"
     UPDATE = "system:dept:update"
     DELETE = "system:dept:delete"

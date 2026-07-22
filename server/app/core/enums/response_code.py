@@ -62,6 +62,13 @@ class RespCodeEnum(Enum):
     # B-PO = 岗位相关 (Post)
     POST_NOT_EXIST = ("BPO0001", "岗位不存在")
 
+    # B-DT = 部门相关 (Dept)
+    DEPT_NOT_EXIST = ("BDT0001", "部门不存在")
+    DEPT_NAME_EXIST = ("BDT0002", "同级部门名称已存在")
+    DEPT_PARENT_NOT_EXIST = ("BDT0003", "父级部门不存在")
+    DEPT_PARENT_CANNOT_BE_SELF = ("BDT0004", "父级部门不能是自身")
+    DEPT_HAS_CHILDREN = ("BDT0005", "部门存在子部门，无法删除")
+
     # B-ME = 菜单相关 (Menu)
     MENU_NOT_EXIST = ("BME0001", "菜单不存在")
     MENU_HAS_CHILDREN = ("BME0002", "菜单存在子菜单，无法删除")
