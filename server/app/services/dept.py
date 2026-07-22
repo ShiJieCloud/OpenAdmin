@@ -125,6 +125,32 @@ class DeptService(BaseService):
 
         await self.dept_crud.delete_dept(dept_id)
 
+    async def batch_delete_dept(self, dept_ids: list[int]) -> None:
+        """批量删除部门（物理删除）
+
+        Args:
+            dept_ids: 部门ID列表
+
+        Raises:
+            BusinessError: 部门不存在 / 部门存在子部门
+        """
+        if not dept_ids:
+            return
+
+        # 校验所有部门是否存在
+        for dept_id in dept_ids:
+            dept = await self.dept_crud.get_dept(dept_id)
+            if not dept:
+                raise BusinessError(RespCodeEnum.DEPT_NOT_EXIST)
+
+        # 校验所有部门是否存在子部门
+        for dept_id in dept_ids:
+            children_count = await self.dept_crud.count_children(dept_id)
+            if children_count > 0:
+                raise BusinessError(RespCodeEnum.DEPT_HAS_CHILDREN)
+
+        await self.dept_crud.batch_delete_dept(dept_ids)
+
     async def get_dept_list(self) -> list[DeptInfoResponse]:
         """获取部门列表
 

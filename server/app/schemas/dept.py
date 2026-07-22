@@ -21,6 +21,12 @@ class DeptUpdateRequest(BaseModel):
     status: int | None = Field(None, description="状态：0=启用 1=禁用", ge=0, le=1)
 
 
+class DeptBatchDeleteRequest(BaseModel):
+    """批量删除部门请求"""
+
+    dept_ids: list[int] = Field(..., description="部门ID列表", min_length=1, example=[1, 2, 3])
+
+
 class DeptInfoResponse(BaseModel):
     """部门信息响应"""
 

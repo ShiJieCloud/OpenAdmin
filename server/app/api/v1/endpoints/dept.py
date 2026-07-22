@@ -5,9 +5,8 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_dept_service
 from app.schemas.base.response import ApiResponse
-from app.schemas.dept import DeptInfoResponse, DeptCreateRequest, DeptUpdateRequest
+from app.schemas.dept import DeptInfoResponse, DeptCreateRequest, DeptUpdateRequest, DeptBatchDeleteRequest
 from app.services import DeptService
-
 router = APIRouter()
 
 
@@ -108,6 +107,31 @@ async def update_dept(
     """
     dept = await dept_service.update_dept(req)
     return ResponseBuilder.success(dept)
+
+
+@router.delete(
+    "/batch",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.Dept.DELETE))],
+    summary="批量删除部门",
+    description="批量删除部门（需要具备部门删除权限）"
+)
+async def batch_delete_dept(
+    req: DeptBatchDeleteRequest = Body(..., description="批量删除部门请求"),
+    dept_service: DeptService = Depends(get_dept_service)
+):
+    """
+    批量删除部门
+
+    批量物理删除部门，存在子部门时无法删除。
+    接口需要用户登录并拥有部门删除权限方可访问。
+
+    :param req: 批量删除部门请求，包含部门ID列表
+    :return: 无返回数据
+    :raises BusinessError: 部门不存在 / 部门存在子部门
+    """
+    await dept_service.batch_delete_dept(req.dept_ids)
+    return ResponseBuilder.success()
 
 
 @router.delete(

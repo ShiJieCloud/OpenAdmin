@@ -19,7 +19,7 @@ import { useFullscreen } from '@vueuse/core'
 
 import type { IDeptInfo, IDeptCreateRequest, IDeptUpdateRequest } from '@/types/modules/dept'
 
-import { getDeptList, createDept, updateDept, deleteDept } from '@/api/modules/dept'
+import { getDeptList, createDept, updateDept, deleteDept, batchDeleteDept } from '@/api/modules/dept'
 
 // ===================== 1. 全局静态常量 =====================
 /** 部门状态选项 */
@@ -288,7 +288,7 @@ const handleSelectionChange = (val: IDeptInfo[]) => {
 
 /**
  * 批量删除已勾选部门
- * @description 批量删除选中的部门，支持并发删除
+ * @description 批量删除选中的部门
  */
 const handleBatchDelete = async () => {
   if (selectedRows.value.length === 0) {
@@ -308,8 +308,8 @@ const handleBatchDelete = async () => {
     )
 
     loading.value.deptBatchDeleteBtn = true
-    const deletePromises = selectedRows.value.map(dept => deleteDept(dept.id))
-    await Promise.all(deletePromises)
+    const deptIds = selectedRows.value.map(dept => dept.id)
+    await batchDeleteDept(deptIds)
 
     ElMessage.success('批量删除成功')
     selectedRows.value = []

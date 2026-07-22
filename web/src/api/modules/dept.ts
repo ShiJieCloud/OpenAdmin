@@ -44,3 +44,11 @@ export const updateDept = (data: IDeptUpdateRequest): Promise<IDeptInfo> => {
 export const deleteDept = (deptId: number): Promise<void> => {
   return request.deleteRequest(`/dept/${deptId}`)
 }
+
+/**
+ * 批量删除部门
+ * @param deptIds - 部门ID列表
+ */
+export const batchDeleteDept = (deptIds: number[]): Promise<void> => {
+  return request.deleteRequest('/dept/batch', { dept_ids: deptIds })
+}

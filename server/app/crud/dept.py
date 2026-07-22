@@ -105,6 +105,22 @@ class DeptCRUD(BaseCRUD):
         await self.db_session.execute(stmt)
         await self.db_session.flush()
 
+    async def batch_delete_dept(self, dept_ids: list[int]) -> None:
+        """批量物理删除部门
+
+        Args:
+            dept_ids: 部门ID列表
+        """
+        if not dept_ids:
+            return
+
+        stmt = (
+            delete(Dept)
+            .where(Dept.id.in_(dept_ids))
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()
+
     async def get_dept_list(self) -> list[Dept]:
         """获取部门列表
 

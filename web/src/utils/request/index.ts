@@ -234,9 +234,19 @@ const put = <T = any>(url: string, data?: object): Promise<T> => {
 }
 
 /** 发送 DELETE 请求 */
-const deleteRequest = <T = any>(url: string, params?: object): Promise<T> => {
-  return request.delete(url, { params })
+const deleteRequest = <T = any>(url: string,data?: object, params?: object, config?: RequestConfig): Promise<T> => {
+  // return request.delete(url, { params })
+  const axiosConfig: RequestConfig = {
+    ...config,
+    params,
+  }
+  // 如果传入data，挂载到config.data，delete才能携带body
+  if (data) {
+    axiosConfig.data = data
+  }
+  return request.delete(url, axiosConfig)
 }
+
 
 /** 发送 PATCH 请求 */
 const patch = <T = any>(url: string, data?: object): Promise<T> => {
