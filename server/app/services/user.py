@@ -191,6 +191,9 @@ class UserService(BaseService):
             auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
         )
 
+        # 续期在线用户缓存 TTL 为 refresh_token 过期时间
+        await self.redis_client.expire(RedisKeyTemplate.online_user(user_id), auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY)
+
         # 7. 返回新令牌
         return TokenResponse(
             access_token=new_access_token,
@@ -451,6 +454,8 @@ class UserService(BaseService):
         int_uid_list = [int(uid) for uid in str_uid_list]
         if not int_uid_list:
             return [], int(total)
+        
+        print('int_uid_list:', int_uid_list)
 
         # 2. 批量查数据库用户，构建id->用户映射，方便匹配
         user_list: list[User] = await self.user_crud.list_by_ids(int_uid_list)

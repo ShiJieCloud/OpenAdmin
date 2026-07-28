@@ -77,6 +77,10 @@ class RespCodeEnum(Enum):
     MENU_PARENT_CANNOT_BE_SELF = ("BME0004", "父菜单不能是自身")
     MENU_STATUS_INVALID = ("BME0005", "菜单状态值无效")
 
+    # B-PM = 权限相关 (Permission)
+    PERM_NOT_EXIST = ("BPM0001", "权限不存在")
+    PERM_CODE_EXIST = ("BPM0002", "权限编码已存在")
+
     # B-CA = 验证码相关 (Captcha)
     CAPTCHA_NOT_EXIST = ("BCA0001", "验证码已失效，请重新获取")
     CAPTCHA_INVALID = ("BCA0002", "验证码不正确，请重新输入")

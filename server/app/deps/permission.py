@@ -1,7 +1,7 @@
 from typing import Callable, Awaitable
 from fastapi import Depends
 
-from app.core.enums import RespCodeEnum, RoleStatusEnum, PostStatusEnum
+from app.core.enums import RespCodeEnum, RoleStatusEnum, PostStatusEnum, PermStatusEnum
 from app.core.exceptions import PermDeniedException
 from app.deps.auth import get_current_active_user
 from app.deps.service import get_user_service, get_permission_service, get_post_service
@@ -52,8 +52,8 @@ async def get_current_user_perms(
     if not role_codes:
         return set()
 
-    # 2. 根据角色编码查询权限列表
-    perms = await perm_service.get_perms_by_role_codes(role_codes)
+    # 2. 根据角色编码查询权限列表（正常状态）
+    perms = await perm_service.get_perms_by_role_codes(role_codes, perm_status=PermStatusEnum.normal)
 
     # 3. 提取权限码并返回
     return {p.code for p in perms}

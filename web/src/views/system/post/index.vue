@@ -17,9 +17,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useFullscreen } from '@vueuse/core'
 
-import type { IPostInfo, IPostQueryParams, IPostCreateRequest, IPostUpdateRequest } from '@/types/modules/post'
+import type { IPostInfo, IPostCreateRequest, IPostUpdateRequest } from '@/types/modules/post'
 import type { IDeptInfo } from '@/types/modules/dept'
-import type { IPageResult } from '@/types/common/api'
 
 
 import { getPostList, createPost, updatePost, deletePost, batchDeletePost, getPostInfo } from '@/api/modules/post'
@@ -38,22 +37,21 @@ const POST_STATUS_OPTIONS = [
 const deptTreeData = ref<IDeptInfo[]>([])
 
 /** 岗位列表查询参数 */
-const searchPostParams = reactive<IPostQueryParams>({
-  page_num: 1,
-  page_size: 10,
+const searchPostParams = reactive({
   post_name: '',
   status: undefined,
   dept_ids: undefined,
 })
 
-/** 岗位列表数据 */
-const postPageData = ref<IPageResult<IPostInfo>>({
-  records: [],
-  total: 0,
-  pages: 0,
-  page_size: 10,
+/** 岗位分页数据 */
+const pagination = reactive({
   page_num: 1,
+  page_size: 10,
+  total: 0,
 })
+
+/** 岗位列表数据 */
+const postTableData = ref<IPostInfo[]>([])
 
 /** 加载状态管理 */
 const loading = ref({
@@ -157,7 +155,9 @@ const fetchPostList = async () => {
   loading.value.postTable = true
   try {
     const res = await getPostList(searchPostParams)
-    postPageData.value = res
+    postTableData.value = res.records
+    pagination.total = res.total
+
   } finally {
     loading.value.postTable = false
   }
@@ -209,7 +209,7 @@ const buildDeptTree = (deptList: IDeptInfo[]): IDeptInfo[] => {
  * @description 根据搜索条件重新加载列表，重置到第一页
  */
 const handleSearchPost = () => {
-  searchPostParams.page_num = 1
+  pagination.page_num = 1
   fetchPostList()
 }
 
@@ -221,16 +221,7 @@ const handleResetSearch = () => {
   searchPostParams.post_name = ''
   searchPostParams.status = undefined
   searchPostParams.dept_ids = undefined
-  searchPostParams.page_num = 1
-  fetchPostList()
-}
-
-/**
- * 分页页码变更回调
- * @param page - 当前页码
- */
-const handlePageChange = (page: number) => {
-  searchPostParams.page_num = page
+  pagination.page_num = 1
   fetchPostList()
 }
 
@@ -239,8 +230,8 @@ const handlePageChange = (page: number) => {
  * @param size - 每页条数
  */
 const handleSizeChange = (size: number) => {
-  searchPostParams.page_size = size
-  searchPostParams.page_num = 1
+  pagination.page_size = size
+  pagination.page_num = 1
   fetchPostList()
 }
 
@@ -513,7 +504,7 @@ onMounted(() => {
           </el-space>
         </div>
 
-        <el-table v-loading="loading.postTable" :data="postPageData.records" stripe width="100%" class="layout-table"
+        <el-table v-loading="loading.postTable" :data="postTableData" stripe width="100%" class="layout-table"
           row-key="id" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="55" />
           <el-table-column prop="post_name" label="岗位名称" min-width="150" />
@@ -558,8 +549,8 @@ onMounted(() => {
 
         <!-- 分页组件 -->
         <div class="layout-pagination">
-          <el-pagination v-model:current-page="searchPostParams.page_num" v-model:page-size="searchPostParams.page_size"
-            :total="postPageData.total" :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next"
+          <el-pagination v-model:current-page="pagination.page_num" v-model:page-size="pagination.page_size"
+            :total="pagination.total" :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next"
             :teleported="false" @size-change="handleSizeChange" @current-change="fetchPostList" />
         </div>
       </el-card>

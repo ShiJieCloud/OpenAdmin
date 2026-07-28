@@ -28,11 +28,6 @@ class Permission(BaseModel):
         unique=True,
         comment="权限标识"
     )
-    type: Mapped[int] = mapped_column(
-        TINYINT,
-        default=0,
-        comment="权限类型：0=按钮 1=接口"
-    )
     description: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
@@ -42,4 +37,9 @@ class Permission(BaseModel):
         Integer,
         default=0,
         comment="排序"
+    )
+    status: Mapped[int] = mapped_column(
+        TINYINT,
+        default=0,
+        comment="状态：0=正常 1=停用"
     )
