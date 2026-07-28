@@ -1,6 +1,8 @@
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, field_serializer, SerializationInfo, computed_field
 
+HOUR_SECONDS = 3600
+MINUTE_SECONDS = 60
 
 class UserRoleAssignRequest(BaseModel):
     """用户角色分配请求（对比差异合并）
@@ -114,16 +116,31 @@ class OnlineUserInfoResponse(BaseModel):
         if dt is None:
             return None
         return dt.strftime("%Y-%m-%d %H:%M:%S")
-    
+
     @computed_field(return_type=str | None)
     @property
     def online_duration(self) -> str | None:
-        """根据登录时间自动格式化在线时长，由Schema自行派生，业务层无需处理"""
-        if not self.login_time:
+        """
+        根据登录时间自动格式化在线时长，由Schema自行派生，业务层无需处理
+        格式示例：3天 2小时 / 5小时 23分钟 / 12分钟
+        """
+        login_time: datetime | None = self.login_time
+        if not login_time:
             return None
-        delta = datetime.now() - self.login_time
-        if delta.days > 0:
-            return f"{delta.days} 天 {delta.seconds // 3600} 小时"
-        elif delta.seconds >= 3600:
-            return f"{delta.seconds // 3600} 小时 {delta.seconds % 3600} 分钟"
-        return f"{delta.seconds // 60} 分钟"
+
+        # 优先使用带时区的 now，根据你的项目调整
+        now = datetime.now()
+        # now = datetime.now(tz=UTC)
+        delta: timedelta = now - login_time
+
+        days = delta.days
+        remain_sec = delta.seconds
+
+        hours = remain_sec // HOUR_SECONDS
+        minutes = (remain_sec % HOUR_SECONDS) // MINUTE_SECONDS
+
+        if days > 0:
+            return f"{days} 天 {hours} 小时"
+        if hours > 0:
+            return f"{hours} 小时 {minutes} 分钟"
+        return f"{minutes} 分钟"
