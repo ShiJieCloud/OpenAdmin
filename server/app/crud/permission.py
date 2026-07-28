@@ -107,8 +107,8 @@ class PermissionCRUD(BaseCRUD):
             conditions.append(Permission.code.like(f"%{query.code}%"))
         if query.status is not None:
             conditions.append(Permission.status == query.status)
-        if query.menu_id is not None:
-            conditions.append(Permission.menu_id == query.menu_id)
+        if query.menu_ids:
+            conditions.append(Permission.menu_id.in_(query.menu_ids))
 
         count_stmt = select(func.count(Permission.id)).where(*conditions)
         count_result = await self.db_session.execute(count_stmt)

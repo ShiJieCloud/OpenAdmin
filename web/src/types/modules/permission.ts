@@ -37,8 +37,8 @@ export type IPermissionListQueryParam = {
   code?: string
   /** 状态：0=正常 1=停用 */
   status?: number
-  /** 所属菜单ID */
-  menu_id?: number
+  /** 所属菜单ID列表 */
+  menu_ids?: number[]
 }
 
 /**

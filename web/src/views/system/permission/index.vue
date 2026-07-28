@@ -55,7 +55,7 @@ const searchPermissionParams = reactive({
   name: '',
   code: '',
   status: undefined,
-  menu_id: undefined,
+  menu_ids: [],
 })
 
 /** 权限分页数据 */
@@ -213,7 +213,7 @@ const handleReset = () => {
   searchPermissionParams.name = ''
   searchPermissionParams.code = ''
   searchPermissionParams.status = undefined
-  searchPermissionParams.menu_id = undefined
+  searchPermissionParams.menu_ids = []
   handleSearch()
 }
 
@@ -420,7 +420,7 @@ onMounted(() => {
 
 <template>
   <div ref="layoutPageRef" class="layout-page">
-    <!-- 搜索区域 -->
+    <!-- 搜索筛选区域 -->
     <div class="layout-page__header">
       <el-card shadow="never">
         <el-collapse>
@@ -432,30 +432,55 @@ onMounted(() => {
               <el-row :gutter="20" class="pl-5">
                 <el-col :sm="12" :md="8" :lg="6">
                   <el-form-item label="权限名称">
-                    <el-input v-model="searchPermissionParams.name" placeholder="请输入权限名称" clearable />
+                    <el-input
+                      v-model="searchPermissionParams.name"
+                      placeholder="请输入权限名称"
+                      clearable
+                    />
                   </el-form-item>
                 </el-col>
                 <el-col :sm="12" :md="8" :lg="6">
                   <el-form-item label="权限标识">
-                    <el-input v-model="searchPermissionParams.code" placeholder="请输入权限标识" clearable />
+                    <el-input
+                      v-model="searchPermissionParams.code"
+                      placeholder="请输入权限标识"
+                      clearable
+                    />
                   </el-form-item>
                 </el-col>
                 <el-col :sm="12" :md="8" :lg="6">
                   <el-form-item label="状态">
-                    <el-select v-model="searchPermissionParams.status" placeholder="请选择状态" clearable>
-                      <el-option v-for="item in PERM_STATUS_OPTIONS" :key="item.value" :label="item.label"
-                        :value="item.value" />
+                    <el-select
+                      v-model="searchPermissionParams.status"
+                      placeholder="请选择状态"
+                      clearable
+                    >
+                      <el-option
+                        v-for="item in PERM_STATUS_OPTIONS"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                      />
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :sm="12" :md="8" :lg="6">
                   <el-form-item label="所属菜单">
-                    <el-tree-select v-model="searchPermissionParams.menu_id" :data="menuTreeData"
-                      :props="{ label: 'label', value: 'id', children: 'children' }" placeholder="请选择菜单" clearable
-                      check-strictly filterable />
+                    <el-tree-select
+                      v-model="searchPermissionParams.menu_ids"
+                      :data="menuTreeData"
+                      :props="{ label: 'label', value: 'id', children: 'children' }"
+                      placeholder="请选择菜单"
+                      clearable
+                      check-strictly
+                      filterable
+                      multiple
+                      collapse-tags
+                      collapse-tags-tooltip
+                    />
                   </el-form-item>
                 </el-col>
-                <el-col :sm="12" :md="8" :lg="6">
+                <el-col :sm="24" :md="16" :lg="24">
                   <el-space alignment="flex-end" class="justify-end w-full">
                     <el-button plain type="primary" @click="handleSearch">
                       <template #icon>
@@ -478,7 +503,7 @@ onMounted(() => {
       </el-card>
     </div>
 
-    <!-- 列表区域 -->
+    <!-- 列表表格区域 -->
     <div class="layout-page__content">
       <el-card shadow="never">
         <div class="layout-toolbar">
@@ -503,7 +528,12 @@ onMounted(() => {
               </template>
               新增
             </el-button>
-            <el-button plain type="danger" :disabled="selectedRows.length === 0" @click="handleBatchDelete">
+            <el-button
+              plain
+              type="danger"
+              :disabled="selectedRows.length === 0"
+              @click="handleBatchDelete"
+            >
               <template #icon>
                 <i-ep-delete />
               </template>
@@ -512,12 +542,30 @@ onMounted(() => {
           </el-space>
         </div>
 
-        <el-table v-loading="loading.permTable" :data="permissionTableData" stripe width="100%"
-          class="layout-table" @selection-change="handleSelectionChange">
+        <el-table
+          v-loading="loading.permTable"
+          :data="permissionTableData"
+          stripe
+          width="100%"
+          class="layout-table"
+          @selection-change="handleSelectionChange"
+        >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="id" label="权限 ID" width="80" align="center" />
-          <el-table-column prop="name" label="权限名称" width="150" align="center" show-overflow-tooltip />
-          <el-table-column prop="code" label="权限标识" width="200" align="center" show-overflow-tooltip>
+          <el-table-column
+            prop="name"
+            label="权限名称"
+            width="150"
+            align="center"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="code"
+            label="权限标识"
+            width="200"
+            align="center"
+            show-overflow-tooltip
+          >
             <template #default="{ row }">
               <el-tag type="info">{{ row.code }}</el-tag>
             </template>
@@ -534,7 +582,13 @@ onMounted(() => {
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip align="center" />
+          <el-table-column
+            prop="description"
+            label="描述"
+            min-width="200"
+            show-overflow-tooltip
+            align="center"
+          />
           <el-table-column label="操作" width="140" fixed="right" align="center">
             <template #default="{ row }">
               <el-button type="primary" size="small" link @click="handleEditPerm(row)">
@@ -554,21 +608,43 @@ onMounted(() => {
         </el-table>
 
         <div class="layout-pagination">
-          <el-pagination v-model:current-page="pagination.page_num"
-            v-model:page-size="pagination.page_size" :total="pagination.total"
-            :page-sizes="PAGE_SIZE_OPTIONS" layout="total, sizes, prev, pager, next" :teleported="false"
-            @size-change="handleSizeChange" @current-change="fetchPermissionList" />
+          <el-pagination
+            v-model:current-page="pagination.page_num"
+            v-model:page-size="pagination.page_size"
+            :total="pagination.total"
+            :page-sizes="PAGE_SIZE_OPTIONS"
+            layout="total, sizes, prev, pager, next"
+            :teleported="false"
+            @size-change="handleSizeChange"
+            @current-change="fetchPermissionList"
+          />
         </div>
       </el-card>
     </div>
 
     <!-- 新增权限弹窗 -->
-    <el-dialog v-model="addPermDialogVisible" title="新增权限" width="500px" @close="closeAddPermDialog">
-      <el-form ref="addPermFormRef" :model="addPermForm" :rules="addPermRules" label-width="100px">
+    <el-dialog
+      v-model="addPermDialogVisible"
+      title="新增权限"
+      width="500px"
+      @close="closeAddPermDialog"
+    >
+      <el-form
+        ref="addPermFormRef"
+        :model="addPermForm"
+        :rules="addPermRules"
+        label-width="100px"
+      >
         <el-form-item label="所属菜单" prop="menu_id">
-          <el-tree-select v-model="addPermForm.menu_id" :data="menuTreeData"
-            :props="{ label: 'label', value: 'id', children: 'children' }" placeholder="请选择所属菜单"
-            check-strictly filterable style="width: 100%" />
+          <el-tree-select
+            v-model="addPermForm.menu_id"
+            :data="menuTreeData"
+            :props="{ label: 'label', value: 'id', children: 'children' }"
+            placeholder="请选择所属菜单"
+            check-strictly
+            filterable
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="权限名称" prop="name">
           <el-input v-model="addPermForm.name" placeholder="请输入权限名称" clearable />
@@ -577,7 +653,12 @@ onMounted(() => {
           <el-input v-model="addPermForm.code" placeholder="例如：system:user:read" clearable />
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-switch v-model="addPermForm.status" :active-value="0" :inactive-value="1" inline-prompt>
+          <el-switch
+            v-model="addPermForm.status"
+            :active-value="0"
+            :inactive-value="1"
+            inline-prompt
+          >
             <template #active>
               <i-ep-check />
             </template>
@@ -587,10 +668,20 @@ onMounted(() => {
           </el-switch>
         </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="addPermForm.sort" :min="0" :max="9999" controls-position="right" />
+          <el-input-number
+            v-model="addPermForm.sort"
+            :min="0"
+            :max="9999"
+            controls-position="right"
+          />
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="addPermForm.description" type="textarea" :rows="3" placeholder="请输入权限描述" />
+          <el-input
+            v-model="addPermForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入权限描述"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -604,12 +695,28 @@ onMounted(() => {
     </el-dialog>
 
     <!-- 编辑权限弹窗 -->
-    <el-dialog v-model="editPermDialogVisible" title="编辑权限" width="500px" @close="closeEditPermDialog">
-      <el-form ref="editPermFormRef" :model="editPermForm" :rules="editPermRules" label-width="100px">
+    <el-dialog
+      v-model="editPermDialogVisible"
+      title="编辑权限"
+      width="500px"
+      @close="closeEditPermDialog"
+    >
+      <el-form
+        ref="editPermFormRef"
+        :model="editPermForm"
+        :rules="editPermRules"
+        label-width="100px"
+      >
         <el-form-item label="所属菜单" prop="menu_id">
-          <el-tree-select v-model="editPermForm.menu_id" :data="menuTreeData"
-            :props="{ label: 'label', value: 'id', children: 'children' }" placeholder="请选择所属菜单"
-            check-strictly filterable style="width: 100%" />
+          <el-tree-select
+            v-model="editPermForm.menu_id"
+            :data="menuTreeData"
+            :props="{ label: 'label', value: 'id', children: 'children' }"
+            placeholder="请选择所属菜单"
+            check-strictly
+            filterable
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="权限名称" prop="name">
           <el-input v-model="editPermForm.name" placeholder="请输入权限名称" clearable />
@@ -618,7 +725,12 @@ onMounted(() => {
           <el-input v-model="editPermForm.code" placeholder="例如：system:user:read" clearable />
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-switch v-model="editPermForm.status" :active-value="0" :inactive-value="1" inline-prompt>
+          <el-switch
+            v-model="editPermForm.status"
+            :active-value="0"
+            :inactive-value="1"
+            inline-prompt
+          >
             <template #active>
               <i-ep-check />
             </template>
@@ -628,10 +740,20 @@ onMounted(() => {
           </el-switch>
         </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="editPermForm.sort" :min="0" :max="9999" controls-position="right" />
+          <el-input-number
+            v-model="editPermForm.sort"
+            :min="0"
+            :max="9999"
+            controls-position="right"
+          />
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="editPermForm.description" type="textarea" :rows="3" placeholder="请输入权限描述" />
+          <el-input
+            v-model="editPermForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入权限描述"
+          />
         </el-form-item>
       </el-form>
       <template #footer>

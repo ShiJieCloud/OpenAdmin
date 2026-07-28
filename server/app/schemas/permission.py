@@ -49,4 +49,5 @@ class PermissionListQueryRequest(BaseModel):
     name: str | None = Field(None, description="权限名称（模糊查询）", max_length=64)
     code: str | None = Field(None, description="权限标识（模糊查询）", max_length=128)
     status: int | None = Field(None, description="状态：0=正常 1=停用", ge=0, le=1)
-    menu_id: int | None = Field(None, description="所属菜单ID", ge=0)
+    menu_ids: list[int] | None = Field(None, description="所属菜单ID列表", example=[1, 2])
+   
