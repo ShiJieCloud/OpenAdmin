@@ -1,11 +1,11 @@
 from typing import Callable, Awaitable
 from fastapi import Depends
 
-from app.core.enums import RespCodeEnum
+from app.core.enums import RespCodeEnum, RoleStatusEnum, PostStatusEnum
 from app.core.exceptions import PermDeniedException
 from app.deps.auth import get_current_active_user
 from app.deps.service import get_user_service, get_permission_service, get_post_service
-from app.models import User, Role
+from app.models import User
 from app.services import UserService, PermissionService, PostService
 
 async def get_current_user_roles(
@@ -14,7 +14,7 @@ async def get_current_user_roles(
     post_service: PostService = Depends(get_post_service),
 ) -> set[str]:
     """
-    获取当前用户的角色列表
+    获取当前用户+所属岗位的角色列表（正常状态）
     """
 
     # 1. 超级管理员直接返回所有角色
@@ -22,15 +22,15 @@ async def get_current_user_roles(
         return set()
 
     # 2. 获取用户自身绑定的角色
-    user_roles = await user_service.get_user_roles(current_user.id)
+    user_roles = await user_service.get_user_bind_roles(current_user.id, role_status=RoleStatusEnum.normal)
 
     # 3. 获取用户所属的岗位列表
-    user_posts = await user_service.get_user_posts(current_user.id)
+    user_posts = await user_service.get_user_bind_posts(current_user.id, post_status=PostStatusEnum.normal)
 
     # 4. 获取岗位关联的角色
     if user_posts:
         post_ids = [post.id for post in user_posts]
-        post_roles = await post_service.get_posts_roles(post_ids)
+        post_roles = await post_service.get_posts_bind_roles(post_ids, role_status=RoleStatusEnum.normal)
     else:
         post_roles = []
 

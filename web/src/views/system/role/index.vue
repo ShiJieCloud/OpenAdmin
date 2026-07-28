@@ -12,7 +12,8 @@
 -->
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useFullscreen } from '@vueuse/core'
@@ -23,6 +24,8 @@ import type { IPageResult } from '@/types/common/api'
 import { getRoleList, createRole, updateRole, deleteRole } from '@/api/modules/role'
 
 import PermissionDrawer from './components/PermissionDrawer.vue'
+
+const route = useRoute()
 
 // ===================== 1. 全局静态常量 =====================
 /** 分页每页条数可选项 */
@@ -369,6 +372,21 @@ const handleRefreshRoleList = async () => {
  * @description 首次加载时拉取角色列表数据
  */
 onMounted(() => fetchRoleList())
+
+/**
+ * 监听路由查询参数变化
+ * @description 当用户从其他页面切换回角色管理页面时，检测 openPermission 参数并自动打开权限分配抽屉
+ */
+watch(
+  () => route.query.openPermission,
+  (openPermissionId) => {
+    if (openPermissionId) {
+      currentRoleId.value = Number(openPermissionId)
+      permissionDrawerVisible.value = true
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -476,8 +494,8 @@ onMounted(() => fetchRoleList())
           <el-table-column prop="role_code" label="角色标识" width="150" />
           <el-table-column prop="status" label="状态" width="100" align="center">
             <template #default="{ row }">
-              <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-                {{ row.status === 1 ? '启用' : '禁用' }}
+              <el-tag :type="row.status === 0 ? 'success' : 'danger'">
+                {{ row.status === 0 ? '启用' : '禁用' }}
               </el-tag>
             </template>
           </el-table-column>
@@ -490,11 +508,11 @@ onMounted(() => fetchRoleList())
                 </template>
                 编辑
               </el-button>
-              <el-button type="primary" size="small" link @click="openPermissionDrawer(row)">
+              <el-button type="success" size="small" link @click="openPermissionDrawer(row)">
                 <template #icon>
                   <i-solar-shield-user-broken />
                 </template>
-                分配权限
+                权限配置
               </el-button>
               <el-button link type="danger" size="small" @click="handleDeleteRole(row)">
                 <template #icon>

@@ -1,8 +1,7 @@
-import json
 from app.config import auth_config
 from app.core import logger
 from app.core.constants import RedisKeyTemplate, TimeSec
-from app.core.enums import RespCodeEnum, UserStatusEnum
+from app.core.enums import RespCodeEnum, UserStatusEnum, RoleStatusEnum, PostStatusEnum
 from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest, OnlineUserQueryRequest, OnlineUserInfoResponse
 from app.core.exceptions import BusinessError
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
@@ -237,17 +236,17 @@ class UserService(BaseService):
 
         return True
 
-    async def get_user_roles(self, user_id: int) -> list[Role]:
+    async def get_user_bind_roles(self, user_id: int, role_status: RoleStatusEnum | None = None) -> list[Role]:
         """
         获取用户关联的角色列表
         """
-        roles = await self.user_crud.get_user_roles(user_id)
+        roles = await self.user_crud.get_user_bind_roles(user_id, role_status=role_status.value if role_status else None)
         if not roles:
             return []
         
         return roles
 
-    async def get_user_posts(self, user_id: int) -> list[Post]:
+    async def get_user_bind_posts(self, user_id: int, post_status: PostStatusEnum | None = None) -> list[Post]:
         """
         获取用户关联的岗位列表
 
@@ -257,7 +256,7 @@ class UserService(BaseService):
         Returns:
             list[Post]: 岗位列表
         """
-        return await self.user_crud.get_user_posts(user_id)
+        return await self.user_crud.get_user_bind_posts(user_id, post_status=post_status.value if post_status else None)
 
     async def create_user(self, req: UserCreateRequest) -> User:
         """
@@ -420,7 +419,7 @@ class UserService(BaseService):
         if user is None:
             raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
 
-        existing_role_ids = await self.user_crud.get_user_role_ids(user_id)
+        existing_role_ids = await self.user_crud.get_user_bind_roles(user_id)
         existing_set = set(existing_role_ids)
         new_set = set(role_ids)
 
@@ -428,12 +427,13 @@ class UserService(BaseService):
         to_remove = existing_set - new_set
 
         if to_remove:
-            await self.user_crud.remove_roles_from_user(user_id, list(to_remove))
+            await self.user_crud.unbind_roles_from_user(user_id, list(to_remove))
 
         if to_add:
-            await self.user_crud.add_roles_to_user(user_id, list(to_add))
+            await self.user_crud.bind_roles_to_user(user_id, list(to_add))
 
-        return await self.user_crud.get_user_role_ids(user_id)
+        user_bind_roles = await self.user_crud.get_user_bind_roles(user_id)
+        return [role.id for role in user_bind_roles]
     
     async def get_online_user_list(self, query: OnlineUserQueryRequest) -> tuple[list[OnlineUserInfoResponse], int]:
         """

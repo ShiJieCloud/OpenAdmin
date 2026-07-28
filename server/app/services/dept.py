@@ -160,3 +160,19 @@ class DeptService(BaseService):
         db_dept_list = await self.dept_crud.get_dept_list()
         dept_list = [DeptInfoResponse.model_validate(dept) for dept in db_dept_list]
         return dept_list
+    
+    async def  list_depts_by_ids(self, dept_ids: list[int]) -> list[DeptInfoResponse]:
+        """根据部门ID列表批量查询部门信息
+
+        Args:
+            dept_ids: 部门ID列表
+
+        Returns:
+            list[DeptInfoResponse]: 部门列表
+        """
+        if not dept_ids:
+            return []
+            
+        db_dept_list = await self.dept_crud. list_depts_by_ids(dept_ids)
+        dept_list = [DeptInfoResponse.model_validate(dept) for dept in db_dept_list]
+        return dept_list

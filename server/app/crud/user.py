@@ -103,28 +103,34 @@ class UserCRUD(BaseCRUD):
         await self.db_session.execute(stmt)
         await self.db_session.commit()
 
-    async def get_user_roles(self, user_id: int) -> list[Role]:
+    async def get_user_bind_roles(self, user_id: int, role_status: int | None = None) -> list[Role]:
         """
-        获取用户关联的角色列表
+        获取用户绑定的角色列表
+
+        Args:
+            user_id: 用户ID
+            role_status: 角色状态，默认0（启用）
+
+        Returns:
+            list[Role]: 角色列表
         """
+        # 基础查询
         stmt = (
             select(Role)
-            .distinct()
-            # 用户 → 角色 直接关联
             .join(UserRole, UserRole.role_id == Role.id)
-            # 只返回启用状态的角色
-            .where(
-                UserRole.user_id == user_id,
-                Role.status == 0
-            )
+            .where(UserRole.user_id == user_id)
         )
+
+        # 动态追加状态条件
+        if role_status is not None:
+            stmt = stmt.where(Role.status == role_status)
 
         result = await self.db_session.execute(stmt)
         return result.scalars().all()
 
-    async def get_user_posts(self, user_id: int) -> list[Post]:
+    async def get_user_bind_posts(self, user_id: int, post_status: int | None = None) -> list[Post]:
         """
-        获取用户关联的岗位列表
+        获取用户绑定的岗位列表
 
         Args:
             user_id: 用户ID
@@ -134,13 +140,13 @@ class UserCRUD(BaseCRUD):
         """
         stmt = (
             select(Post)
-            .distinct()
             .join(UserPost, UserPost.post_id == Post.id)
-            .where(
-                UserPost.user_id == user_id,
-                Post.status == 0
-            )
+            .where(UserPost.user_id == user_id)
         )
+
+        # 动态追加状态条件
+        if post_status is not None:
+            stmt = stmt.where(Post.status == post_status)
 
         result = await self.db_session.execute(stmt)
         return result.scalars().all()
@@ -268,25 +274,12 @@ class UserCRUD(BaseCRUD):
 
         return users, total, pages, query.page_num
 
-    async def get_user_role_ids(self, user_id: int) -> list[int]:
-        """获取用户已绑定的角色ID列表
+    async def bind_roles_to_user(self, user_id: int, role_ids: list[int]) -> None:
+        """批量绑定用户角色关联
 
         Args:
             user_id: 用户ID
-
-        Returns:
-            list[int]: 角色ID列表
-        """
-        stmt = select(UserRole.role_id).where(UserRole.user_id == user_id)
-        result = await self.db_session.execute(stmt)
-        return list(result.scalars().all())
-
-    async def add_roles_to_user(self, user_id: int, role_ids: list[int]) -> None:
-        """批量新增用户角色关联
-
-        Args:
-            user_id: 用户ID
-            role_ids: 要新增的角色ID列表
+            role_ids: 要绑定的角色ID列表
         """
         if not role_ids:
             return
@@ -299,12 +292,12 @@ class UserCRUD(BaseCRUD):
         insert_stmt = insert(UserRole).values(role_relations)
         await self.db_session.execute(insert_stmt)
 
-    async def remove_roles_from_user(self, user_id: int, role_ids: list[int]) -> None:
-        """批量删除用户角色关联
+    async def unbind_roles_from_user(self, user_id: int, role_ids: list[int]) -> None:
+        """批量解绑用户角色关联
 
         Args:
             user_id: 用户ID
-            role_ids: 要删除的角色ID列表
+            role_ids: 要解绑的角色ID列表
         """
         if not role_ids:
             return

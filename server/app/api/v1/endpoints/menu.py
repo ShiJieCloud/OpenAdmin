@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Body, Path
-from app.core.enums import PermCode
+from app.core.enums import PermCode, RoleStatusEnum
 from app.core.response import ResponseBuilder, ApiResponse
 from app.deps.permission import get_current_active_user, has_perm
 from app.deps.service import get_menu_service, get_user_service, get_post_service
@@ -142,9 +142,9 @@ async def get_user_menu_list(
         menu_list = [MenuResponse.model_validate(m) for m in menus]
         return ResponseBuilder.success(data=menu_list)
 
-    # 1. 获取用户角色 + 岗位角色
-    user_roles = await user_service.get_user_roles(current_user.id)
-    post_roles = await post_service.get_posts_roles(current_user.id)
+    # 1. 获取生效的（正常状态）的用户角色 + 岗位角色
+    user_roles = await user_service.get_user_bind_roles(current_user.id, role_status=RoleStatusEnum.normal)
+    post_roles = await post_service.get_posts_bind_roles(current_user.id, role_status=RoleStatusEnum.normal)
     all_roles = user_roles + post_roles
 
     # 无角色 → 返回空菜单

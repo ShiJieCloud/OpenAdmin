@@ -61,6 +61,7 @@ class RespCodeEnum(Enum):
 
     # B-PO = 岗位相关 (Post)
     POST_NOT_EXIST = ("BPO0001", "岗位不存在")
+    POST_NAME_EXIST = ("BPO0002", "岗位名称已存在")
 
     # B-DT = 部门相关 (Dept)
     DEPT_NOT_EXIST = ("BDT0001", "部门不存在")

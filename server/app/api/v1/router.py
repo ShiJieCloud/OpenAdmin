@@ -5,6 +5,7 @@ from app.api.v1.endpoints.user import router as user_router
 from app.api.v1.endpoints.role import router as role_router
 from app.api.v1.endpoints.menu import router as menu_router
 from app.api.v1.endpoints.dept import router as dept_router
+from app.api.v1.endpoints.post import router as post_router
 from app.api.v1.endpoints.permission import router as permission_router
 from app.api.v1.endpoints.login_log import router as login_log_router
 from app.api.v1.endpoints.oper_log import router as oper_log_router
@@ -16,6 +17,7 @@ api_v1_router.include_router(user_router, prefix="/user", tags=["用户管理"])
 api_v1_router.include_router(role_router, prefix="/role", tags=["角色管理"])
 api_v1_router.include_router(menu_router, prefix="/menu", tags=["菜单管理"])
 api_v1_router.include_router(dept_router, prefix="/dept", tags=["部门管理"])
+api_v1_router.include_router(post_router, prefix="/post", tags=["岗位管理"])
 api_v1_router.include_router(permission_router, prefix="/permission", tags=["权限管理"])
 api_v1_router.include_router(auth_router, prefix="/auth", tags=["认证授权"])
 api_v1_router.include_router(login_log_router, prefix="/login-log", tags=["登录日志"])

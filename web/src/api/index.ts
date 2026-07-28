@@ -1,3 +1,6 @@
 export * from './modules/auth'
 export * from './modules/menu'
 export * from './modules/permission'
+export * from './modules/role'
+export * from './modules/dept'
+export * from './modules/post'

@@ -22,16 +22,19 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage, ElTable } from 'element-plus'
 
 import type { IPermissionInfo } from '@/types/modules/permission'
+import type { IRoleInfo } from '@/types/modules/role'
+
 import type { IMenuItem } from '@/types/modules/menu'
 
 import { getSystemMenuTree } from '@/api/modules/menu'
 import { fetchSystemPermissionList } from '@/api/modules/permission'
+import { getRoleInfo } from '@/api/modules/role'
 import { assignRolePermissions, getRolePermissions } from '@/api/modules/role'
 
 // ===================== 1. Props / Model 定义 =====================
 /** 组件入参：角色ID */
 const props = defineProps<{
-  roleId: number
+  roleId: number,
 }>()
 
 /** 抽屉显隐状态（v-model 双向绑定） */
@@ -83,6 +86,8 @@ const selectedPermissionSet = ref<Set<number>>(new Set())
 
 /** 表格组件引用 */
 const permissionTableRef = ref<InstanceType<typeof ElTable>>()
+
+const currentRoleInfo = ref<IRoleInfo>()
 
 // ===================== 4. 计算属性 =====================
 /**
@@ -198,13 +203,20 @@ const fetchRolePerms = async () => {
   selectedPermissionSet.value = new Set(currentRolePermissionIdSet.value)
 }
 
+/** 获取角色信息 */
+const fetchRoleInfo = async () => {
+  const role = await getRoleInfo(props.roleId)
+  if (!role) return
+  currentRoleInfo.value = role
+}
+
 // ===================== 7. 业务处理 =====================
 /**
  * 抽屉打开回调
  * @description 并行加载数据，等待 DOM 渲染后恢复勾选状态
  */
 const handleOpenPermissionDrawer = async () => {
-  await Promise.all([fetchMenuTree(), fetchAllPermissionList(), fetchRolePerms()])
+  await Promise.all([fetchMenuTree(), fetchAllPermissionList(), fetchRolePerms(), fetchRoleInfo()])
 
   // 等待 DOM 渲染完成，确保表格数据更新，再恢复勾选状态
   await nextTick()
@@ -296,108 +308,119 @@ watch(filterPermissionData, restoreSelection, { flush: 'post' })
 <template>
   <el-drawer
     v-model="drawerVisible"
-    title="开通权限"
     size="50%"
     resizable
     @close="closePermissionDrawer"
     @open="handleOpenPermissionDrawer"
   >
 
+    <template #header>
+      <div class="flex items-center gap-2">
+        <div class="text-lg font-bold">权限配置</div>
+        <el-tag type="primary" effect="light" size="small">{{ currentRoleInfo?.role_name || '未知' }}</el-tag>
+      </div>
+    </template>
+
     <template #default>
-      <div class="permission-header">
-        <el-input
-          v-model="permissionSearchForm.searchKey"
-          placeholder="例如：获取群组信息、im:chat:readonly"
-        >
-          <template #prefix>
-            <el-icon>
-              <i-ep-search />
-            </el-icon>
-          </template>
-          <template #append>
-            <el-select
-              v-model="permissionSearchForm.searchType"
-              placeholder="Select"
-              style="width: 115px"
-            >
-              <el-option
-                v-for="option in PERMISSION_SEARCH_OPTIONS"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
-            </el-select>
-          </template>
-        </el-input>
-      </div>
 
-      <div class="permission-content">
-        <div
-          v-loading="loading.menuTree"
-          class="permission-content__tree"
-        >
-          <el-tree
-            :data="systemMenuTree"
-            :props="TREE_DEFAULT_PROPS"
-            node-key="id"
-            default-expand-all
-            highlight-current
-            :current-node-key="selectedMenu"
-            @node-click="handleClickMenu($event.id)"
-          />
-        </div>
-
-        <div
-          v-loading="loading.permTable"
-          class="permission-content__table"
-        >
-          <el-table
-            ref="permissionTableRef"
-            border
-            :data="filterPermissionData"
-            stripe
-            row-key="id"
-            @select="handleSelectPermission"
-            @select-all="handleSelectAllPermission"
+      <div class="permission-drawer">
+        <div class="permission-header">
+          <el-input
+            v-model="permissionSearchForm.searchKey"
+            placeholder="例如：获取群组信息、im:chat:readonly"
           >
-            <el-table-column
-              type="selection"
-              width="55"
-              align="center"
-              :reserve-selection="true"
+            <template #prefix>
+              <el-icon>
+                <i-ep-search />
+              </el-icon>
+            </template>
+            <template #append>
+              <el-select
+                v-model="permissionSearchForm.searchType"
+                placeholder="Select"
+                style="width: 115px"
+              >
+                <el-option
+                  v-for="option in PERMISSION_SEARCH_OPTIONS"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </template>
+          </el-input>
+        </div>
+
+        <div class="permission-content">
+          <div
+            v-loading="loading.menuTree"
+            class="permission-content__tree"
+          >
+            <el-tree
+              :data="systemMenuTree"
+              :props="TREE_DEFAULT_PROPS"
+              node-key="id"
+              default-expand-all
+              highlight-current
+              :expand-on-click-node="false"
+              :current-node-key="selectedMenu"
+              @node-click="handleClickMenu($event.id)"
             />
+          </div>
 
-            <el-table-column
-              prop="name"
-              label="权限名称"
-              min-width="140"
-              align="center"
+          <div
+            v-loading="loading.permTable"
+            class="permission-content__table"
+          >
+            <el-table
+              ref="permissionTableRef"
+              border
+              :data="filterPermissionData"
+              stripe
+              row-key="id"
+              @select="handleSelectPermission"
+              @select-all="handleSelectAllPermission"
             >
-              <template #default="{ row }">
-                <el-tooltip
-                  v-if="row.description"
-                  :content="row.description"
-                  placement="top"
-                >
-                  <el-link>{{ row.name }}</el-link>
-                </el-tooltip>
-                <el-link v-else>{{ row.name }}</el-link>
-              </template>
-            </el-table-column>
+              <el-table-column
+                type="selection"
+                width="55"
+                align="center"
+                :reserve-selection="true"
+              />
 
-            <el-table-column
-              prop="code"
-              label="API"
-              min-width="160"
-              align="center"
-            >
-              <template #default="{ row }">
-                <el-tag type="info">{{ row.code }}</el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
+              <el-table-column
+                prop="name"
+                label="权限名称"
+                min-width="140"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-tooltip
+                    v-if="row.description"
+                    :content="row.description"
+                    placement="top"
+                  >
+                    <el-link>{{ row.name }}</el-link>
+                  </el-tooltip>
+                  <el-link v-else>{{ row.name }}</el-link>
+                </template>
+              </el-table-column>
+
+              <el-table-column
+                prop="code"
+                label="API"
+                min-width="160"
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-tag type="info">{{ row.code }}</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
       </div>
+
     </template>
 
     <template #footer>
@@ -417,12 +440,12 @@ watch(filterPermissionData, restoreSelection, { flush: 'post' })
 </template>
 
 <style scoped>
-:deep(.el-drawer__body) {
+
+.permission-drawer {
+  flex: 1 1 auto;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  padding: 16px;
-  overflow: hidden;
 }
 
 .permission-header {
@@ -432,7 +455,7 @@ watch(filterPermissionData, restoreSelection, { flush: 'post' })
 
 .permission-content {
   flex: 1 1 auto;
-  height: calc(100% - 40px);
+  min-height: 0;
   display: flex;
   gap: 12px;
 }

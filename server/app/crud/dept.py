@@ -134,3 +134,20 @@ class DeptCRUD(BaseCRUD):
         )
         result = await self.db_session.execute(stmt)
         return list(result.scalars().all())
+
+    async def list_depts_by_ids(self, dept_ids: list[int]) -> list[Dept]:
+        """根据部门ID列表批量查询部门信息
+
+        Args:
+            dept_ids: 部门ID列表
+
+        Returns:
+            list[Dept]: 部门列表
+        """
+
+        if not dept_ids:
+            return []
+
+        stmt = select(Dept).where(Dept.id.in_(dept_ids))
+        result = await self.db_session.execute(stmt)
+        return list(result.scalars().all())
