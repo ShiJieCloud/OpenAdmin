@@ -161,14 +161,17 @@ const handleSelectRole = (selection: IRoleInfo[], row: IRoleInfo) => {
  * @param selection - 全选时的勾选行列表，空数组表示取消全选
  */
 const handleSelectAllRole = (selection: IRoleInfo[]) => {
-  if (selection.length === 0) {
-    // 取消全选：移除当前页所有启用状态角色的 ID
-    roleTableData.value
-      .filter(row => row.status === 0)
-      .forEach(row => selectedRoleSet.value.delete(row.id))
-  } else {
+  const enabledSelection = selection.filter(row => row.status === 0)
+  const isSelectAll = enabledSelection.length > 0;
+
+  if (isSelectAll) {
     // 全选：selection 已包含当前页所有可勾选行
     selection.forEach(row => selectedRoleSet.value.add(row.id))
+  } else {
+    // 取消全选：移除当前页所有启用状态角色的 ID
+    roleTableData.value
+    .filter(row => row.status === 0)
+    .forEach(row => selectedRoleSet.value.delete(row.id))
   }
 }
 

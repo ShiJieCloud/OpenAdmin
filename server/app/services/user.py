@@ -285,15 +285,24 @@ class UserService(BaseService):
             if existing_user:
                 raise BusinessError(RespCodeEnum.PHONE_EXIST)
 
+        # 校验岗位部门一致性
+        if req.post_ids and req.dept_id:
+            await self._validate_posts_dept(req.post_ids, req.dept_id)
+
         # 密码加密
         hashed_password = get_password_hash(req.password)
 
-        # 构建用户数据
-        user_data = req.model_dump()
+        # 构建用户数据（排除 post_ids，不存入用户表）
+        user_data = req.model_dump(exclude={"post_ids"})
         user_data["password"] = hashed_password
 
         # 创建用户
         user = await self.user_crud.create_user(user_data)
+
+        # 绑定岗位
+        if req.post_ids:
+            await self.user_crud.bind_posts_to_user(user.id, req.post_ids)
+
         return user
 
     async def reset_user_password(self, req: UserResetPasswordRequest) -> None:
@@ -381,15 +390,26 @@ class UserService(BaseService):
             if existing_user:
                 raise BusinessError(RespCodeEnum.PHONE_EXIST)
 
-        # 构建更新数据
-        update_data = req.model_dump(exclude_unset=True)
+        # 确定最终的 dept_id（用于校验岗位部门一致性）
+        final_dept_id = req.dept_id if req.dept_id is not None else user.dept_id
+
+        # 校验岗位部门一致性
+        if req.post_ids is not None and final_dept_id:
+            await self._validate_posts_dept(req.post_ids, final_dept_id)
+
+        # 构建更新数据（排除 post_ids，不存入用户表）
+        update_data = req.model_dump(exclude_unset=True, exclude={"post_ids", "user_id"})
 
         # 更新用户信息
         if update_data:
             await self.user_crud.update_user_info(req.user_id, update_data)
-            # 重新获取更新后的用户信息
-            user = await self.user_crud.get_user(id=req.user_id)
 
+        # 更新岗位绑定
+        if req.post_ids is not None:
+            await self._sync_user_posts(req.user_id, req.post_ids)
+
+        # 重新获取更新后的用户信息
+        user = await self.user_crud.get_user(id=req.user_id)
         return user
 
     async def get_user_list(self, query: UserListQueryRequest) -> tuple[list[User], int, int, int]:
@@ -401,6 +421,50 @@ class UserService(BaseService):
         """
         users, total, pages, page_num = await self.user_crud.get_user_list(query)
         return users, total, pages, page_num
+
+    async def _validate_posts_dept(self, post_ids: list[int], dept_id: int) -> None:
+        """校验岗位的部门ID是否与用户部门一致
+
+        Args:
+            post_ids: 岗位ID列表
+            dept_id: 用户部门ID
+
+        Raises:
+            BusinessError: 岗位不存在或岗位部门与用户部门不一致
+        """
+        from app.crud import PostCRUD
+        post_crud = PostCRUD(self.db_session)
+
+        for post_id in post_ids:
+            post = await post_crud.get_post(post_id)
+            if not post:
+                raise BusinessError(RespCodeEnum.POST_NOT_EXIST)
+            if post.dept_id != dept_id:
+                raise BusinessError(RespCodeEnum.USER_POST_DEPT_MISMATCH)
+
+    async def _sync_user_posts(self, user_id: int, new_post_ids: list[int]) -> None:
+        """同步用户岗位绑定（对比差异）
+
+        Args:
+            user_id: 用户ID
+            new_post_ids: 新的岗位ID列表
+        """
+        # 获取当前绑定的岗位
+        current_post_ids = await self.user_crud.get_user_bind_post_ids(user_id)
+        current_set = set(current_post_ids)
+        new_set = set(new_post_ids)
+
+        # 计算差异
+        to_add = new_set - current_set
+        to_remove = current_set - new_set
+
+        # 解绑多余的岗位
+        if to_remove:
+            await self.user_crud.unbind_posts_from_user(user_id, list(to_remove))
+
+        # 绑定新增的岗位
+        if to_add:
+            await self.user_crud.bind_posts_to_user(user_id, list(to_add))
 
     async def assign_roles_to_user(self, user_id: int, role_ids: list[int]) -> list[int]:
         """对比差异分配角色给用户
@@ -422,12 +486,12 @@ class UserService(BaseService):
         if user is None:
             raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
 
-        existing_role_ids = await self.user_crud.get_user_bind_roles(user_id)
-        existing_set = set(existing_role_ids)
+        bind_roles = await self.user_crud.get_user_bind_roles(user_id)
+        bind_roles_set = set([role.id for role in bind_roles])
         new_set = set(role_ids)
 
-        to_add = new_set - existing_set
-        to_remove = existing_set - new_set
+        to_add = new_set - bind_roles_set
+        to_remove = bind_roles_set - new_set
 
         if to_remove:
             await self.user_crud.unbind_roles_from_user(user_id, list(to_remove))

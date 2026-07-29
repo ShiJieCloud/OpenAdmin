@@ -182,3 +182,15 @@ class PostService(BaseService):
         final_bind_roles = await self.post_crud.get_posts_bind_roles([post_id])
         
         return [role.id for role in final_bind_roles]
+
+    async def list_posts_by_dept_id(self, dept_id: int) -> list[PostInfoResponse]:
+        """根据部门ID查询部门下的所有岗位
+
+        Args:
+            dept_id: 部门ID
+
+        Returns:
+            list[PostInfoResponse]: 部门下的岗位列表
+        """
+        posts = await self.post_crud.list_posts_by_dept_id(dept_id)
+        return [PostInfoResponse.model_validate(post) for post in posts]

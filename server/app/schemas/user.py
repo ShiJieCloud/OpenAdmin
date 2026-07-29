@@ -25,10 +25,11 @@ class UserCreateRequest(BaseModel):
     password: str = Field(..., description="登录密码", min_length=6, max_length=50, example="123456")
     nickname: str | None = Field(None, description="用户昵称/姓名", max_length=50, example="管理员")
     avatar: str | None = Field(None, description="头像URL", max_length=255)
-    email: str | None = Field(None, description="邮箱", max_length=100, example="admin@example.com")
+    email: str = Field(..., description="邮箱", max_length=100, example="admin@example.com")
     phone: str | None = Field(None, description="手机号", max_length=20, example="13800138000")
     sex: int = Field(0, description="性别：0=未知 1=男 2=女", ge=0, le=2, example=0)
     dept_id: int | None = Field(None, description="所属部门ID", ge=1)
+    post_ids: list[int] = Field(default_factory=list, description="岗位ID列表（一人多岗）", example=[1, 2, 3])
     remark: str | None = Field(None, description="备注", max_length=500)
 
 
@@ -56,6 +57,7 @@ class UserUpdateRequest(BaseModel):
     phone: str | None = Field(None, description="手机号", max_length=20, example="13800138000")
     sex: int | None = Field(None, description="性别：0=未知 1=男 2=女", ge=0, le=2, example=0)
     dept_id: int | None = Field(None, description="所属部门ID", ge=1)
+    post_ids: list[int] | None = Field(None, description="岗位ID列表（一人多岗）", example=[1, 2, 3])
     remark: str | None = Field(None, description="备注", max_length=500)
 
 
@@ -86,10 +88,17 @@ class UserInfoResponse(BaseModel):
     sex: int = Field(..., description="性别：0=未知 1=男 2=女")
     status: int = Field(..., description="账号状态：0=正常 1=禁用 2=锁定 3=注销 4=冻结")
     dept_id: int | None = Field(None, description="所属部门ID")
-    post_id: int | None = Field(None, description="所属岗位ID")
+    dept_name: str | None = Field(None, description="所属部门名称")
+    post_ids: list[int] = Field(default_factory=list, description="岗位ID列表（一人多岗）")
     last_login_ip: str | None = Field(None, description="最后登录IP")
     last_login_date: datetime | None = Field(None, description="最后登录时间")
     create_time: datetime = Field(..., description="创建时间")
+
+    @field_serializer("create_time")
+    def format_datetime(dt: datetime | None, _info: SerializationInfo):
+        if dt is None:
+            return None
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 class OnlineUserQueryRequest(BaseModel):
     """在线用户列表查询请求"""

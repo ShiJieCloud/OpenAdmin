@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Path, Body, Query
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
-from app.deps.service import get_user_service
+from app.deps.service import get_user_service, get_post_service, get_dept_service
 from app.schemas.base.response import ApiResponse, PaginationResponse
 from app.schemas.user import (
     # 查询入参
@@ -20,7 +20,7 @@ from app.schemas.user import (
     UserInfoResponse,
     OnlineUserInfoResponse,
 )
-from app.services import UserService
+from app.services import PostService, UserService, DeptService
 
 router = APIRouter()
 
@@ -34,7 +34,8 @@ router = APIRouter()
 )
 async def get_user_info(
     user_id: int = Path(..., description="用户ID", ge=1, examples=[1001]),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    post_service: PostService = Depends(get_post_service)
 ):
     """
     获取用户详情
@@ -48,6 +49,12 @@ async def get_user_info(
     """
     user = await user_service.get_user(user_id)
     user_info = UserInfoResponse.model_validate(user)
+
+    # 获取用户绑定岗位信息
+    bind_posts = await user_service.get_user_bind_posts(user_id)
+    
+    user_info.post_ids = [post.id for post in bind_posts]
+
     return ResponseBuilder.success(user_info)
 
 
@@ -96,6 +103,9 @@ async def reset_user_password(
     :raises BusinessError: 用户不存在
     """
     await user_service.reset_user_password(req)
+
+    # 清除用户所有在线会话
+    await user_service.clean_user_online_session(req.user_id)
     return ResponseBuilder.success()
 
 
@@ -165,7 +175,8 @@ async def update_user_info(
 )
 async def get_user_list(
     query: UserListQueryRequest = Body(..., description="查询条件"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    dept_service: DeptService = Depends(get_dept_service)
 ):
     """
     分页查询用户列表
@@ -182,8 +193,47 @@ async def get_user_list(
     :return: 返回分页用户列表
     """
     users, total, pages, page_num = await user_service.get_user_list(query)
-    records = [UserInfoResponse.model_validate(user) for user in users]
+    
+    # 批量获取用户所属部门名称
+    dept_ids = [user.dept_id for user in users if user.dept_id]
+    depts = await dept_service.list_depts_by_ids(dept_ids)
+    # 构建部门名称映射
+    dept_name_map = {dept.id: dept.dept_name for dept in depts}
+
+    records = []
+    for user in users:
+        user_info = UserInfoResponse.model_validate(user)
+        # 获取用户所属部门名称
+        dept_name = dept_name_map.get(user.dept_id, "")
+        user_info.dept_name = dept_name
+        records.append(user_info)
+    
     return ResponseBuilder.pagination(records, total, page_num, query.page_size)
+
+
+@router.get(
+    "/{user_id}/roles",
+    response_model=ApiResponse[list[int]],
+    dependencies=[Depends(has_perm(PermCode.User.VIEW))],
+    summary="获取用户已绑定角色ID列表",
+    description="获取指定用户已绑定的角色ID列表（需要具备用户查看权限）"
+)
+async def get_user_roles(
+    user_id: int = Path(..., description="用户ID", ge=1, examples=[1001]),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    获取用户已绑定角色ID列表
+
+    根据用户ID查询该用户已绑定的所有角色ID。
+    接口需要用户登录并拥有用户查看权限方可访问。
+
+    :param user_id: 目标用户的唯一标识ID
+    :return: 返回用户已绑定的角色ID列表
+    :raises BusinessError: 用户不存在
+    """
+    role_ids = await user_service.user_crud.get_user_bind_role_ids(user_id)
+    return ResponseBuilder.success(role_ids)
 
 
 @router.post(

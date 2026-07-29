@@ -128,6 +128,23 @@ class UserCRUD(BaseCRUD):
         result = await self.db_session.execute(stmt)
         return result.scalars().all()
 
+    async def get_user_bind_role_ids(self, user_id: int) -> list[int]:
+        """
+        获取用户绑定的角色ID列表
+
+        Args:
+            user_id: 用户ID
+
+        Returns:
+            list[int]: 角色ID列表
+        """
+        stmt = (
+            select(UserRole.role_id)
+            .where(UserRole.user_id == user_id)
+        )
+        result = await self.db_session.execute(stmt)
+        return [row[0] for row in result.all()]
+
     async def get_user_bind_posts(self, user_id: int, post_status: int | None = None) -> list[Post]:
         """
         获取用户绑定的岗位列表
@@ -310,6 +327,59 @@ class UserCRUD(BaseCRUD):
             )
         )
         await self.db_session.execute(delete_stmt)
+
+    async def bind_posts_to_user(self, user_id: int, post_ids: list[int]) -> None:
+        """批量绑定用户岗位关联
+
+        Args:
+            user_id: 用户ID
+            post_ids: 要绑定的岗位ID列表
+        """
+        if not post_ids:
+            return
+
+        post_relations = [
+            {"user_id": user_id, "post_id": post_id}
+            for post_id in set(post_ids)
+        ]
+
+        insert_stmt = insert(UserPost).values(post_relations)
+        await self.db_session.execute(insert_stmt)
+
+    async def unbind_posts_from_user(self, user_id: int, post_ids: list[int]) -> None:
+        """批量解绑用户岗位关联
+
+        Args:
+            user_id: 用户ID
+            post_ids: 要解绑的岗位ID列表
+        """
+        if not post_ids:
+            return
+
+        delete_stmt = (
+            delete(UserPost)
+            .where(
+                UserPost.user_id == user_id,
+                UserPost.post_id.in_(post_ids)
+            )
+        )
+        await self.db_session.execute(delete_stmt)
+
+    async def get_user_bind_post_ids(self, user_id: int) -> list[int]:
+        """获取用户绑定的岗位ID列表
+
+        Args:
+            user_id: 用户ID
+
+        Returns:
+            list[int]: 岗位ID列表
+        """
+        stmt = (
+            select(UserPost.post_id)
+            .where(UserPost.user_id == user_id)
+        )
+        result = await self.db_session.execute(stmt)
+        return list(result.scalars().all())
 
     async def list_by_ids(self, user_ids: list[int]) -> list[User]:
         """根据用户ID列表查询用户

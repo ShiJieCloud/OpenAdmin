@@ -1,5 +1,8 @@
 import request from '@/utils/request'
 import type { IDeptInfo, IDeptCreateRequest, IDeptUpdateRequest } from '@/types/modules/dept'
+import type { IPostInfo } from '@/types/modules/post'
+import type { RequestConfig } from '@/utils/request/type'
+
 
 /**
  * 获取部门树形列表
@@ -51,4 +54,13 @@ export const deleteDept = (deptId: number): Promise<void> => {
  */
 export const batchDeleteDept = (deptIds: number[]): Promise<void> => {
   return request.deleteRequest('/dept/batch', { dept_ids: deptIds })
+}
+
+/**
+ * 获取部门下的所有岗位
+ * @param deptId - 部门ID
+ * @returns 部门下的岗位列表
+ */
+export const listPostsByDeptId = (deptId: number, config?: RequestConfig): Promise<IPostInfo[]> => {
+  return request.get(`/dept/${deptId}/posts`, {}, config)
 }

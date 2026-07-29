@@ -193,3 +193,19 @@ class PostCRUD(BaseCRUD):
             )
         )
         await self.db_session.execute(delete_stmt)
+
+    async def list_posts_by_dept_id(self, dept_id: int) -> list[Post]:
+        """根据部门ID查询部门下的所有岗位
+
+        Args:
+            dept_id: 部门ID
+
+        Returns:
+            list[Post]: 部门下的岗位列表
+        """
+        if dept_id is None:
+            return []
+
+        stmt = select(Post).where(Post.dept_id == dept_id)
+        result = await self.db_session.execute(stmt)
+        return list(result.scalars().all())

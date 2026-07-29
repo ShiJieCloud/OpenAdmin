@@ -43,6 +43,7 @@ class RespCodeEnum(Enum):
     USER_STATUS_TARGET_CANCELLED = ("BUS0010", "后台不能手动注销用户")
     USER_STATUS_NO_CHANGE = ("BUS0011", "用户状态无需修改")
     USER_STATUS_TRANSITION_INVALID = ("BUS0012", "不支持的用户状态流转")
+    USER_POST_DEPT_MISMATCH = ("BUS0013", "岗位的所属部门与用户部门不一致")
 
     # B-PW = 密码认证 (Password)
     PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误，，剩余尝试次数: {count} 次")

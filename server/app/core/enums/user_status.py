@@ -11,7 +11,7 @@ class UserStatusEnum(IntEnum):
     枚举值：
         - 0: 账号可正常使用
         - 1: 管理员手动禁用
-        - 2: 登录失败次数过多，可自动解锁
+        - 2: 登录失败次数过多，可自动或手动解锁
         - 3: 用户主动注销，不可逆
         - 4: 风控或违规操作冻结
     """
@@ -37,6 +37,7 @@ class UserStatusEnum(IntEnum):
             冻结 (4) → 正常 (0)：允许
             禁用 (1) → 冻结 (4)：允许
             冻结 (4) → 禁用 (1)：允许
+            锁定 (2) → 正常 (0)：允许
         """
         valid_transitions = {
             (cls.NORMAL, cls.DISABLED): True,
@@ -45,5 +46,6 @@ class UserStatusEnum(IntEnum):
             (cls.FROZEN, cls.NORMAL): True,
             (cls.DISABLED, cls.FROZEN): True,
             (cls.FROZEN, cls.DISABLED): True,
+            (cls.LOCKED, cls.NORMAL): True,
         }
         return valid_transitions.get((current_status, target_status), False)

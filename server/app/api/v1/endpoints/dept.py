@@ -3,10 +3,12 @@ from fastapi import APIRouter, Depends, Path, Body
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
-from app.deps.service import get_dept_service
+from app.deps.service import get_dept_service, get_post_service
 from app.schemas.base.response import ApiResponse
 from app.schemas.dept import DeptInfoResponse, DeptCreateRequest, DeptUpdateRequest, DeptBatchDeleteRequest
-from app.services import DeptService
+from app.schemas.post import PostInfoResponse
+
+from app.services import DeptService, PostService
 router = APIRouter()
 
 
@@ -157,3 +159,26 @@ async def delete_dept(
     """
     await dept_service.delete_dept(dept_id)
     return ResponseBuilder.success()
+
+@router.get(
+    "/{dept_id}/posts",
+    response_model=ApiResponse[list[PostInfoResponse]],
+    dependencies=[Depends(has_perm(PermCode.Post.READ))],
+    summary="获取部门下的岗位",
+    description="根据部门ID查询该部门下的所有岗位（需要具备岗位详情查询权限）"
+)
+async def get_dept_posts(
+    dept_id: int = Path(..., description="部门ID", ge=1, examples=[1]),
+    post_service: PostService = Depends(get_post_service)
+):
+    """
+    获取部门下的岗位
+
+    根据部门ID查询该部门下的所有岗位，接口需要用户登录并拥有岗位详情查询权限方可访问。
+
+    :param dept_id: 目标部门的唯一标识ID
+    :return: 返回部门下的岗位列表
+    :raises BusinessError: 部门不存在
+    """
+    posts = await post_service.list_posts_by_dept_id(dept_id)
+    return ResponseBuilder.success(posts)

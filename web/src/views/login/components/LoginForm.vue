@@ -39,14 +39,10 @@ const rules: FormRules<PasswordLoginRequest> = {
 }
 
 const refreshCaptcha = async () => {
-  try {
-    const data = await getCaptcha()
-    captchaUrl.value = data.captcha_image
-    captchaId.value = data.captcha_id
-    loginForm.captcha_code = ''
-  } catch (error) {
-
-  }
+  const data = await getCaptcha()
+  captchaUrl.value = data.captcha_image
+  captchaId.value = data.captcha_id
+  loginForm.captcha_code = ''
 }
 
 /**
@@ -86,15 +82,9 @@ const handleLogin = async (formEl: FormInstance | undefined): Promise<boolean> =
 
     return true
   } catch (err) {
-    // 登录异常处理
-    const error = err as Error
-    // 清空验证码输入框
-    loginForm.captcha_code = ''
     // 刷新验证码（根据项目补充验证码刷新逻辑）
-    // refreshCaptcha()
-
-    // 展示后端返回错误信息，兜底默认文案
-    ElMessage.error(error.message || '登录失败，请检查账号密码或验证码')
+    loginForm.captcha_code = ''
+    refreshCaptcha()
     return false
   } finally {
     // 无论成功/失败，关闭加载状态
