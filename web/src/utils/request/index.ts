@@ -233,15 +233,20 @@ request.interceptors.response.use(
  * await get('/api/users', { page: 1 }, { signal: abortController.signal })
  * ```
  */
-// 重载1：仅 url
-function get<T = any>(url: string): Promise<T>
-// 重载2：url + 查询参数
-function get<T = any>(url: string, params: Record<string, unknown>): Promise<T>
-// 重载3：url + 查询参数 + 配置（signal / headers / timeout）
-function get<T = any>(url: string, params: Record<string, unknown>, config?: RequestConfig): Promise<T>
-// 实现体（响应拦截器已解包 data，需断言为 T）
-function get<T = any>(url: string, params?: Record<string, unknown>, config?: RequestConfig): Promise<T> {
-  return request.get(url, { params, ...config }) as Promise<T>
+// 重载
+function get<T>(url: string): Promise<T>
+function get<T, P extends object>(url: string, params: P): Promise<T>
+function get<T, P extends object>(url: string, params: P, config?: RequestConfig): Promise<T>
+
+// 实现
+function get<T, P extends object>(
+  url: string,
+  params?: P,
+  config?: RequestConfig
+): Promise<T> {
+  const options = { ...config }
+  if (params) options.params = params
+  return request.get(url, options) as Promise<T>
 }
 
 /** 发送 POST 请求 */
