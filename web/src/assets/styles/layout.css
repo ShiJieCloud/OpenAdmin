@@ -458,3 +458,14 @@ body,
 .el-drawer__header {
     margin-bottom: 0 !important;
 }
+
+/* 搜索弹窗专用样式，仅作用 custom-class="search-dialog" */
+.search-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.search-dialog .el-dialog__header {
+  display: none;
+}

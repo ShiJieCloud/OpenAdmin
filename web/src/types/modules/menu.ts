@@ -5,7 +5,7 @@ export interface IMenuItem {
     id: number
     name: string
     label: string
-    desc?: string
+    description?: string
     icon?: string
     path?: string
     component?: string

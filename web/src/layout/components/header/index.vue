@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import Logo from '@/layout/components/logo.vue'
 import { useLayoutStore, useMenuStore, useThemeStore } from '@/store'
 import { LAYOUT } from '@/types/modules/layout'
@@ -7,10 +8,13 @@ import UserAvatar from './components/UserAvatar.vue'
 
 import Breadcrumb from '@/layout/components/Breadcrumb.vue'
 import FullScreen from '@/components/common/FullScreen.vue'
+import SearchDialog from '@/components/SearchDialog/index.vue'
 
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()
 const themeStore = useThemeStore()
+
+const searchDialogRef = ref<InstanceType<typeof SearchDialog>>()
 
 </script>
 
@@ -36,7 +40,16 @@ const themeStore = useThemeStore()
     </div>
 
     <!-- 右侧按钮 -->
-    <div class="flex items-center">
+    <div class="flex items-center gap-2">
+
+      <!-- 搜索按钮 -->
+      <el-tooltip content="搜索 (Ctrl+K)" placement="bottom">
+        <div class="header-settings-btn" @click="searchDialogRef?.open()">
+          <el-icon>
+            <i-ep-search />
+          </el-icon>
+        </div>
+      </el-tooltip>
 
       <!-- 全屏按钮 -->
       <div class="header-settings-btn">
@@ -52,6 +65,9 @@ const themeStore = useThemeStore()
       <!-- 用户头像区域 -->
       <UserAvatar />
     </div>
+
+    <!-- 搜索弹窗 -->
+    <SearchDialog ref="searchDialogRef" />
 
   </header>
 </template>
@@ -83,7 +99,6 @@ const themeStore = useThemeStore()
   justify-content: center;
   width: 36px;
   height: 36px;
-  margin-right: 8px;
   border: none;
   border-radius: 8px;
   background: transparent;
