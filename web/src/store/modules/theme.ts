@@ -16,7 +16,7 @@ import { THEME_MODE, FONT_TYPE, CODE_THEME_MODE, CODE_THEME_LABEL } from '@/type
  * @constant DEFAULT_THEME
  * @desc 默认主题配置
  */
-const DEFAULT_THEME: ThemeConfig = {
+export const DEFAULT_THEME: ThemeConfig = {
   primaryColor: '#409EFF',
   themeMode: THEME_MODE.Light,
   showBreadcrumb: true,

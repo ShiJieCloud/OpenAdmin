@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { LAYOUT, layoutList } from '@/types/modules/layout'
 import { useLayoutStore, useThemeStore } from '@/store'
 import { FONT_LABEL, CODE_THEME_LABEL } from '@/types/modules/theme'
+import { DEFAULT_THEME } from '@/store/modules/theme'
 
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
@@ -149,7 +150,12 @@ const handleReset = () => {
                         <!-- 主题色：左右布局 -->
                         <div class="flex items-center justify-between">
                             <p class="text-sm var(--el-text-color-regular)">主题色</p>
-                            <ElColorPicker v-model="themeStore.primaryColor" class="w-[160px]" />
+                            <ElColorPicker
+                                v-model="themeStore.primaryColor"
+                                :value-on-clear="DEFAULT_THEME.primaryColor"
+                                :empty-value="DEFAULT_THEME.primaryColor"
+                                class="w-[160px]"
+                            />
                         </div>
 
                         <!-- 代码高亮主题：左右布局 -->
