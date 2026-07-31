@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,9 @@
     "@tailwindcss/vite": "^4.3.0",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.16.1",
+    "dompurify": "^3.4.12",
     "element-plus": "^2.14.0",
+    "markdown-it": "^14.1.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "shiki": "^4.3.1",
@@ -32,6 +34,7 @@
     "@iconify-json/solar": "^1.2.5",
     "@iconify-json/tabler": "^1.2.35",
     "@shikijs/colorized-brackets": "^4.3.1",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",

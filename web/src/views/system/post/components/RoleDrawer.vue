@@ -285,7 +285,7 @@ const submitRoleAssign = async () => {
     size="50%"
     resizable
     @close="closeRoleDrawer"
-    @open="handleOpenRoleDrawer"
+    @opened="handleOpenRoleDrawer"
   >
     <!-- 抽屉头部标题区域 -->
     <template #header>

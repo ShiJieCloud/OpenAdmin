@@ -8,6 +8,9 @@ import IconsResolver from 'unplugin-icons/resolver'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 
+import { versionPlugin } from './scripts/vite-plugin-version'
+
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -42,6 +45,13 @@ export default defineConfig({
       autoInstall: true, // 自动下载图标组件
       compiler: 'vue3',
       scale: 1, // 图标缩放比例
+    }),
+
+    // 版本信息插件
+    versionPlugin({
+      changelogFile: 'CHANGELOG.md',
+      enableDevGenerate: false,
+      version: '1.0.0',
     }),
   ],
 
