@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import MarkdownIt from 'markdown-it'
-import DOMPurify from 'dompurify'
+import { useMarkdown } from '@/composables/useMarkdown'
 import { getVersionChecker } from '@/utils/version-check'
 
 /**
@@ -29,25 +28,8 @@ const data = ref<VersionInfo>({
   changelog: ''
 })
 
-/**
- * Markdown 转换 + XSS防御净化
- * @param mdText 原始markdown文本
- * @returns 安全HTML字符串
- */
-const md = new MarkdownIt()
-
-/**
- * Markdown 转换 + XSS防御净化
- * @param mdText 原始markdown文本
- * @returns 安全HTML字符串
- */
-const renderMarkdown = (mdText: string): string => {
-  if (!mdText) return ''
-  // markdown转html
-  const rawHtml = md.render(mdText)
-  // DOMPurify 过滤恶意标签，防止XSS攻击
-  return DOMPurify.sanitize(rawHtml)
-}
+// 使用 markdown composable
+const { renderMarkdown } = useMarkdown()
 
 /**
  * 外部调用：打开弹窗，传入版本信息
@@ -106,7 +88,7 @@ defineExpose({ open })
 
     <!-- Markdown 更新日志渲染区域 -->
     <div
-      class="markdown-container prose prose-sm max-w-none overflow-auto max-h-[50vh] px-1"
+      class="markdown-container prose dark:prose-invert prose-sm max-w-none overflow-auto max-h-[50vh] px-1"
       v-html="renderMarkdown(data.changelog)"
     />
 
@@ -126,4 +108,5 @@ defineExpose({ open })
   color: #606266;
   font-size: 14px;
 }
+
 </style>

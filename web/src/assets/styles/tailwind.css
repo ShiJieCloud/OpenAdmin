@@ -1,2 +1,5 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* 全局 dark 变体 */
+@variant dark (&:where(.dark, .dark *));
