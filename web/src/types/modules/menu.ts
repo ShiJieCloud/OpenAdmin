@@ -10,6 +10,7 @@ export interface IMenuItem {
     path?: string
     component?: string
     parent_id?: number
+    sort: number
     children?: IMenuItem[]
 }
 

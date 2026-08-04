@@ -1,5 +1,8 @@
 {
-  "name": "web",
+  "name": "OpenAdmin",
+  "description": "OpenAdmin 是基于 Vue3 + TypeScript + Vite 搭建的现代化后台管理模板，内置 Element Plus 组件库、Pinia 状态管理与 Vue Router 路由体系，集成 Tailwind CSS 实现灵活样式开发。项目内置图标自动导入、API 请求封装、Markdown 文档渲染、代码高亮等常用后台能力，开箱即用，兼顾开发效率与页面性能，可快速搭建企业级中后台管理系统。",
+  "author": "sjzhao",
+  "license": "MIT",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -39,6 +42,7 @@
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
+    "dayjs": "^1.11.21",
     "typescript": "~6.0.2",
     "unplugin-auto-import": "^21.0.0",
     "unplugin-icons": "^23.0.1",

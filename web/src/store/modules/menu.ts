@@ -11,6 +11,8 @@ import { ref, computed } from 'vue'
 import router from '@/router'
 import type { IMenuItem } from '@/types/modules/menu'
 import { getCurrentUserMenuList } from '@/api'
+import { staticMenuList } from '@/router/staticMenus'
+
 
 export const useMenuStore = defineStore(
   'menu',
@@ -57,8 +59,9 @@ export const useMenuStore = defineStore(
      */
     const menuIdMap = computed(() => {
       const map = new Map<number, IMenuItem>()
-      rawMenuList.value.forEach(item => {
-        map.set(item.id, { ...item, component: `/src/views/${item.component}.vue`, children: item.children ?? [] })
+      rawMenuList.value
+      .forEach(item => {
+        map.set(item.id, { ...item, children: item.children ?? [] })
       })
       return map
     })
@@ -69,12 +72,26 @@ export const useMenuStore = defineStore(
      */
     const treeMenuList = computed(() => {
       const idMap = menuIdMap.value
-      const rootArr: IMenuItem[] = []
+      const childrenMap = new Map<number, IMenuItem[]>()
+
+      // 先收集所有子节点
       idMap.forEach(node => {
-        const parent = idMap.get(node.parent_id ?? 0)
-        parent ? parent.children!.push(node) : rootArr.push(node)
+        const pid = node.parent_id ?? 0
+        if (pid !== 0) {
+          if (!childrenMap.has(pid)) childrenMap.set(pid, [])
+          childrenMap.get(pid)!.push(node)
+        }
       })
-      return rootArr
+
+      // 构建树，不修改原对象
+      const buildTree = (node: IMenuItem): IMenuItem => ({
+        ...node,
+        children: (childrenMap.get(node.id) || []).map(buildTree)
+      })
+
+      return Array.from(idMap.values())
+        .filter(node => (node.parent_id ?? 0) === 0)
+        .map(buildTree)
     })
 
     /**
@@ -94,51 +111,9 @@ export const useMenuStore = defineStore(
     const currentSubMenu = computed(() => {
       return rootMenuIdMap.value.get(activeRootMenuId.value) || []
     })
-
-    /**
-     * @computed rootIdTraceMap
-     * @desc 懒加载缓存Map<菜单ID,所属顶级根ID>，用到再计算
-     */
-    const rootIdTraceMap = computed(() => {
-      const cache = new Map<number, number>()
-      const idMap = menuIdMap.value
-
-      /**
-       * @inner findRoot
-       * @desc 递归溯源根ID + 懒缓存，首次查询计算，后续直接命中缓存
-       * @param mid 菜单ID
-       * @returns 顶级根菜单ID
-       */
-      const findRoot = (mid: number): number => {
-        if (cache.has(mid)) return cache.get(mid)!
-
-        const node = idMap.get(mid)
-        if (!node) {
-          cache.set(mid, 0)
-          return 0
-        }
-        if (node.parent_id === 0) {
-          cache.set(mid, node.id)
-          return node.id
-        }
-        const rootId = findRoot(node.parent_id!)
-        cache.set(mid, rootId)
-        return rootId
-      }
-
-      return { cache, findRoot }
-    })
     // #endregion
 
     // #region Action
-    /**
-     * @method setRawMenuList
-     * @desc 赋值后端原始菜单数据源
-     * @param {IMenuItem[]} list 后端菜单数组
-     */
-    const setRawMenuList = (list: IMenuItem[]) => {
-      rawMenuList.value = Array.isArray(list) ? list : []
-    }
 
     /**
      * @method setActiveRootMenuId
@@ -174,7 +149,13 @@ export const useMenuStore = defineStore(
      * @returns 根ID，无匹配返回0
      */
     const traceRootId = (menuId: number): number => {
-      const { findRoot } = rootIdTraceMap.value
+      const idMap = menuIdMap.value
+      const findRoot = (mid: number): number => {
+        const node = idMap.get(mid)
+        if (!node) return 0
+        if (node.parent_id === 0) return node.id
+        return findRoot(node.parent_id!)
+      }
       return findRoot(menuId)
     }
 
@@ -194,9 +175,8 @@ export const useMenuStore = defineStore(
       const rootId = traceRootId(menuItem.id)
       setActiveRootMenuId(rootId)
 
-      if (rootMenuIdMap.value.has(menuItem.id)) {
-        !currentSubMenu.value.length && router.push(menuItem.path)
-      } else {
+      const hasChildren = rootMenuIdMap.value.has(menuItem.id) && currentSubMenu.value.length > 0
+      if (!hasChildren) {
         router.push(menuItem.path)
       }
     }
@@ -206,8 +186,8 @@ export const useMenuStore = defineStore(
      * @desc 加载当前用户菜单列表
      */
     const loadUserMenu = async () => {
-      const currentUserMenuList = await getCurrentUserMenuList()
-      setRawMenuList(currentUserMenuList)
+      const backendMenus = await getCurrentUserMenuList()
+      rawMenuList.value = [...(backendMenus || []), ...staticMenuList].sort((a, b) => a.sort - b.sort)
     }
     // #endregion
 
@@ -223,9 +203,7 @@ export const useMenuStore = defineStore(
       treeMenuList,
       rootMenuIdMap,
       currentSubMenu,
-      rootIdTraceMap,
       // Action
-      setRawMenuList,
       setActiveRootMenuId,
       setActiveSubMenuId,
       setIsRouteLoaded,

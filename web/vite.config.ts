@@ -1,15 +1,27 @@
+import { resolve } from 'path'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+
 import AutoImport from 'unplugin-auto-import/vite'
-import Icons from 'unplugin-icons/vite'
 import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import tailwindcss from '@tailwindcss/vite'
-import { resolve } from 'path'
+
+import dayjs from 'dayjs'
 
 import { versionPlugin } from './scripts/vite-plugin-version'
 
+// 读取 package.json 依赖信息
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+const dependencies = pkg.dependencies || {}
+const devDependencies = pkg.devDependencies || {}
+const buildTs = Date.now()
+
+// 格式化构建时间
+const buildTime = dayjs(buildTs).format('YYYY-MM-DD HH:mm:ss')
 
 export default defineConfig({
   plugins: [
@@ -51,7 +63,8 @@ export default defineConfig({
     versionPlugin({
       changelogFile: 'CHANGELOG.md',
       enableDevGenerate: false,
-      version: '1.0.0',
+      version: pkg.version || '',
+      buildTs,
     }),
   ],
 
@@ -60,5 +73,17 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src'),
     },
+  },
+
+  // 注入全局常量
+  define: {
+    __APP_NAME__: JSON.stringify(pkg.name),
+    __APP_DESCRIPTION__: JSON.stringify(pkg.description || ''),
+    __APP_AUTHOR__: JSON.stringify(pkg.author || ''),
+    __APP_LICENSE__: JSON.stringify(pkg.license || ''),
+    __APP_VERSION__: JSON.stringify(pkg.version || ''),
+    __APP_BUILD_TIME__: JSON.stringify(buildTime),
+    __APP_DEPENDENCIES__: JSON.stringify(dependencies),
+    __APP_DEV_DEPENDENCIES__: JSON.stringify(devDependencies),
   },
 })

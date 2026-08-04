@@ -1,30 +1,28 @@
+/**
+ * @file vite-plugin-version.ts
+ * @desc Vite 版本信息生成插件
+ * @feature 构建/开发时自动生成 version.json，包含版本号、构建时间、更新日志
+ * @usage 用于前端检测版本更新弹窗、关于页面展示构建信息
+ */
 import type { Plugin, ResolvedConfig } from 'vite'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
+import dayjs from 'dayjs'
 
 // ====================== 类型定义 ======================
-/**
- * 插件配置参数类型
- */
+/** 插件入参配置项 */
 export interface VersionPluginOptions {
-  /**
-   * 自定义版本号
-   * @description 默认值为 0.0.0，适合CI流水线动态注入版本
-   */
+  /** 自定义版本号，优先级高于默认兜底 */
   version?: string
-  /**
-   * changelog 更新日志文件相对路径
-   * @default CHANGELOG.md
-   */
+  /** 更新日志 MD 文件相对路径 */
   changelogFile?: string
-  /**
-   * 开发环境是否生成 public/version.json
-   * @description 开启后 npm run dev 启动时生成版本文件，用于本地调试更新弹窗
-   * @default false
-   */
+  /** 开发环境是否生成 public/version.json */
   enableDevGenerate?: boolean
+  /** 构建时间戳，用于格式化发布时间 */
+  buildTs?: number
 }
 
+/** 输出 version.json 完整结构 */
 export interface VersionInfo {
   version: string
   buildTs: number
@@ -32,135 +30,139 @@ export interface VersionInfo {
   changelog: string
 }
 
-// ====================== 常量抽取 ======================
+// ====================== 全局常量（统一维护默认值/正则） ======================
+/** 插件唯一标识名称，日志打印使用 */
 const PLUGIN_NAME = 'vite-plugin-version'
+/** 默认更新日志文件名 */
 const DEFAULT_CHANGELOG_NAME = 'CHANGELOG.md'
-const DEFAULT_FALLBACK_CHANGELOG = (v: string) => `## ${v}\n\n- 系统更新`
-const NO_CHANGELOG_TIP = '# 暂无更新日志'
-const MKDIR_RECURSIVE_OPT = { recursive: true }
+/** 目录创建配置：递归创建多级目录 */
+const MKDIR_OPT = { recursive: true }
+/** 兜底默认版本号 */
 const DEFAULT_VERSION = '0.0.0'
+/** 无日志时占位文案 */
+const NO_CHANGELOG_TEXT = '# 暂无更新日志'
 
-// 匹配格式：## [1.0.0] - 2026-07-30 或 ## [1.0.0] - 2026-07-30 12:00:00
-const VERSION_HEADER_REG = /## \[(\d+\.\d+\.\d+)\] - \d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2})?([\s\S]*?)(?=\n## \[\d+\.\d+\.\d+\]|$)/
+/**
+ * 日志缺失时默认模板
+ * @param version 当前版本号
+ * @returns 填充版本的默认更新内容
+ */
+const getDefaultChangelog = (version: string) => `## ${version}\n\n- 系统更新`
+
+/**
+ * 正则匹配 CHANGELOG 首个版本块
+ * 匹配格式：## [1.0.0] - 2026-07-30 或 ## [1.0.0] - 2026-07-30 12:00:00
+ */
+const VERSION_BLOCK_REG = /## \[(\d+\.\d+\.\d+)\] - \d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2})?([\s\S]*?)(?=\n## \[\d+\.\d+\.\d+\]|$)/
 
 // ====================== 工具函数 ======================
-/** 从 changelog 文本截取最新版本更新内容 */
+/**
+ * 从 changelog 文本中提取最新版本的更新内容
+ * @param mdContent CHANGELOG.md 完整文本
+ * @returns 最新版本更新描述文本
+ */
 function extractLatestChangelog(mdContent: string): string {
-  const match = mdContent.match(VERSION_HEADER_REG)
-  if (!match) return NO_CHANGELOG_TIP
-  return match[2].trim()
-}
-
-/** 安全创建目录，不存在则递归创建 */
-function ensureDirExists(filePath: string): void {
-  const targetDir = dirname(filePath)
-  if (!existsSync(targetDir)) {
-    mkdirSync(targetDir, MKDIR_RECURSIVE_OPT)
-  }
+  const matchResult = mdContent.match(VERSION_BLOCK_REG)
+  if (!matchResult) return NO_CHANGELOG_TEXT
+  return matchResult[2].trim()
 }
 
 /**
- * 时间戳转 YYYY-MM-DD HH:mm:ss
- * @param timestamp 毫秒时间戳
+ * 校验目录是否存在，不存在则递归创建
+ * @param filePath 完整文件路径
  */
-function formatDateTime(timestamp: number): string {
-  const d = new Date(timestamp)
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  const y = d.getFullYear()
-  const m = pad(d.getMonth() + 1)
-  const day = pad(d.getDate())
-  const h = pad(d.getHours())
-  const min = pad(d.getMinutes())
-  const s = pad(d.getSeconds())
-  return `${y}-${m}-${day} ${h}:${min}:${s}`
+function ensureDirectoryExist(filePath: string): void {
+  const targetDir = dirname(filePath)
+  if (!existsSync(targetDir)) {
+    mkdirSync(targetDir, MKDIR_OPT)
+  }
 }
 
-// ====================== 插件主入口 ======================
+// ====================== 插件主函数 ======================
+/**
+ * Vite 版本信息插件工厂函数
+ * @param options 插件自定义配置
+ * @returns Vite Plugin 实例
+ */
 export function versionPlugin(options: VersionPluginOptions = {}): Plugin {
-  // 配置默认值解构
+  // 解构配置并赋予默认值
   const {
-    version: customVersion,
+    version = DEFAULT_VERSION,
     changelogFile = DEFAULT_CHANGELOG_NAME,
-    enableDevGenerate = false
+    enableDevGenerate = false,
+    buildTs = Date.now()
   } = options
 
-  let root = ''
-  let outDir = 'dist'
-  let isDev = false
+  // 运行时缓存变量（Vite 配置解析后赋值）
+  let projectRoot = ''
+  let buildOutDir = 'dist'
+  let isDevelopmentEnv = false
 
-  /** 生成 version.json 主逻辑 */
-  function generateVersionFile(targetPath: string): void {
+  /**
+   * 核心逻辑：读取日志、组装版本对象、写入 version.json
+   * @param targetJsonPath json 文件输出绝对路径
+   */
+  function generateVersionJsonFile(targetJsonPath: string): void {
     try {
-      // 1. 获取最终版本号：自定义参数 > package.json > 默认值
-      let finalVersion = customVersion || DEFAULT_VERSION
+      // 1. 拼接 changelog 绝对路径并读取内容
+      const changelogAbsolutePath = resolve(projectRoot, changelogFile)
+      let latestLogContent = ''
 
-      // 2. 读取并解析 changelog
-      const changelogAbsPath = resolve(root, changelogFile)
-      let changelogContent = ''
-      if (existsSync(changelogAbsPath)) {
-        const mdRaw = readFileSync(changelogAbsPath, 'utf-8')
-        changelogContent = extractLatestChangelog(mdRaw)
+      if (existsSync(changelogAbsolutePath)) {
+        const mdRawText = readFileSync(changelogAbsolutePath, 'utf-8')
+        latestLogContent = extractLatestChangelog(mdRawText)
       } else {
-        changelogContent = DEFAULT_FALLBACK_CHANGELOG(finalVersion)
+        // 日志文件不存在，使用默认模板
+        latestLogContent = getDefaultChangelog(version)
       }
 
-      // 3. 组装版本信息
-      const nowTs = Date.now()
-      const versionInfo: VersionInfo = {
-        version: finalVersion,
-        buildTs: nowTs,
-        publishTime: formatDateTime(nowTs),
-        changelog: changelogContent
+      // 2. 组装标准版本信息对象
+      const versionExportData: VersionInfo = {
+        version,
+        buildTs,
+        publishTime: dayjs(buildTs).format('YYYY-MM-DD HH:mm:ss'),
+        changelog: latestLogContent
       }
 
-      // 4. 写入文件
-      ensureDirExists(targetPath)
-      writeFileSync(targetPath, JSON.stringify(versionInfo, null, 2), 'utf-8')
-      console.log(`[${PLUGIN_NAME}] ✅ v${finalVersion} 已生成 → ${targetPath}`)
-    } catch (err) {
-      console.error(`[${PLUGIN_NAME}] ❌ 生成 version.json 失败`, err)
+      // 3. 确保目录存在并写入 JSON 文件
+      ensureDirectoryExist(targetJsonPath)
+      writeFileSync(targetJsonPath, JSON.stringify(versionExportData, null, 2), 'utf-8')
+      console.log(`[${PLUGIN_NAME}] ✅ v${version} 版本文件已生成 → ${targetJsonPath}`)
+    } catch (error) {
+      console.error(`[${PLUGIN_NAME}] ❌ 生成 version.json 异常`, error)
     }
   }
 
   return {
-    // Vite 插件名称
-    name: 'vite-plugin-version',
+    name: PLUGIN_NAME,
 
     /**
-     * Vite钩子：configResolved
-     * 在Vite解析完成全部配置后触发
-     * @param config Vite最终合并后的完整配置对象
+     * Vite 钩子：配置完全解析完成后触发
+     * @param config Vite 合并后的完整配置对象
      */
-    configResolved(config) {
-      root = config.root                 // 项目根目录绝对路径
-      outDir = config.build.outDir || 'dist' // 打包输出目录，默认dist
-      isDev = config.mode === 'development'  // 判断当前是否开发环境
+    configResolved(config: ResolvedConfig) {
+      projectRoot = config.root
+      buildOutDir = config.build.outDir || 'dist'
+      isDevelopmentEnv = config.mode === 'development'
     },
 
     /**
-     * Vite钩子：configureServer
-     * 仅【开发模式 npm run dev】触发，启动dev服务时执行
+     * Vite 钩子：开发服务启动时执行（仅 dev 模式）
      */
-    // 仅在开发环境且配置允许时执行
     configureServer() {
-      if (!isDev || !enableDevGenerate) return
-      // 拼接路径：项目根目录/public/version.json
-      const publicPath = resolve(root, 'public/version.json')
-      // 生成version.json到public目录
-      generateVersionFile(publicPath)
+      // 非开发环境 / 未开启开发生成配置则直接跳过
+      if (!isDevelopmentEnv || !enableDevGenerate) return
+      const publicJsonPath = resolve(projectRoot, 'public/version.json')
+      generateVersionJsonFile(publicJsonPath)
     },
 
     /**
-     * Vite钩子：closeBundle
-     * 仅【生产打包 npm run build】触发
-     * 打包完成、资源写入dist之后执行
+     * Vite 钩子：打包完成后触发（仅 build 生产模式）
      */
     closeBundle() {
-      // 开发环境直接跳过，避免重复执行
-      if (isDev) return
-      // 拼接输出路径：项目根目录/dist/version.json
-      const outputPath = resolve(root, outDir, 'version.json')
-      generateVersionFile(outputPath)
-    },
+      if (isDevelopmentEnv) return
+      const distJsonPath = resolve(projectRoot, buildOutDir, 'version.json')
+      generateVersionJsonFile(distJsonPath)
+    }
   }
 }
