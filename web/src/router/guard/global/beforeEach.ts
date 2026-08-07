@@ -52,6 +52,9 @@ export const beforeEach = async (
     // 动态路由未加载：首次登录或刷新后加载动态路由
     if (!menuStore.isRouteLoaded) {
         try {
+            // 加载用户菜单
+            await menuStore.loadUserMenu()
+
             // 根据菜单列表注册动态路由
             loadDynamicRouter(menuStore.treeMenuList)
             // 标记路由已加载，避免重复注册

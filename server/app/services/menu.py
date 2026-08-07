@@ -115,6 +115,41 @@ class MenuService(BaseService):
         
         await self.menu_crud.delete_menu(menu_id)
 
+    async def batch_delete_menus(self, menu_ids: list[int]) -> None:
+        """批量删除菜单
+
+        逻辑：
+        - 如果菜单存在子菜单，但子菜单也在删除列表中，允许删除
+        - 如果菜单存在子菜单，但子菜单不在删除列表中，不允许删除
+
+        Args:
+            menu_ids: 菜单ID列表
+
+        Raises:
+            BusinessError: 存在子菜单不在删除列表中的菜单项
+        """
+        if not menu_ids:
+            return
+
+        menu_id_set = set(menu_ids)
+
+        # 一次性查询所有待删除菜单的子菜单ID
+        all_children = await self.menu_crud.get_descendants_by_parent_ids(menu_ids)
+        all_children_ids = set([child.id for child in all_children])
+
+        # 检查是否有子菜单不在删除列表中（即会成为孤儿菜单）
+        orphan_children = all_children_ids - menu_id_set
+        if orphan_children:
+            first_orphan_id = next(iter(orphan_children))
+            orphan_menu = await self.menu_crud.get_menu(first_orphan_id)
+            label = orphan_menu.label if orphan_menu else str(first_orphan_id)
+            raise BusinessError(
+                RespCodeEnum.MENU_BATCH_HAS_CHILDREN,
+                label=label,
+            )
+
+        await self.menu_crud.batch_delete_menus(menu_ids)
+
     async def get_menu_list(self) -> list[Menu]:
         """获取所有菜单列表
 

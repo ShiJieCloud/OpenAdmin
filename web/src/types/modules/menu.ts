@@ -11,7 +11,49 @@ export interface IMenuItem {
     component?: string
     parent_id?: number
     sort: number
+    type: number
+    is_hidden: number
+    is_frame: number
+    status: number
+    create_time?: string
+    update_time?: string
     children?: IMenuItem[]
+}
+
+/**
+ * 菜单创建请求
+ */
+export interface IMenuCreateRequest {
+    name: string
+    label: string
+    parent_id?: number
+    sort: number
+    path: string
+    component?: string
+    type: number
+    description?: string
+    icon: string
+    is_hidden: number
+    is_frame: number
+    status: number
+}
+
+/**
+ * 菜单更新请求
+ */
+export interface IMenuUpdateRequest {
+    name?: string
+    label?: string
+    parent_id?: number
+    sort?: number
+    path?: string
+    component?: string
+    type?: number
+    description?: string
+    icon?: string
+    is_hidden?: number
+    is_frame?: number
+    status?: number
 }
 
 /**

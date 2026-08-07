@@ -17,7 +17,9 @@ class MenuCRUD(BaseCRUD):
         """
         menu = Menu(**menu_data)
         self.db_session.add(menu)
+        await self.db_session.flush()
         await self.db_session.refresh(menu)
+        
         return menu
 
     async def get_menu(self, menu_id: int) -> Menu | None:
@@ -45,6 +47,22 @@ class MenuCRUD(BaseCRUD):
         stmt = select(Menu).where(Menu.parent_id == parent_id)
         result = await self.db_session.execute(stmt)
         return len(result.scalars().all())
+
+    async def get_descendants_by_parent_ids(self, parent_ids: list[int]) -> set[Menu]:
+        """
+        批量查询多个父菜单下所有子菜单
+
+        Args:
+            parent_ids: 父菜单ID列表
+
+        Returns:
+            set[Menu]: 所有子菜单集合
+        """
+        if not parent_ids:
+            return set()
+        stmt = select(Menu).where(Menu.parent_id.in_(parent_ids))
+        result = await self.db_session.execute(stmt)
+        return set(result.scalars().all())
 
     async def update_menu(self, menu_id: int, menu_data: dict) -> None:
         """更新菜单
@@ -76,6 +94,21 @@ class MenuCRUD(BaseCRUD):
             None: 删除成功
         """
         stmt = delete(Menu).where(Menu.id == menu_id)
+        await self.db_session.execute(stmt)
+        await self.db_session.commit()
+
+    async def batch_delete_menus(self, menu_ids: list[int]) -> None:
+        """批量删除菜单
+
+        Args:
+            menu_ids: 菜单ID列表
+
+        Returns:
+            None: 删除成功
+        """
+        if not menu_ids:
+            return
+        stmt = delete(Menu).where(Menu.id.in_(menu_ids))
         await self.db_session.execute(stmt)
         await self.db_session.commit()
 

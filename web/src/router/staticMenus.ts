@@ -14,15 +14,23 @@ const nestedStaticMenuList: (IMenuItem & { children?: IMenuItem[] })[] = [
     icon: 'iconamoon:home',
     sort: 0,
     component: 'dashboard/index',
+    type: 1,
+    is_hidden: 0,
+    is_frame: 0,
+    status: 0,
   },
   {
-    id: 10002,
+    id: 10003,
     name: 'About',
     label: '关于',
     icon: 'solar:info-square-broken',
     path: '/about',
     component: 'about/index',
-    sort: 99
+    sort: 99,
+    type: 1,
+    is_hidden: 0,
+    is_frame: 0,
+    status: 0,
   }
 ]
 

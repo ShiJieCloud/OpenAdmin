@@ -88,6 +88,9 @@ class MenuTreeResponse(BaseModel):
     icon: str = Field(..., description="菜单图标")
     is_hidden: int = Field(..., description="是否隐藏：0=显示 1=隐藏")
     is_frame: int = Field(..., description="是否内嵌：0=否 1=是")
+    status: int = Field(..., description="状态：0=启用 1=禁用")
+    create_time: datetime = Field(..., description="创建时间")
+    update_time: datetime = Field(..., description="更新时间")
     children: List["MenuTreeResponse"] = Field([], description="子菜单列表")
 
     model_config = ConfigDict(from_attributes=True)

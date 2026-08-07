@@ -4,7 +4,7 @@ from app.core.response import ResponseBuilder, ApiResponse
 from app.deps.permission import get_current_active_user, has_perm
 from app.deps.service import get_menu_service, get_user_service, get_post_service
 from app.models import User
-from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuUpdateStatusRequest, MenuResponse, MenuTreeResponse
+from app.schemas.menu import MenuCreateRequest, MenuUpdateRequest, MenuUpdateStatusRequest, MenuDeleteRequest, MenuResponse, MenuTreeResponse
 from app.services import UserService, PostService, MenuService
 
 router = APIRouter()
@@ -74,6 +74,27 @@ async def update_menu_status(
     await menu_service.update_menu_status(req)
     status_text = "启用" if status == 0 else "禁用"
     return ResponseBuilder.success(message=f"菜单{status_text}成功")
+
+
+@router.delete(
+    "/batch",
+    dependencies=[Depends(has_perm(PermCode.Menu.DELETE))],
+    summary="批量删除菜单",
+    description="批量删除菜单（需具备菜单删除权限）"
+)
+async def batch_delete_menu(
+    req: MenuDeleteRequest = Body(..., description="批量删除菜单请求"),
+    menu_service: MenuService = Depends(get_menu_service)
+):
+    """批量删除菜单
+
+    权限：`system:menu:delete`
+
+    **注意：**
+    - 如果任一菜单存在子菜单，整个批量操作将失败
+    """
+    await menu_service.batch_delete_menus(req.menu_ids)
+    return ResponseBuilder.success(message="批量删除成功")
 
 
 @router.delete(

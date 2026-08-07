@@ -77,6 +77,7 @@ class RespCodeEnum(Enum):
     MENU_PARENT_NOT_EXIST = ("BME0003", "父菜单不存在")
     MENU_PARENT_CANNOT_BE_SELF = ("BME0004", "父菜单不能是自身")
     MENU_STATUS_INVALID = ("BME0005", "菜单状态值无效")
+    MENU_BATCH_HAS_CHILDREN = ("BME0006", "菜单【{label}】存在子菜单，无法删除")
 
     # B-PM = 权限相关 (Permission)
     PERM_NOT_EXIST = ("BPM0001", "权限不存在")
