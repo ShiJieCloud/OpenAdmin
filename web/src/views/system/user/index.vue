@@ -758,7 +758,7 @@ onMounted(() => {
           <el-table-column type="selection" width="55" />
           <el-table-column prop="id" label="用户 ID" width="80" align="center" />
           <el-table-column prop="username" label="登录账号" width="120" align="center" />
-          <el-table-column prop="nickname" label="用户昵称" width="120" align="center" />
+          <el-table-column prop="nickname" label="用户昵称" align="center" />
           <el-table-column prop="sex" label="性别" width="80" align="center">
             <template #default="{ row }">
               {{ SEX_OPTIONS.find(item => item.value === row.sex)?.label || '未知' }}

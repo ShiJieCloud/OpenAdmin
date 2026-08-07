@@ -411,7 +411,6 @@ onMounted(() => {
           :tree-props="{ children: 'children' }"
           class="layout-table"
           table-layout="auto"
-          border
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="55" />
