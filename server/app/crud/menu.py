@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, func, delete, update
 from app.crud.base import BaseCRUD
 from app.models import Menu, Permission, Role, RolePermission
 
@@ -21,6 +21,16 @@ class MenuCRUD(BaseCRUD):
         await self.db_session.refresh(menu)
         
         return menu
+
+    async def count_menus(self) -> int:
+        """统计菜单总数
+
+        Returns:
+            int: 菜单数量
+        """
+        stmt = select(func.count(Menu.id))
+        result = await self.db_session.execute(stmt)
+        return result.scalar_one()
 
     async def get_menu(self, menu_id: int) -> Menu | None:
         """根据菜单ID获取菜单

@@ -9,15 +9,16 @@ from app.services.login_log import LoginLogService
 from app.services.oper_log import OperLogService
 from app.services.captcha import CaptchaService
 
+
 __all__ = [
-    "BaseService", 
-    "UserService", 
-    "PermissionService", 
-    "RoleService", 
-    "PostService", 
-    "MenuService", 
+    "BaseService",
+    "UserService",
+    "PermissionService",
+    "RoleService",
+    "PostService",
+    "MenuService",
     "DeptService",
-    "LoginLogService", 
+    "LoginLogService",
     "OperLogService",
-    "CaptchaService"
+    "CaptchaService",
 ]

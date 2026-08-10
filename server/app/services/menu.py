@@ -14,6 +14,14 @@ class MenuService(BaseService):
         super().__init__(db_session)
         self.menu_crud = MenuCRUD(db_session)
 
+    async def count_menus(self) -> int:
+        """统计菜单总数
+
+        Returns:
+            int: 菜单数量
+        """
+        return await self.menu_crud.count_menus()
+
     async def create_menu(self, req: MenuCreateRequest) -> Menu:
         """创建菜单
 

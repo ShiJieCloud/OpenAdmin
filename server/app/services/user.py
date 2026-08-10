@@ -551,3 +551,11 @@ class UserService(BaseService):
             ))
 
         return records, int(total)
+
+    async def count_users(self) -> int:
+        """统计用户总数
+
+        Returns:
+            int: 用户数量
+        """
+        return await self.user_crud.count()

@@ -2,7 +2,7 @@ from app.core.enums import RespCodeEnum
 from app.core.exceptions import BusinessError
 from app.crud import OperLogCRUD
 from app.models import OperLog
-from app.schemas import OperLogCreateRequest, OperLogListQueryRequest
+from app.schemas import OperLogCreateRequest, OperLogListQueryRequest, OperLogResponse
 from app.services.base import BaseService
 
 
@@ -51,3 +51,15 @@ class OperLogService(BaseService):
                 query.end_time,
             )
         return logs, total, pages, page_num
+
+    async def get_recent_oper_logs(self, limit: int = 10) -> list[OperLogResponse]:
+        """
+        获取最近操作日志
+
+        :param limit: 返回条数，默认10条
+        :return: 最近操作日志列表
+        """
+        logs, _, _, _ = await self.oper_log_crud.get_oper_log_list(
+                OperLog()
+            )
+        return [OperLogResponse.model_validate(log) for log in logs]

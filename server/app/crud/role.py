@@ -55,6 +55,16 @@ class RoleCRUD(BaseCRUD):
         result = await self.db_session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def count_roles(self) -> int:
+        """统计角色总数
+
+        Returns:
+            int: 角色数量
+        """
+        stmt = select(func.count(Role.id))
+        result = await self.db_session.execute(stmt)
+        return result.scalar_one()
+
     async def count_users_by_role(self, role_id: int) -> int:
         """统计角色关联的用户数量
 

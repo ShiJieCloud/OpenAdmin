@@ -17,5 +17,5 @@ __all__ = [
     "MenuCRUD",
     "DeptCRUD",
     "LoginLogCRUD",
-    "OperLogCRUD"
+    "OperLogCRUD",
 ]

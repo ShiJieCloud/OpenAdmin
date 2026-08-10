@@ -13,6 +13,14 @@ class DeptService(BaseService):
         super().__init__(db_session)
         self.dept_crud = DeptCRUD(db_session)
 
+    async def count_depts(self) -> int:
+        """统计部门总数
+
+        Returns:
+            int: 部门数量
+        """
+        return await self.dept_crud.count_depts()
+
     async def get_dept(self, dept_id: int) -> DeptInfoResponse:
         """获取部门详情
 
@@ -161,7 +169,7 @@ class DeptService(BaseService):
         dept_list = [DeptInfoResponse.model_validate(dept) for dept in db_dept_list]
         return dept_list
     
-    async def  list_depts_by_ids(self, dept_ids: list[int]) -> list[DeptInfoResponse]:
+    async def list_depts_by_ids(self, dept_ids: list[int]) -> list[DeptInfoResponse]:
         """根据部门ID列表批量查询部门信息
 
         Args:

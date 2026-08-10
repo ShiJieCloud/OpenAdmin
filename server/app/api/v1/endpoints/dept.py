@@ -5,10 +5,16 @@ from app.core.response import ResponseBuilder
 from app.deps.permission import has_perm
 from app.deps.service import get_dept_service, get_post_service
 from app.schemas.base.response import ApiResponse
-from app.schemas.dept import DeptInfoResponse, DeptCreateRequest, DeptUpdateRequest, DeptBatchDeleteRequest
-from app.schemas.post import PostInfoResponse
+from app.schemas import (
+    DeptInfoResponse,
+    DeptCreateRequest,
+    DeptUpdateRequest,
+    DeptBatchDeleteRequest,
+    PostInfoResponse
+)
 
 from app.services import DeptService, PostService
+
 router = APIRouter()
 
 

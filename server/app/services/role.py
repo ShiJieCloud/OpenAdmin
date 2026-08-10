@@ -13,6 +13,14 @@ class RoleService(BaseService):
         super().__init__(db_session)
         self.role_crud = RoleCRUD(db_session)
 
+    async def count_roles(self) -> int:
+        """统计角色总数
+
+        Returns:
+            int: 角色数量
+        """
+        return await self.role_crud.count_roles()
+
     async def get_role(self, role_id: int) -> Role:
         """获取角色详情
 

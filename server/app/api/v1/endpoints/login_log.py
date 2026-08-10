@@ -18,7 +18,7 @@ router = APIRouter()
     summary="分页查询登录日志列表",
     description="分页获取登录日志列表，支持多条件筛选（需要具备登录日志查看权限）"
 )
-async def get_login_log_list(
+async def paginate_login_logs(
     query: LoginLogListQueryRequest = Body(..., description="查询条件"),
     login_log_service: LoginLogService = Depends(get_login_log_service)
 ):
@@ -41,6 +41,6 @@ async def get_login_log_list(
     :param query: 分页参数和筛选条件
     :return: 返回分页登录日志列表
     """
-    logs, total, pages, page_num = await login_log_service.get_login_log_list(query)
+    logs, total, pages, page_num = await login_log_service.paginate_login_logs(query)
     records = [LoginLogResponse.model_validate(log) for log in logs]
     return ResponseBuilder.pagination(records, total, page_num, query.page_size)

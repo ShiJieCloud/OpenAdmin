@@ -49,6 +49,16 @@ class DeptCRUD(BaseCRUD):
         result = await self.db_session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def count_depts(self) -> int:
+        """统计部门总数
+
+        Returns:
+            int: 部门数量
+        """
+        stmt = select(func.count(Dept.id))
+        result = await self.db_session.execute(stmt)
+        return result.scalar_one()
+
     async def count_children(self, parent_id: int) -> int:
         """统计子部门数量
 

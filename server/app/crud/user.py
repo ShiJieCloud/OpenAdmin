@@ -393,3 +393,13 @@ class UserCRUD(BaseCRUD):
         stmt = select(User).where(User.id.in_(user_ids))
         result = await self.db_session.execute(stmt)
         return list(result.scalars().all())
+
+    async def count(self) -> int:
+        """统计用户总数
+
+        Returns:
+            int: 用户数量
+        """
+        stmt = select(func.count(User.id)).where(User.del_flag == 0)
+        result = await self.db_session.execute(stmt)
+        return result.scalar_one()

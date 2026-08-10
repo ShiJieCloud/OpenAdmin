@@ -68,8 +68,8 @@ export const resetUserPassword = (data: IUserResetPasswordRequest): Promise<void
  * @param roleIds - 角色ID列表
  * @returns 分配后的角色ID列表
  */
-export const assignUserRoles = (userId: number, roleIds: number[]): Promise<number[]> => {
-  return request.post('/user/roles/assign', { user_id: userId, role_ids: roleIds })
+export const assignUserRoles = (data: IUserRoleAssignRequest): Promise<number[]> => {
+  return request.post('/user/roles/assign', data)
 }
 
 /**
