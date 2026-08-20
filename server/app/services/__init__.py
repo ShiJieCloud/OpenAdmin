@@ -9,6 +9,8 @@ from app.services.login_log import LoginLogService
 from app.services.oper_log import OperLogService
 from app.services.captcha import CaptchaService
 
+from app.services.agent import AgentService
+
 
 __all__ = [
     "BaseService",
@@ -21,4 +23,5 @@ __all__ = [
     "LoginLogService",
     "OperLogService",
     "CaptchaService",
+    "AgentService"
 ]

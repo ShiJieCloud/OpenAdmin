@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from app.core.database import engine
+from app.core.database import async_engine
 from app.core.redis import redis_client
 from app.core.logger import logger
 
@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     """
     # 启动时执行
     logger.info("正在初始化数据库...")
-    async with engine.begin() as conn:
+    async with async_engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
     logger.info("数据库初始化完成！")
 
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     
     # 关闭时执行
     logger.info("正在关闭数据库连接...")
-    await engine.dispose()
+    await async_engine.dispose()
     logger.info("数据库连接已关闭！")
 
     logger.info("正在关闭Redis连接...")

@@ -49,6 +49,11 @@ class AppContextMiddleware(BaseHTTPMiddleware):
                 logger.debug(f"非 API 接口，跳过处理")
                 return await call_next(request)
 
+            # 2.1 跳过流式接口（SSE 流式输出需要直接返回，不能缓冲）
+            if "/ai/chat" in api_path:
+                logger.debug(f"流式接口，跳过中间件处理")
+                return await call_next(request)
+
             # 3. 收集请求参数（查询参数，请求体参数）
             request_params = await HttpUtils.get_request_params(request)
             logger.debug(f"收集请求参数完成，params={request_params}")

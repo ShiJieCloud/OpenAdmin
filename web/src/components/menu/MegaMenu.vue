@@ -14,7 +14,6 @@ const emit = defineEmits<MegaMenuEmits>()
 
 // 只读菜单列表（优化命名，语义更清晰）
 const menuList = computed(() => readonly(props.treeMenuList))
-
 </script>
 
 <template>
@@ -25,7 +24,7 @@ const menuList = computed(() => readonly(props.treeMenuList))
       <!-- 一级菜单项 - BEM 元素 + 循环 -->
       <el-popover v-for="menu in menuList" :key="menu.id" placement="right-start"
         :trigger="menu.children?.length ? 'hover' : 'manual'" :open-delay="150" :close-delay="150" width="auto"
-        :teleported="false">
+        teleported="false">
         <!-- 触发源：一级菜单项 -->
         <template #reference>
           <div class="mega-menu__root-item"

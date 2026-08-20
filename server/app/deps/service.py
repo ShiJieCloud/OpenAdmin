@@ -11,7 +11,8 @@ from app.services import (
     DeptService,
     LoginLogService,
     OperLogService,
-    CaptchaService
+    CaptchaService,
+    AgentService
 )
 from app.core.redis import RedisClient
 
@@ -78,3 +79,8 @@ async def get_oper_log_service(
 ) -> OperLogService:
     """操作日志服务依赖注入，返回 OperLogService 实例"""
     return OperLogService(db_session)
+
+async def get_agent_service(
+) -> AgentService:
+    """智能对话服务依赖注入，返回 AgentService 实例"""
+    return AgentService()

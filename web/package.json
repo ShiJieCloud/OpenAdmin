@@ -16,6 +16,7 @@
     "@iconify-vue/meteor-icons": "^1.0.3",
     "@iconify-vue/solar": "^1.0.4",
     "@iconify/vue": "^5.0.1",
+    "@shikijs/stream": "^4.4.3",
     "@tailwindcss/vite": "^4.3.0",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.16.1",
@@ -25,9 +26,12 @@
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "shiki": "^4.3.1",
+    "shiki-stream": "^0.1.5",
     "tailwindcss": "^4.3.0",
     "vue": "^3.5.34",
-    "vue-router": "^4.6.4"
+    "vue-element-plus-x": "^2.0.3",
+    "vue-router": "^4.6.4",
+    "x-markdown-vue": "^0.0.202"
   },
   "devDependencies": {
     "@iconify-json/ep": "^1.2.4",
