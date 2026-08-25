@@ -9,12 +9,13 @@ import MainContent from './components/MainContent.vue'
 import Footer from './components/Footer.vue'
 import AppUpdateDialog from '@/components/AppUpdateDialog/index.vue'
 
-import { useLayoutStore, useMenuStore, useTabsStore } from '@/store'
+import { useLayoutStore, useMenuStore, useTabsStore, useThemeStore } from '@/store'
 import { initVersionChecker } from '@/utils/version-check'
 
 const layoutStore = useLayoutStore()
 const menuStore = useMenuStore()
 const tabsStore = useTabsStore()
+const themeStore = useThemeStore()
 
 const updateDialogRef = ref<InstanceType<typeof AppUpdateDialog> | null>(null)
 
@@ -50,7 +51,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="layout-container" :class="layoutStore.layoutMode">
+  <div class="layout-container" :class="[layoutStore.layoutMode, { 'no-footer': !themeStore.switchFooter, 'no-tagsview': !themeStore.showTags }]">
     <div class="layout-sidebar">
       <Sidebar />
     </div>
@@ -59,7 +60,7 @@ onUnmounted(() => {
       <Header />
     </div>
 
-    <div class="layout-tagsview">
+    <div v-if="themeStore.showTags" class="layout-tagsview">
       <PageTabs
         :tab-list="tabsStore.visitedTabs"
         :active-path="tabsStore.activePath"
@@ -77,7 +78,7 @@ onUnmounted(() => {
       <MainContent />
     </div>
 
-    <div class="layout-footer">
+    <div v-if="themeStore.switchFooter" class="layout-footer">
       <Footer />
     </div>
 

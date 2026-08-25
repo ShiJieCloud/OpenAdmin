@@ -241,6 +241,16 @@ body,
   box-sizing: border-box;
 }
 
+/* 无页脚模式 */
+.layout-container.no-footer {
+  --footer-height: 0px;
+}
+
+/* 无标签栏模式 */
+.layout-container.no-tagsview {
+  --tagsview-height: 0px;
+}
+
 /* ====================== */
 /* 1. 经典布局（classic） */
 /* ====================== */
@@ -371,7 +381,6 @@ body,
     height: calc(100vh - var(--header-height));
     display: flex;
     flex-direction: row;
-    gap: 8px;
     background-color: var(--el-bg-color-page);
 
     .layout-sidebar-menu {
@@ -379,6 +388,7 @@ body,
       height: 100%;
       background: var(--el-bg-color);
       overflow: hidden;
+      border-right: 1px solid var(--el-border-color);
 
       .sidebar-scrollbar {
         height: 100%;
@@ -391,6 +401,7 @@ body,
       height: 100%;
       background: var(--el-bg-color);
       overflow: hidden;
+      border-right: 1px solid var(--el-border-color);
 
       .sidebar-scrollbar {
         height: 100%;

@@ -19,7 +19,9 @@ import { THEME_MODE, FONT_TYPE, CODE_THEME_MODE, CODE_THEME_LABEL } from '@/type
 export const DEFAULT_THEME: ThemeConfig = {
   primaryColor: '#409EFF',
   themeMode: THEME_MODE.Light,
+  showTags: true,
   showBreadcrumb: true,
+  showFooter: true,
   showSettingsPanel: false,
   fontType: FONT_TYPE.Default,
   codeTheme: CODE_THEME_MODE['github-light'],
@@ -90,10 +92,22 @@ export const useThemeStore = defineStore(
     const themeMode = ref<ThemeMode>(DEFAULT_THEME.themeMode)
 
     /**
+     * @var showTags
+     * @desc 是否显示标签页
+     */
+    const showTags = ref(DEFAULT_THEME.showTags)
+
+    /**
      * @var switchBreadcrumb
      * @desc 是否显示面包屑导航
      */
     const switchBreadcrumb = ref(DEFAULT_THEME.showBreadcrumb)
+
+    /**
+     * @var switchFooter
+     * @desc 是否显示页脚
+     */
+    const switchFooter = ref(DEFAULT_THEME.showFooter)
 
     /**
      * @var switchSettingsPanel
@@ -203,7 +217,9 @@ export const useThemeStore = defineStore(
     const resetTheme = () => {
       primaryColor.value = DEFAULT_THEME.primaryColor
       themeMode.value = DEFAULT_THEME.themeMode
+      showTags.value = DEFAULT_THEME.showTags
       switchBreadcrumb.value = DEFAULT_THEME.showBreadcrumb
+      switchFooter.value = DEFAULT_THEME.showFooter
       switchSettingsPanel.value = DEFAULT_THEME.showSettingsPanel
       fontType.value = DEFAULT_THEME.fontType
     }
@@ -284,7 +300,9 @@ export const useThemeStore = defineStore(
       // State
       primaryColor,
       themeMode,
+      showTags,
       switchBreadcrumb,
+      switchFooter,
       switchSettingsPanel,
       isDarkMode,
       fontType,

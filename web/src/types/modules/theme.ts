@@ -82,7 +82,9 @@ export type CodeLang = typeof CODE_LANGS[number]
 export interface ThemeConfig {
   primaryColor: string
   themeMode: ThemeMode
+  showTags: boolean
   showBreadcrumb: boolean
+  showFooter: boolean
   showSettingsPanel: boolean
   fontType: FontType
   codeTheme: CodeThemeMode

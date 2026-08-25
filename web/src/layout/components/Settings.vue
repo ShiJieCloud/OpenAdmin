@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { LAYOUT, layoutList } from '@/types/modules/layout'
 import { useLayoutStore, useThemeStore } from '@/store'
 import { FONT_LABEL, CODE_THEME_LABEL } from '@/types/modules/theme'
@@ -7,8 +6,6 @@ import { DEFAULT_THEME } from '@/store/modules/theme'
 
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
-
-const showTags = ref(true)
 
 const handleReset = () => {
     themeStore.resetTheme()
@@ -175,11 +172,15 @@ const handleReset = () => {
                         <h3 class="text-sm font-semibold var(--el-text-color-primary)">显示设置</h3>
                         <div class="flex items-center justify-between">
                             <span class="text-sm var(--el-text-color-regular)">显示标签</span>
-                            <ElSwitch v-model="showTags" />
+                            <ElSwitch v-model="themeStore.showTags" />
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm var(--el-text-color-regular)">显示面包屑</span>
                             <ElSwitch v-model="themeStore.switchBreadcrumb" />
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm var(--el-text-color-regular)">显示页脚</span>
+                            <ElSwitch v-model="themeStore.switchFooter" />
                         </div>
                     </div>
 
