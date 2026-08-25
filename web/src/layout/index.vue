@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar.vue'
 import Settings from './components/Settings.vue'
 import PageTabs from './components/PageTabs.vue'
 import MainContent from './components/MainContent.vue'
+import Footer from './components/Footer.vue'
 import AppUpdateDialog from '@/components/AppUpdateDialog/index.vue'
 
 import { useLayoutStore, useMenuStore, useTabsStore } from '@/store'
@@ -74,6 +75,10 @@ onUnmounted(() => {
 
     <div class="layout-main">
       <MainContent />
+    </div>
+
+    <div class="layout-footer">
+      <Footer />
     </div>
 
     <Settings />

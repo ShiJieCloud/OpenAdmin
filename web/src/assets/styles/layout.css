@@ -227,7 +227,18 @@ body,
 .layout-main {
   position: relative;
   margin-top: calc(var(--header-height) + var(--tagsview-height));
-  height: calc(100vh - var(--header-height) - var(--tagsview-height));
+  height: calc(100vh - var(--header-height) - var(--tagsview-height) - var(--footer-height));
+}
+
+/* 通用底部栏基础样式 */
+.layout-footer {
+  position: fixed;
+  bottom: 0;
+  height: var(--footer-height);
+  background: var(--el-bg-color);
+  border-top: 1px solid var(--el-border-color);
+  z-index: 999;
+  box-sizing: border-box;
 }
 
 /* ====================== */
@@ -261,6 +272,11 @@ body,
 
   .layout-main {
     margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .layout-footer {
+    left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
   }
 }
@@ -299,6 +315,11 @@ body,
     margin-left: var(--sidebar-collapse-width);
     width: calc(100% - var(--sidebar-collapse-width));
   }
+
+  .layout-footer {
+    left: var(--sidebar-collapse-width);
+    width: calc(100% - var(--sidebar-collapse-width));
+  }
 }
 
 /* ======================== */
@@ -327,6 +348,11 @@ body,
 
   .layout-main {
     margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .layout-footer {
+    left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
   }
 }
@@ -379,6 +405,11 @@ body,
 
   .layout-main {
     margin-left: var(--double-sidebar-width);
+    width: calc(100% - var(--double-sidebar-width));
+  }
+
+  .layout-footer {
+    left: var(--double-sidebar-width);
     width: calc(100% - var(--double-sidebar-width));
   }
 }
