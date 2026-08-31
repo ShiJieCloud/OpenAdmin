@@ -376,5 +376,72 @@ class RedisClient:
         client = await self.get_client()
         return await client.zcount(key, min_score, max_score)
 
+    # ==================== List 列表操作 ====================
+
+    async def rpush(self, key: str, value: Any) -> int:
+        """
+        向列表右侧添加元素（自动 JSON 序列化）
+
+        Args:
+            key: 列表键名
+            value: 值（dict/list 自动序列化）
+
+        Returns:
+            添加后列表长度
+        """
+        client = await self.get_client()
+        if isinstance(value, (dict, list, tuple)):
+            value = json.dumps(value, ensure_ascii=False)
+        return await client.rpush(key, value)
+
+    async def lrange(self, key: str, start: int = 0, end: int = -1) -> List:
+        """
+        获取列表指定范围内的元素
+
+        Args:
+            key: 列表键名
+            start: 起始索引（0 表示第一个，-1 表示最后一个）
+            end: 结束索引（-1 表示到最后一个）
+
+        Returns:
+            元素列表
+        """
+        client = await self.get_client()
+        return await client.lrange(key, start, end)
+
+    async def lrem(self, key: str, count: int, value: Any) -> int:
+        """
+        删除列表元素
+
+        Args:
+            key: 列表键名
+            count: 删除数量（0=删除所有匹配，正数=从头部删除，负数=从尾部删除）
+            value: 要删除的值
+
+        Returns:
+            成功删除的元素数量
+        """
+        client = await self.get_client()
+        if isinstance(value, (dict, list, tuple)):
+            value = json.dumps(value, ensure_ascii=False)
+        return await client.lrem(key, count, value)
+
+    # ==================== 服务端信息 ====================
+
+    async def get_info(self, section: Optional[str] = None) -> Dict[str, Any]:
+        """
+        获取 Redis 服务端信息
+
+        Args:
+            section: 指定信息分区，可选值：server、clients、memory、persistence、
+                stats、replication、cpu、commandstats、latencystats、cluster、keyspace。
+                不传则返回全部信息。
+
+        Returns:
+            Redis 服务端信息字典
+        """
+        client = await self.get_client()
+        return await client.info(section=section)
+
 
 redis_client = RedisClient()

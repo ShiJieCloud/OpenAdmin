@@ -44,7 +44,33 @@ const nestedStaticMenuList: (IMenuItem & { children?: IMenuItem[] })[] = [
     is_hidden: 0,
     is_frame: 0,
     status: 0,
-  }
+  },
+  {
+    id: 10010,
+    name: 'Monitor',
+    label: '监控',
+    icon: 'solar:server-square-cloud-broken',
+    sort: 2,
+    type: 1,
+    is_hidden: 0,
+    is_frame: 0,
+    status: 0,
+    children: [
+      {
+        id: 10011,
+        name: 'RedisMonitor',
+        label: 'Redis 监控',
+        icon: 'solar:database-broken',
+        path: '/monitor/redis',
+        component: 'monitor/redis/index',
+        sort: 1,
+        type: 1,
+        is_hidden: 0,
+        is_frame: 0,
+        status: 0,
+      },
+    ],
+  },
 ]
 
 /**

@@ -14,12 +14,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onActivated, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { BubbleList, XSender, Thinking } from 'vue-element-plus-x'
+import { Plus } from '@element-plus/icons-vue'
+import { BubbleList, XSender, Thinking, Conversations } from 'vue-element-plus-x'
 import type {
   BubbleListItemProps
 } from 'vue-element-plus-x/types/BubbleList';
 import type { ThinkingStatus } from 'vue-element-plus-x/types/Thinking';
-import { sendChatMessageStream, getModelList } from '@/api/modules/ai_chat'
+import type { ConversationMenuCommand } from 'vue-element-plus-x/types/Conversations';
+import { sendChatMessageStream, getModelList, createChatSession, getSessionList, getSessionMessages, deleteSession as deleteSessionApi } from '@/api/modules/ai_chat'
 import type { SSEEvent } from '@/api/modules/ai_chat'
 
 import { MarkdownRenderer } from 'x-markdown-vue'
@@ -29,8 +31,6 @@ import { useThemeStore } from '@/store';
 const themeStore = useThemeStore()
 
 const isDark = computed(() => themeStore.isDarkMode)
-
-
 
 /** 消息类型定义 */
 type ChatMessage = BubbleListItemProps & {
@@ -54,6 +54,63 @@ const modelOptions = ref<{ label: string; value: string }[]>([])
 /** 当前选中的模型 */
 const selectedModel = ref('')
 
+/** 当前会话 ID（由后端生成，用于多轮对话记忆隔离） */
+const sessionId = ref('')
+
+/** 会话列表项类型 */
+type SessionItem = {
+  id: string;
+  label: string;
+  group: string;
+  timestamp: number;
+}
+
+/** 会话列表 */
+const sessions = ref<SessionItem[]>([])
+
+/** 当前激活的会话 ID */
+const activeSessionId = ref<string>('')
+
+/** 时间分组映射 */
+const groupLabels: Record<string, string> = {
+  today: '今天',
+  yesterday: '昨天',
+  week: '一周前',
+  month: '一个月前',
+  older: '更早',
+}
+
+/**
+ * 根据时间戳返回分组标识
+ */
+const formatGroup = (timestamp: number): string => {
+  const now = new Date()
+  const date = new Date(timestamp)
+  const diffTime = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+  // 今天
+  if (date.toDateString() === now.toDateString()) {
+    return 'today'
+  }
+  // 昨天
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'yesterday'
+  }
+  // 一周内
+  if (diffDays < 7) {
+    return 'week'
+  }
+  // 一个月内
+  if (diffDays < 30) {
+    return 'month'
+  }
+  // 更早
+  return 'older'
+}
+
 /** 加载模型列表 */
 const loadModels = async () => {
   try {
@@ -68,8 +125,187 @@ const loadModels = async () => {
   }
 }
 
+/**
+ * 添加会话到列表
+ */
+const addSession = (id: string, label: string) => {
+  const item: SessionItem = {
+    id,
+    label,
+    group: formatGroup(Date.now()),
+    timestamp: Date.now(),
+  }
+  // 插入到列表最前面（最新的会话在最前）
+  sessions.value.unshift(item)
+  activeSessionId.value = id
+}
+
+/**
+ * 切换会话
+ */
+const switchSession = async (id: string) => {
+  if (currentAbortController) {
+    currentAbortController.abort()
+    currentAbortController = null
+  }
+
+  activeSessionId.value = id
+  sessionId.value = id
+
+  await loadSessionHistory(id)
+
+  senderLoading.value = false
+}
+
+/**
+ * 删除会话
+ */
+const deleteSession = async (id: string) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除该会话吗？此操作不可恢复。',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    await deleteSessionApi(id)
+
+    sessions.value = sessions.value.filter(item => item.id !== id)
+
+    if (activeSessionId.value === id) {
+      if (sessions.value.length > 0) {
+        await switchSession(sessions.value[0].id)
+      } else {
+        await createNewSession()
+      }
+    }
+
+    ElMessage.success('会话已删除')
+  } catch {
+    // 用户取消操作
+  }
+}
+
+/**
+ * 创建新会话
+ */
+const createNewSession = async () => {
+  try {
+    const newSessionId = await createChatSession(selectedModel.value || 'qwen3.7-plus')
+    sessionId.value = newSessionId
+    activeSessionId.value = newSessionId
+    addSession(newSessionId, '新对话')
+
+    // 清空当前消息列表
+    messageList.value = [
+      {
+        key: 'welcome',
+        content: '你好，我是 OpenAdmin 的智能助手。',
+        role: 'ai',
+        placement: 'start',
+        variant: 'filled',
+        avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+        avatarSize: '24px',
+        avatarGap: '12px',
+        isMarkdown: false,
+      }
+    ]
+
+    // 重置加载状态
+    senderLoading.value = false
+  } catch (e) {
+    console.error('创建会话失败:', e)
+    sessionId.value = ''
+    ElMessage.error('创建会话失败，请刷新重试')
+  }
+}
+
+/**
+ * 初始化会话 ID
+ * 进入页面时调用，获取新的 session_id 并添加到会话列表。
+ */
+const initSession = async () => {
+  try {
+    const existingSessions = await getSessionList()
+    if (existingSessions.length > 0) {
+      sessions.value = existingSessions.map(s => ({
+        id: s.session_id,
+        label: s.title,
+        group: formatGroup(s.updated_at || s.created_at),
+        timestamp: s.updated_at || s.created_at,
+      }))
+      const firstSession = sessions.value[0]
+      activeSessionId.value = firstSession.id
+      sessionId.value = firstSession.id
+      await loadSessionHistory(firstSession.id)
+    } else {
+      await createNewSession()
+    }
+  } catch (e) {
+    console.error('加载会话列表失败:', e)
+    await createNewSession()
+  }
+}
+
+const loadSessionHistory = async (sessionId: string) => {
+  try {
+    const messages = await getSessionMessages(sessionId)
+    if (messages.length > 0) {
+      messageList.value = messages.map(m => ({
+        key: generateKey(),
+        content: m.content,
+        role: m.role === 'user' ? 'user' : 'ai',
+        placement: m.role === 'user' ? 'end' : 'start',
+        variant: m.role === 'user' ? 'outlined' : 'filled',
+        avatar: m.role === 'user' 
+          ? 'https://avatars.githubusercontent.com/u/76239030?v=4'
+          : 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+        avatarSize: '24px',
+        avatarGap: '12px',
+        isMarkdown: m.role !== 'user',
+        thinkingContent: m.reasoning_content || '',
+        thinkingStatus: m.reasoning_content ? 'end' : 'start',
+        thinkingExpanded: false,
+      }))
+    } else {
+      messageList.value = [
+        {
+          key: 'welcome',
+          content: '你好，我是 OpenAdmin 的智能助手。',
+          role: 'ai',
+          placement: 'start',
+          variant: 'filled',
+          avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+          avatarSize: '24px',
+          avatarGap: '12px',
+          isMarkdown: false,
+        }
+      ]
+    }
+  } catch (e) {
+    console.error('加载会话历史失败:', e)
+    messageList.value = []
+  }
+}
+
+/**
+ * 更新会话标题（发送第一条消息后调用）
+ */
+const updateSessionTitle = (id: string, label: string) => {
+  const item = sessions.value.find(item => item.id === id)
+  if (item && item.label === '新对话') {
+    // 截断到 20 个字符
+    item.label = label.slice(0, 20)
+  }
+}
+
 onMounted(() => {
   loadModels()
+  initSession()
 })
 
 /** 页面激活时自动聚焦输入框（KeepAlive 缓存场景） */
@@ -183,6 +419,14 @@ const handleSend = async () => {
     ElMessage.warning('请输入消息内容')
     return
   }
+
+  // 会话未初始化保护（session_id 获取失败时不允许发送）
+  if (!sessionId.value) {
+    ElMessage.error('会话未初始化，正在重新获取...')
+    await initSession()
+    return
+  }
+
   senderRef.value?.clear()
 
   // 创建 AbortController 用于取消请求
@@ -197,20 +441,16 @@ const handleSend = async () => {
   // 添加 AI 加载消息
   const aiMessageKey = addAiMessage('', true)
 
-  // 构建消息历史（过滤掉空内容和欢迎消息）
-  const messages = messageList.value
-    .filter(msg => (msg.role === 'user' || msg.role === 'ai') && msg.content?.trim())
-    .map(msg => ({
-      role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
-      content: msg.content!.trim()
-    }))
+  // 更新会话标题（第一条消息时）
+  updateSessionTitle(sessionId.value, content)
 
   try {
-    // 调用流式接口
+    // 调用流式接口（记忆模式：历史由后端按 session_id 自动加载，前端只传本轮内容）
     await sendChatMessageStream(
       {
         model: selectedModel.value || 'qwen3.7-plus',
-        messages,
+        message: { content },
+        session_id: sessionId.value,
         stream: true
       },
       (event: SSEEvent) => {
@@ -232,7 +472,6 @@ const handleSend = async () => {
           case 'content':
             // 实际内容 - 累积到 message.content，过滤空白内容
             // JSON.parse 已自动还原 \n 等转义，无需手动处理
-            console.log('[SSE] content event:', event.content?.substring(0, 50))
             if (event.content && event.content.trim()) {
               message.content += event.content
               message.loading = false
@@ -281,135 +520,172 @@ const handleCancel = () => {
 
 /**
  * 清空对话
+ * 删除当前会话并创建新会话
  */
 const handleClear = async () => {
-  console.log(messageList);
+  try {
+    await ElMessageBox.confirm(
+      '确定要清空当前对话吗？将创建新的会话。',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
 
-  // try {
-  //   await ElMessageBox.confirm(
-  //     '确定要清空所有对话记录吗？此操作不可恢复。',
-  //     '提示',
-  //     {
-  //       confirmButtonText: '确定',
-  //       cancelButtonText: '取消',
-  //       type: 'warning',
-  //     }
-  //   )
+    // 如果有正在进行的请求，先取消
+    if (currentAbortController) {
+      currentAbortController.abort()
+      currentAbortController = null
+    }
 
-  //   // 如果有正在进行的请求，先取消
-  //   if (currentAbortController) {
-  //     currentAbortController.abort()
-  //     currentAbortController = null
-  //   }
+    // 删除当前会话并创建新会话
+    if (activeSessionId.value) {
+      sessions.value = sessions.value.filter(
+        item => item.id !== activeSessionId.value
+      )
+    }
 
-  //   // 清空所有消息
-  //   messageList.value = []
+    try {
+      await deleteSessionApi(activeSessionId.value)
+    } catch (e) {
+      console.error('删除会话失败:', e)
+    }
 
-  //   // 重置加载状态
-  //   senderLoading.value = false
+    await createNewSession()
 
-  //   ElMessage.success('对话已清空')
-  // } catch {
-  //   // 用户取消操作
-  // }
+    ElMessage.success('已创建新会话')
+  } catch {
+    // 用户取消操作
+  }
+}
+
+/**
+ * 处理会话列表菜单命令
+ */
+const handleMenuCommand = (command: ConversationMenuCommand, item: SessionItem) => {
+  if (command === 'delete') {
+    deleteSession(item.id)
+  }
 }
 </script>
 
 <template>
   <div class="ai-chat-page">
-    <div class="ai-chat-header">
-      <h2>AI 智能对话</h2>
-      <p class="ai-chat-desc">基于大语言模型的智能助手，支持多轮对话</p>
-      <el-button type="danger" size="small" @click="handleClear">
-        清空对话
-      </el-button>
+    <!-- 左侧会话列表 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <el-button type="primary" size="small" @click="createNewSession">
+          <el-icon><Plus /></el-icon>
+          新建对话
+        </el-button>
+      </div>
+      <Conversations
+        :items="sessions"
+        :active="activeSessionId"
+        :groupable="{ sort: (a, b) => groupLabels[a]?.localeCompare(groupLabels[b] || '') || 0 }"
+        :menu="[
+          { label: '删除会话', key: 'delete', command: 'delete' }
+        ]"
+        :show-built-in-menu="true"
+        show-built-in-menu-type="hover"
+        row-key="id"
+        label-key="label"
+        @change="(item) => switchSession(item.id)"
+        @menu-command="handleMenuCommand"
+      />
     </div>
 
-    <div class="ai-chat-container">
-      <div class="message-area">
-        <BubbleList :list="messageList" :auto-scroll="true" class="bubble-list">
-          <template #avatar="{ item }">
-            <el-avatar :src="item.avatar" :size="28" />
-          </template>
+    <!-- 右侧聊天区域 -->
+    <div class="chat-main">
 
-          <template #header="{ item }">
-            <div class="message-header">
-              <span class="message-header-name">{{ item.role === 'user' ? '用户' : 'AI 助手' }}</span>
-              <el-button v-if="item.key !== 'welcome'" type="danger" size="small" link @click="removeMessage(item.key)">
-                删除
-              </el-button>
-            </div>
-          </template>
+      <div class="ai-chat-container">
+        <div class="message-area">
+          <BubbleList :list="messageList" :auto-scroll="true" class="bubble-list">
+            <template #avatar="{ item }">
+              <el-avatar :src="item.avatar" :size="28" />
+            </template>
 
-          <template #content="{ item }">
-            <!-- AI 消息：先展示思考过程，再展示内容 -->
-            <div v-if="item.role === 'ai'">
-              <!-- 思考过程展示 -->
-              <Thinking
-                v-if="item.thinkingContent || item.thinkingStatus === 'thinking'"
-                v-model="item.thinkingExpanded"
-                :content="item.thinkingContent"
-                :status="item.thinkingStatus || 'start'"
-                max-width="100%"
-                class="thinking-block"
-              >
-                <template #content="{ content }">
-                  <MarkdownRenderer v-if="content" :is-dark="isDark"
-                :shiki-theme="['github-light', 'github-dark']"
-                :markdown="content"
-                :enable-animate="true"
-                :enable-gfm="true" :enable-breaks="true" :allow-html="true"
-                  :enable-shiki="true" :enable-code-line-number="true"
-                  :enable-code-block="true"
-                  :enable-code-block-number="true"
-                  class="prose-xmd-renderer"/>
-                <span v-else>{{ content }}</span>
-                </template>
-              </Thinking>
-              <!-- 内容展示（Markdown 或纯文本） -->
-              <div v-if="item.content" :class="item.isMarkdown ? 'prose prose-sm dark:prose-invert max-w-none' : ''">
-                <MarkdownRenderer v-if="item.isMarkdown" :is-dark="isDark"
-                :shiki-theme="['github-light', 'github-dark']"
-                :markdown="item.content"
-                :enable-animate="true"
-                :enable-gfm="true" :enable-breaks="true" :allow-html="true"
-                  :enable-shiki="true" :enable-code-line-number="true"
-                  :enable-code-block="true"
-                  :enable-code-block-number="true"
-                  class="prose-xmd-renderer"/>
-                <span v-else>{{ item.content }}</span>
+            <template #header="{ item }">
+              <div class="message-header">
+                <span class="message-header-name">{{ item.role === 'user' ? '用户' : 'AI 助手' }}</span>
+                <el-button v-if="item.key !== 'welcome'" type="danger" size="small" link @click="removeMessage(item.key)">
+                  删除
+                </el-button>
               </div>
-              <!-- 加载状态 -->
-              <div v-if="item.loading && !item.content && !item.thinkingContent" class="loading-dots">
-                <span></span><span></span><span></span>
-              </div>
-            </div>
-            <!-- 用户消息纯文本显示 -->
-            <div v-else class="user-content">
-              {{ item.content }}
-            </div>
-          </template>
-        </BubbleList>
-      </div>
+            </template>
 
-      <div class="input-area">
-        <XSender ref="senderRef" 
-        :loading="senderLoading" 
-        variant="updown" 
-        placeholder="输入消息，Enter 发送，Shift+Enter 换行"
-          @submit="handleSend" 
-          @cancel="handleCancel" 
-          auto-focus 
-          clearable 
-          submit-type="enter">
-          <template #prefix>
-            <div>
-              <el-select v-model="selectedModel" placeholder="选择模型" style="width: 160px">
-                <el-option v-for="model in modelOptions" :key="model.value" :label="model.label" :value="model.value" />
-              </el-select>
-            </div>
-          </template>
-        </XSender>
+            <template #content="{ item }">
+              <!-- AI 消息：先展示思考过程，再展示内容 -->
+              <div v-if="item.role === 'ai'">
+                <!-- 思考过程展示 -->
+                <Thinking
+                  v-if="item.thinkingContent || item.thinkingStatus === 'thinking'"
+                  v-model="item.thinkingExpanded"
+                  :content="item.thinkingContent"
+                  :status="item.thinkingStatus || 'start'"
+                  max-width="100%"
+                  class="thinking-block"
+                >
+                  <template #content="{ content }">
+                    <MarkdownRenderer v-if="content" :is-dark="isDark"
+                  :shiki-theme="['github-light', 'github-dark']"
+                  :markdown="content"
+                  :enable-animate="true"
+                  :enable-gfm="true" :enable-breaks="true" :allow-html="true"
+                    :enable-shiki="true" :enable-code-line-number="true"
+                    :enable-code-block="true"
+                    :enable-code-block-number="true"
+                    class="prose-xmd-renderer"/>
+                  <span v-else>{{ content }}</span>
+                  </template>
+                </Thinking>
+                <!-- 内容展示（Markdown 或纯文本） -->
+                <div v-if="item.content" :class="item.isMarkdown ? 'prose prose-sm dark:prose-invert max-w-none' : ''">
+                  <MarkdownRenderer v-if="item.isMarkdown" :is-dark="isDark"
+                  :shiki-theme="['github-light', 'github-dark']"
+                  :markdown="item.content"
+                  :enable-animate="true"
+                  :enable-gfm="true" :enable-breaks="true" :allow-html="true"
+                    :enable-shiki="true" :enable-code-line-number="true"
+                    :enable-code-block="true"
+                    :enable-code-block-number="true"
+                    class="prose-xmd-renderer"/>
+                  <span v-else>{{ item.content }}</span>
+                </div>
+                <!-- 加载状态 -->
+                <div v-if="item.loading && !item.content && !item.thinkingContent" class="loading-dots">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+              <!-- 用户消息纯文本显示 -->
+              <div v-else class="user-content">
+                {{ item.content }}
+              </div>
+            </template>
+          </BubbleList>
+        </div>
+
+        <div class="input-area">
+          <XSender ref="senderRef" 
+          :loading="senderLoading" 
+          variant="updown" 
+          placeholder="输入消息，Enter 发送，Shift+Enter 换行"
+            @submit="handleSend" 
+            @cancel="handleCancel" 
+            auto-focus 
+            clearable 
+            submit-type="enter">
+            <template #prefix>
+              <div>
+                <el-select v-model="selectedModel" placeholder="选择模型" style="width: 160px">
+                  <el-option v-for="model in modelOptions" :key="model.value" :label="model.label" :value="model.value" />
+                </el-select>
+              </div>
+            </template>
+          </XSender>
+        </div>
       </div>
     </div>
   </div>
@@ -418,9 +694,35 @@ const handleClear = async () => {
 <style scoped>
 .ai-chat-page {
   display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 左侧会话列表 */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
   flex-direction: column;
-  gap: 16px;
-  height: calc(100vh - 120px);
+  background: var(--el-bg-color);
+  border-radius: 8px 0 0 8px;
+  border-right: 1px solid var(--el-border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--el-border-color);
+}
+
+/* 右侧聊天区域 */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .ai-chat-header {
@@ -451,12 +753,14 @@ const handleClear = async () => {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-height: 0;
 }
 
 .message-area {
   flex: 1;
   overflow: hidden;
   padding: 16px;
+  min-height: 0;
 }
 
 .bubble-list {
@@ -519,6 +823,24 @@ const handleClear = async () => {
   --elx-thinking-trigger-bg: var(--el-fill-color-light);
   --elx-thinking-trigger-bg-hover: var(--el-fill-color);
   --elx-thinking-content-wrapper-background-color: var(--el-fill-color-lighter);
+}
+
+/* Conversations 组件深度样式 */
+:deep(.elx-conversations) {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: var(--el-bg-color);
+  padding: 8px;
+}
+
+:deep(.elx-conversations__list) {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+:deep(.elx-conversations-item) {
+  margin: 0;
 }
 
 /* 加载动画 */

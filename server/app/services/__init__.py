@@ -10,6 +10,7 @@ from app.services.oper_log import OperLogService
 from app.services.captcha import CaptchaService
 
 from app.services.agent import AgentService
+from app.services.ai_session import AiSessionService
 
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     "LoginLogService",
     "OperLogService",
     "CaptchaService",
-    "AgentService"
+    "AgentService",
+    "AiSessionService"
 ]

@@ -6,22 +6,30 @@
 - 推理过程提取（reasoning_content → additional_kwargs）
 - 工具调用事件暴露（tool_call / tool_result）
 - 事件分类（content / reasoning / tool_call / tool_result）
+- 会话记忆（基于 LangGraph checkpointer，按 session_id 隔离，唯一模式）
 
 典型用法：
     ```python
     from app.agent.agents.chat_agent import ChatAgent
     from app.core.llm import LLMFactory
+    from langgraph.checkpoint.memory import InMemorySaver
 
     llm = LLMFactory.create("qwen3-max")
-    agent = ChatAgent(llm, "你是数据库助手")
+    agent = ChatAgent(
+        llm,
+        "你是数据库助手",
+        checkpointer=InMemorySaver(),
+    )
 
-    # 仅输出 content/reasoning
-    async for event in agent.astream(messages):
+    # 仅输出 content/reasoning（每轮只传本轮新消息）
+    async for event in agent.astream(new_messages, session_id="sess-1"):
         if event.type == "content":
             print(event.data.content)
 
     # 包含工具调用事件
-    async for event in agent.astream(messages, include_tool_events=True):
+    async for event in agent.astream(
+        new_messages, session_id="sess-1", include_tool_events=True
+    ):
         if event.type == "tool_call":
             print(f"调用工具: {event.data.tool_calls}")
         elif event.type == "tool_result":
@@ -29,14 +37,16 @@
     ```
 
 @since 2026-08-19
-@version 2.2.0
+@version 2.3.0
 """
 
-from typing import AsyncGenerator, Literal
+from typing import Any, AsyncGenerator, Literal
 from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import BaseMessage, SystemMessage, AIMessageChunk, ToolMessage
+from langchain_core.messages import BaseMessage, SystemMessage, AIMessageChunk, ToolMessage, HumanMessage
 from langchain_core.tools import BaseTool
+from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.types import RunnableConfig
 
 
 # 事件类型定义
@@ -67,19 +77,25 @@ class ChatAgent:
     封装 LangChain ReAct Agent，提供流式对话能力。
     支持推理过程（reasoning_content）和回答内容（content）的分离提取。
 
+    基于注入的 LangGraph checkpointer 实现会话记忆（唯一模式）：
+    - 构造时必须注入 checkpointer
+    - astream 时必须提供 session_id，agent 自动加载/持久化该会话的历史状态
+    - 前端每轮只需传本轮新消息，不要重传全量历史（否则会消息重复）
+
     Attributes:
         _agent: LangChain CompiledStateGraph 实例
 
     Example:
         ```python
-        # 简单用法
-        agent = ChatAgent(llm, system_prompt)
+        from langgraph.checkpoint.memory import InMemorySaver
 
-        # 带工具用法
-        agent = ChatAgent(llm, system_prompt, tools=[sql_tool, search_tool])
-
-        # 自定义 SystemMessage
-        agent = ChatAgent(llm, SystemMessage(content="你是{role}助手"))
+        agent = ChatAgent(
+            llm, system_prompt,
+            tools=[sql_tool],
+            checkpointer=InMemorySaver(),
+        )
+        async for event in agent.astream(new_messages, session_id="sess-1"):
+            ...
         ```
     """
 
@@ -87,6 +103,7 @@ class ChatAgent:
         self,
         llm_client: BaseChatModel,
         system_prompt: str | SystemMessage,
+        checkpointer: BaseCheckpointSaver,
         tools: list[BaseTool] | None = None,
     ):
         """
@@ -95,6 +112,8 @@ class ChatAgent:
         Args:
             llm_client: LLM 客户端实例
             system_prompt: 系统提示词（str 或 SystemMessage）
+            checkpointer: LangGraph 检查点存储器（必填）。
+                用于按 session_id 自动持久化/加载会话状态。
             tools: 工具列表（可选）
         """
         # 延迟初始化参数
@@ -103,6 +122,7 @@ class ChatAgent:
             'llm_client': llm_client,
             'tools': tools,
             'system_prompt': system_prompt,
+            'checkpointer': checkpointer,
         }
 
     async def _ensure_agent(self):
@@ -112,19 +132,25 @@ class ChatAgent:
                 model=self._init_params['llm_client'],
                 tools=self._init_params['tools'],
                 system_prompt=self._init_params['system_prompt'],
+                checkpointer=self._init_params['checkpointer'],
             )
 
     async def astream(
         self,
-        messages: list[BaseMessage],
+        message: HumanMessage,
         *,
+        session_id: str,
         include_tool_events: bool = False
     ) -> AsyncGenerator[AgentEvent, None]:
         """
         流式输出对话结果
 
         Args:
-            messages: 消息列表
+            message: 本轮新消息（历史由 checkpointer 按 session_id 自动加载，无需重传）。
+                支持 HumanMessage 对象，
+                LangGraph 的 add_messages reducer 会自动将 dict 转为 BaseMessage。
+            session_id: 会话标识（必填）。
+                用于隔离不同会话的状态；agent 会自动读取/写入该会话的历史。
             include_tool_events: 是否包含工具调用事件（默认 False，仅输出 content/reasoning）
 
         Yields:
@@ -135,14 +161,20 @@ class ChatAgent:
                 - type="tool_result": 工具执行结果（ToolMessage）
 
         Note:
-            推理过程提取需要 LLM 启用推理模式（enable_thinking=True）
+            - 推理过程提取需要 LLM 启用推理模式（enable_thinking=True）
+            - 本轮回复完成后，AI 回复会自动写入 checkpointer，下一轮可直接续接
         """
         # 确保 agent 已初始化
         await self._ensure_agent()
-        
+
+        # 构造 runnable 配置：LangGraph checkpointer 使用 thread_id 作为内部 key，
+        # 业务层参数使用 session_id，此处做映射
+        config: RunnableConfig = {"configurable": {"thread_id": session_id}}
+
         # 获取流式迭代器
         async for chunk, _metadata in self._agent.astream(
-            {"messages": messages},
+            {"messages": [message]},
+            config=config,
             stream_mode="messages"
         ):
             # 处理 ToolMessage（工具执行结果）

@@ -6,20 +6,24 @@ Agent 对话服务模块
 - 工具组装（通过 ToolFactory）
 - Agent 调用（通过 ChatAgent）
 - 事件流式输出（AgentEvent）
+- 会话记忆（通过 Redis Checkpointer，按 session_id 隔离）
 
 @since 2026-08-20
-@version 2.0.0
+@version 3.0.0
 """
 
-from typing import AsyncGenerator
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
+from typing import AsyncGenerator, Optional
+
+from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from app.core.llm import LLMFactory
 from app.agent.agents import ChatAgent
 from app.agent.agents.chat_agent import AgentEvent
 from app.agent.tools import ToolFactory
 from app.agent.prompts import PromptBuilder
+from app.agent.checkpointers.redis_checkpointer import RedisCheckpointer
 from app.core.logger import logger
+from langchain_core.messages import HumanMessage
 
 
 class AgentService:
@@ -31,48 +35,36 @@ class AgentService:
     - 工具自动组装（Service 内部决策）
     - 事件分类输出（content / reasoning / tool_call / tool_result）
     - Jinja2 模板提示词（动态注入工具列表、用户信息等）
+    - 会话记忆（Redis Checkpointer，按 session_id 隔离，持久化）
 
-    Example:
-        ```python
-        service = AgentService()
-        async for event in service.chat_stream("qwen3-max", messages):
-            if event.type == "content":
-                print(event.data.content)
-        ```
+    记忆策略：
+    - Redis Checkpointer 单例，所有会话共享，按 session_id 隔离
+    - session_id 必填：前端首轮通过 POST /ai/chat/session 获取
+    - 前端每轮只需传本轮新消息，历史由 checkpointer 自动加载/持久化
+    - 不要重传全量历史，否则会与 checkpointer 中的历史重复
     """
 
     def __init__(self):
         self._prompt_builder = PromptBuilder()
+        self._checkpointer: Optional[BaseCheckpointSaver] = None
 
-    @staticmethod
-    def _build_messages(messages: list[dict]) -> list[BaseMessage]:
+    async def _get_checkpointer(self) -> BaseCheckpointSaver:
         """
-        构建 LangChain 消息格式
-
-        Args:
-            messages: 消息列表，格式为 [{"role": "user", "content": "..."}]
+        获取 Redis Checkpointer（延迟初始化）
 
         Returns:
-            list[BaseMessage]: LangChain 消息对象列表
+            AsyncRedisSaver 实例
         """
-        langchain_messages = []
-        for msg in messages:
-            role = msg.get("role")
-            content = msg.get("content", "")
-
-            if role == "user":
-                langchain_messages.append(HumanMessage(content=content))
-            elif role == "assistant":
-                langchain_messages.append(AIMessage(content=content))
-            elif role == "system":
-                langchain_messages.append(SystemMessage(content=content))
-
-        return langchain_messages
+        if self._checkpointer is None:
+            self._checkpointer = await RedisCheckpointer.get_instance()
+            logger.info("Redis Checkpointer 初始化完成")
+        return self._checkpointer
 
     async def chat_stream(
         self,
         model_id: str,
-        messages: list[dict],
+        message: HumanMessage,
+        session_id: str,
         system_prompt: str | None = None,
     ) -> AsyncGenerator[AgentEvent, None]:
         """
@@ -80,7 +72,11 @@ class AgentService:
 
         Args:
             model_id: 模型标识（需在 LLM_MODELS 配置中）
-            messages: 消息列表，格式为 [{"role": "user", "content": "..."}]
+            message: 本轮新消息，格式为 HumanMessage
+                历史由 checkpointer 按 session_id 自动加载，无需重传全量历史。
+            session_id: 会话标识（必填）。
+                用于隔离不同会话状态；agent 自动读取/写入该会话的历史。
+                首轮通过 POST /ai/chat/session 获取。
             system_prompt: 系统提示词（可选，默认使用内置提示词）
 
         Yields:
@@ -91,15 +87,18 @@ class AgentService:
                 - type="tool_result": 工具执行结果
         """
         try:
-            # 1. 创建 LLM 实例
-            llm = LLMFactory.create(model_id)
-            logger.info(f"创建 LLM 实例: {model_id}")
+            # 1. 获取 Redis Checkpointer
+            checkpointer = await self._get_checkpointer()
 
-            # 2. 创建工具集（Service 内部决策）
+            # 2. 创建 LLM 实例
+            llm = LLMFactory.create(model_id)
+            logger.info(f"创建 LLM 实例: {model_id} | session: {session_id}")
+
+            # 3. 创建工具集（Service 内部决策）
             tools = ToolFactory.create_all_tools(llm)
             logger.info(f"创建工具集, 工具数: {len(tools)}")
 
-            # 3. 确定系统提示词
+            # 4. 确定系统提示词
             if system_prompt is None:
                 # 使用 Jinja2 模板渲染提示词
                 system_prompt = self._prompt_builder.render(
@@ -110,18 +109,21 @@ class AgentService:
                 )
                 logger.debug(f"渲染系统提示词: {len(system_prompt)} 字符")
 
-            # 4. 创建 Agent
+            # 5. 创建 Agent（注入 Redis checkpointer）
             agent = ChatAgent(
                 llm_client=llm,
                 system_prompt=system_prompt,
                 tools=tools,
+                checkpointer=checkpointer,
             )
 
-            # 5. 构建消息
-            langchain_messages = self._build_messages(messages)
-
-            # 6. 流式输出（包含工具事件）
-            async for event in agent.astream(langchain_messages, include_tool_events=True):
+            # 6. 流式输出（包含工具事件，透传 session_id 启用记忆）
+            #    message 为 HumanMessage 格式，LangGraph 的 add_messages reducer 会自动转换为 BaseMessage
+            async for event in agent.astream(
+                message,
+                session_id=session_id,
+                include_tool_events=True,
+            ):
                 yield event
 
         except Exception as e:

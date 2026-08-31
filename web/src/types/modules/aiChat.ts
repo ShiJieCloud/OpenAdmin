@@ -25,8 +25,10 @@ export interface IChatMessage {
 export interface IChatRequest {
   /** 模型标识 */
   model: string
-  /** 消息列表 */
-  messages: Array<{ role?: ChatRole; content?: string }>
+  /** 本轮新消息（历史由后端按 session_id 自动加载，无需重传） */
+  message: { content: string }
+  /** 会话 ID（首轮通过 createChatSession 获取，后续轮回传） */
+  session_id: string
   /** 是否流式输出 */
   stream?: boolean
   /** 采样温度 */
@@ -39,4 +41,38 @@ export interface IChatRequest {
 export interface IStreamChunk {
   /** 增量内容 */
   content: string
+}
+
+/** 会话元数据 */
+export interface ISessionMeta {
+  /** 会话 ID */
+  session_id: string
+  /** 会话标题 */
+  title: string
+  /** 模型标识 */
+  model_id: string
+  /** 创建时间戳 */
+  created_at: number
+  /** 更新时间戳 */
+  updated_at: number
+}
+
+/** 会话消息 */
+export interface ISessionMessage {
+  /** 消息角色 */
+  role: ChatRole
+  /** 消息内容 */
+  content: string
+  /** 推理内容 */
+  reasoning_content?: string
+  /** 模型标识 */
+  model_id: string
+  /** 时间戳 */
+  timestamp: number
+}
+
+/** 创建会话响应 */
+export interface ICreateSessionResponse {
+  /** 会话 ID */
+  session_id: string
 }

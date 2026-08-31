@@ -14,6 +14,11 @@ class RedisKey:
     ONLINE_USER_PREFIX = "online_user"
     ONLINE_USER_ZSET_PREFIX = "online_user_zset"
 
+    # ==================== AI 对话相关 ====================
+    AI_SESSIONS_PREFIX = "ai_sessions"   # 会话列表索引（ZSet）
+    AI_SESSION_PREFIX = "ai_session"     # 会话元数据（Hash）
+    AI_MESSAGES_PREFIX = "ai_messages"    # 消息历史（List）
+
 class RedisKeyTemplate:
     """
     Redis 键名模板生成器
@@ -44,3 +49,18 @@ class RedisKeyTemplate:
     def online_user_zset() -> str:
         """在线用户 ZSET 缓存键（值：用户ID 列表）"""
         return f"{RedisKey.PREFIX}:{RedisKey.ONLINE_USER_ZSET_PREFIX}"
+
+    @staticmethod
+    def ai_sessions(user_id: int) -> str:
+        """AI 会话列表索引键（ZSet，score=更新时间戳）"""
+        return f"{RedisKey.PREFIX}:{RedisKey.AI_SESSIONS_PREFIX}:{user_id}"
+
+    @staticmethod
+    def ai_session(session_id: str) -> str:
+        """AI 会话元数据键（Hash：title/user_id/时间戳）"""
+        return f"{RedisKey.PREFIX}:{RedisKey.AI_SESSION_PREFIX}:{session_id}"
+
+    @staticmethod
+    def ai_messages(session_id: str) -> str:
+        """AI 会话消息历史键（List，元素为消息 JSON）"""
+        return f"{RedisKey.PREFIX}:{RedisKey.AI_MESSAGES_PREFIX}:{session_id}"

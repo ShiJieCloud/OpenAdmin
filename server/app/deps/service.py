@@ -12,7 +12,8 @@ from app.services import (
     LoginLogService,
     OperLogService,
     CaptchaService,
-    AgentService
+    AgentService,
+    AiSessionService
 )
 from app.core.redis import RedisClient
 
@@ -84,3 +85,9 @@ async def get_agent_service(
 ) -> AgentService:
     """智能对话服务依赖注入，返回 AgentService 实例"""
     return AgentService()
+
+async def get_ai_session_service(
+    redis_client: RedisClient = Depends(get_redis)
+) -> AiSessionService:
+    """智能对话会话服务依赖注入，返回 AiSessionService 实例"""
+    return AiSessionService(redis_client)

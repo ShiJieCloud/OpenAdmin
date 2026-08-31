@@ -3,7 +3,11 @@
  * @module api/modules/aiChat
  * @since 2026-08-10
  */
-import type { IChatRequest } from '@/types/modules/aiChat'
+import type {
+  IChatRequest,
+  ISessionMeta,
+  ISessionMessage,
+} from '@/types/modules/aiChat'
 import request from '@/utils/request'
 
 /**
@@ -95,4 +99,48 @@ export const sendChatMessageStream = async (
  */
 export const getModelList = (): Promise<string[]> => {
   return request.get('/ai/models')
+}
+
+/**
+ * 创建会话（获取会话 ID 并在 Redis 注册元数据）
+ * 前端进入页面或清空对话时调用，获取 session_id 用于后续流式对话的记忆隔离。
+ * @param model_id 模型标识
+ * @returns 会话 ID（32 位十六进制，无连字符）
+ */
+export const createChatSession = (model_id: string): Promise<string> => {
+  return request.post('/ai/chat/session', {
+    model_id,
+  })
+}
+
+/**
+ * 获取用户会话列表
+ * @param limit 返回数量上限
+ * @returns 会话元数据列表
+ */
+export const getSessionList = (limit = 100): Promise<ISessionMeta[]> => {
+  return request.get('/ai/chat/sessions', {
+    params: { limit },
+  })
+}
+
+/**
+ * 获取会话消息历史
+ * @param session_id 会话 ID
+ * @param limit 返回数量上限
+ * @returns 消息历史列表
+ */
+export const getSessionMessages = (session_id: string, limit = 200): Promise<ISessionMessage[]> => {
+  return request.get(`/ai/chat/sessions/${session_id}/messages`, {
+    params: { limit },  
+  })
+}
+
+/**
+ * 删除会话
+ * @param session_id 会话 ID
+ * @returns 删除结果
+ */
+export const deleteSession = (session_id: string): Promise<boolean> => {
+  return request.deleteRequest(`/ai/chat/sessions/${session_id}`, undefined)
 }
