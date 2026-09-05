@@ -239,11 +239,13 @@ class HttpUtils:
             content_type = request.headers.get("Content-Type", "").lower()
             body = None
             try:
-                # multipart/form-data 需要特殊处理，不能先调用 request.body()
-                # 因为 request.form() 会消耗流，只能调用一次
+                
                 if "multipart/form-data" in content_type:
-                    form_data = await request.form()
-                    body = cls._parse_form_data(form_data)
+                    # multipart/form‑data 禁止读取请求流：
+                    # 该类型流无法通过 request._body 重置，中间件一旦调用 await request.form() 会耗尽流，
+                    # 下游 UploadFile 接口将拿到空文件，因此仅写入日志标记，原始流交给 FastAPI 业务处理
+                    body = "[multipart/form‑data, skip body parse]"
+
                 else:
                     # 保存原始请求体以便重置
                     raw_body = await request.body()
