@@ -1,55 +1,58 @@
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import create_engine
+from sqlalchemy import event
 
 from app.config.database import database_config
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from pgvector.asyncpg import register_vector
 
-# 创建数据库URL
+# ------------------------------
+# 异步引擎（postgresql+asyncpg）：业务API、ORM、pgvector向量读写
+# ------------------------------
 ASYNC_DB_URL = URL.create(
-    drivername="mysql+asyncmy",
+    drivername="postgresql+asyncpg",
     username=database_config.USER,
     password=database_config.PASSWORD,
     host=database_config.HOST,
     port=database_config.PORT,
     database=database_config.NAME,
-    query={
-        "charset": database_config.CHARSET,
-        "sql_mode": "STRICT_TRANS_TABLES",
-    }
 )
 
-# 创建异步引擎
 async_engine = create_async_engine(
     ASYNC_DB_URL,
     echo=database_config.DEBUG,
     pool_size=database_config.POOL_SIZE,
-    max_overflow=database_config.MAX_OVERFLOW
+    max_overflow=database_config.MAX_OVERFLOW,
+    pool_pre_ping=True,       # 检测断开连接，生产建议开启
+    pool_recycle=1800,        # 回收空闲连接，避免pg长连接断开
 )
 
-# 创建同步数据库URL（使用同步驱动）
+# ------------------------------
+# 同步引擎（postgresql+psycopg）：供给 LangChain SQLDatabaseToolkit
+# ------------------------------
 SYNC_DB_URL = URL.create(
-    drivername="mysql+pymysql",
+    drivername="postgresql+psycopg",
     username=database_config.USER,
     password=database_config.PASSWORD,
     host=database_config.HOST,
     port=database_config.PORT,
     database=database_config.NAME,
-    query={
-        "charset": database_config.CHARSET,
-    }
 )
 
-# 创建同步引擎（用于 LangChain SQLDatabaseToolkit）
 sync_engine = create_engine(
     SYNC_DB_URL,
     echo=database_config.DEBUG,
     pool_size=database_config.POOL_SIZE,
-    max_overflow=database_config.MAX_OVERFLOW
+    max_overflow=database_config.MAX_OVERFLOW,
+    pool_pre_ping=True,
+    pool_recycle=1800,
 )
 
-# 创建异步会话工厂
+# ------------------------------
+# 异步会话工厂 FastAPI依赖注入
+# ------------------------------
 AsyncSessionLocal = async_sessionmaker(
     async_engine,
     class_=AsyncSession,
@@ -58,6 +61,8 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False
 )
 
+
+# FastAPI 依赖获取会话
 @asynccontextmanager
 async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """

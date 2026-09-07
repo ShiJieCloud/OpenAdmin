@@ -27,13 +27,13 @@ class BaseModel(BaseRelation):
     __abstract__ = True
 
     create_time: Mapped[DateTime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
         comment="创建时间"
     )
     update_time: Mapped[DateTime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,

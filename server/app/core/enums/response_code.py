@@ -29,6 +29,9 @@ class RespCodeEnum(Enum):
     TOKEN_TYPE_ERROR = ("BAU0003", "Token 类型错误")
     LOGIN_EXPIRED = ("BAU0004", "登录已失效，请重新登录")
     PERM_DENIED = ("BAU0005", "权限不足，无法访问该资源")
+    FACE_LOGIN_FAIL = ("BAU0006", "人脸校验失败，请正对摄像头重新核验")
+    FACE_NOT_DETECT = ("BAU0007", "未检测到人脸，请正对摄像头、光线充足")
+
 
     # B-US = 用户相关 (User)
     USER_NOT_EXIST = ("BUS0001", "用户不存在")

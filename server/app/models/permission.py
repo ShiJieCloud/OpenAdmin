@@ -1,6 +1,5 @@
-from sqlalchemy import String, BigInteger, Integer
+from sqlalchemy import String, BigInteger, Integer, SMALLINT
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.mysql import TINYINT
 from app.models.base import BaseModel
 
 
@@ -39,7 +38,7 @@ class Permission(BaseModel):
         comment="排序"
     )
     status: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="状态：0=正常 1=停用"
     )

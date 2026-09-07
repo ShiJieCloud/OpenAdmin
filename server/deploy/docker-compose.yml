@@ -1,0 +1,43 @@
+# docker‑compose.yml
+# 功能：PostgreSQL18 + pgvector向量扩展，为openadmin项目提供数据库服务
+# 启动：docker compose up -d
+# 停止：docker compose down
+# 销毁并清除数据：docker compose down && docker volume rm pg18_data
+# 进入数据库终端：docker exec -it openadmin-db psql -U root -d openadmin
+# ⚠️重要：数据库初始化完成后，需要手动执行SQL开启pgvector向量扩展
+
+name: openadmin
+version: '3.8'
+
+services:
+  postgres:
+    # PostgreSQL18，内置pgvector向量扩展，Debian trixie基础镜像
+    image: pgvector/pgvector:pg18-trixie
+    # 容器实例名称
+    container_name: openadmin-db
+    # 容器异常退出、OrbStack重启自动拉起数据库
+    restart: always
+    # 端口映射：宿主机5432端口映射容器5432
+    ports:
+      - "5432:5432"
+    environment:
+      # Postgres超级用户账号
+      POSTGRES_USER: root
+      # 超级用户密码
+      POSTGRES_PASSWORD: root
+      # 容器首次初始化自动创建业务数据库
+      POSTGRES_DB: openadmin
+    volumes:
+      # 命名数据卷持久化PG数据；容器删除数据不会丢失
+      - pg18_data:/var/lib/postgresql
+    command:
+      # PG内存缓冲区，开发环境512MB，生产根据机器内存调大
+      - -c
+      - shared_buffers=512MB
+      # 数据库最大并发连接数
+      - -c
+      - max_connections=200
+
+# Docker命名数据卷定义
+volumes:
+  pg18_data:

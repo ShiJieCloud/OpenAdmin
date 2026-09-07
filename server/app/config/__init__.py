@@ -6,6 +6,7 @@ from .log import log_config
 from .llm import llm_config
 from .search import search_config
 from .rag import rag_config
+from .face import face_config
 
 
 
@@ -18,4 +19,5 @@ __all__ = [
     "llm_config",
     "search_config",
     "rag_config",
+    "face_config",
 ]

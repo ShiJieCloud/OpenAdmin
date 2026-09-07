@@ -47,7 +47,7 @@ async def get_current_user(
         User: 当前用户信息
     """
 
-    user = await user_service.get_user(id=token.sub)
+    user = await user_service.get_user(id=int(token.sub))
 
     # App 上下文：设置当前登录用户ID
     AppContext.set_current_user_id(user.id)

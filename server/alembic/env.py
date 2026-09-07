@@ -15,7 +15,7 @@ from app.models import *
 config = context.config
 
 # 从配置系统中读取数据库连接信息，使用同步驱动
-config.set_main_option('sqlalchemy.url', f"mysql+pymysql://{database_config.USER}:{database_config.PASSWORD}@{database_config.HOST}:{database_config.PORT}/{database_config.NAME}?charset={database_config.CHARSET}")
+config.set_main_option('sqlalchemy.url', f"postgresql+psycopg://{database_config.USER}:{database_config.PASSWORD}@{database_config.HOST}:{database_config.PORT}/{database_config.NAME}")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

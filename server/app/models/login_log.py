@@ -1,9 +1,7 @@
-from sqlalchemy import String, BigInteger, DateTime, Integer, Text, Numeric
+from sqlalchemy import String, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.mysql import TINYINT
 
 from app.models.base import BaseModel
-from datetime import datetime
 
 
 class LoginLog(BaseModel):

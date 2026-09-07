@@ -1,6 +1,5 @@
-from sqlalchemy import String, BigInteger, Integer
+from sqlalchemy import String, BigInteger, Integer, SMALLINT
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.mysql import TINYINT
 
 
 from app.models.base import BaseModel
@@ -31,7 +30,7 @@ class Post(BaseModel):
         comment="显示顺序（越小越靠前）"
     )
     status: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="状态 0=启用 1=禁用"
     )

@@ -5,6 +5,7 @@ from .auth import (
     CaptchaVerifyRequest,
     CaptchaResponse,
     PasswordLoginRequest,
+    RegisterRequest,
 )
 from .dashboard import DashboardOverviewResponse
 from .dept import (
@@ -26,6 +27,7 @@ __all__ = [
     "CaptchaVerifyRequest",
     "CaptchaResponse",
     "PasswordLoginRequest",
+    "RegisterRequest",
     "OperLogCreateRequest",
     "OperLogListQueryRequest",
     "OperLogResponse",

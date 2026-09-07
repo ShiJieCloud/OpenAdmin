@@ -5,6 +5,13 @@ export interface PasswordLoginRequest {
   captcha_code: string
 }
 
+export interface RegisterRequest {
+  username: string
+  phone: string
+  password: string
+  sms_code?: string
+}
+
 export interface TokenResponse {
   access_token: string
   refresh_token: string

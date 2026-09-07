@@ -403,3 +403,66 @@ class UserCRUD(BaseCRUD):
         stmt = select(func.count(User.id)).where(User.del_flag == 0)
         result = await self.db_session.execute(stmt)
         return result.scalar_one()
+
+    async def search_nearest_face(self, embedding: list[float]) -> tuple[User | None, float]:
+        """人脸向量最近邻检索（pgvector 余弦距离）
+
+        在已录入人脸的未删除用户中，按余弦距离（<=> 算子）升序取最相似用户。
+        特征向量已 L2 归一化时，余弦相似度 = 1 - 余弦距离。
+
+        Args:
+            embedding: 待比对的人脸特征向量（512维，已归一化）
+
+        Returns:
+            tuple[User | None, float]: (最相似用户对象, 余弦距离)；
+            无任何已录入人脸的用户时返回 (None, 1.0)
+        """
+        # cosine_distance 生成 pgvector 的 <=> 算子，距离越小越相似
+        distance = User.face_embedding.cosine_distance(embedding).label("face_distance")
+        stmt = (
+            select(User, distance)
+            .where(
+                User.del_flag == 0,
+                User.face_embedding.isnot(None),
+            )
+            .order_by(distance)
+            .limit(1)
+        )
+        result = await self.db_session.execute(stmt)
+        row = result.first()
+
+        if row is None:
+            return None, 1.0
+        return row[0], float(row[1])
+
+    async def update_face_embedding(self, user_id: int, embedding: list[float]) -> None:
+        """更新用户人脸特征向量（人脸录入/重新录入）
+
+        Args:
+            user_id: 用户ID
+            embedding: 人脸特征向量（512维，已归一化）
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(face_embedding=embedding)
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()
+
+    async def clear_face_embedding(self, user_id: int) -> None:
+        """清除用户人脸特征向量（删除人脸数据）
+
+        将 face_embedding 置为 NULL，该用户随即退出人脸向量库，
+        无法再通过人脸识别登录；操作幂等，未录入人脸时执行无副作用。
+
+        Args:
+            user_id: 用户ID
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(face_embedding=None)
+        )
+        await self.db_session.execute(stmt)
+        await self.db_session.flush()

@@ -1,19 +1,28 @@
-from app.config import auth_config
+from datetime import datetime
+import asyncio
+
+from app.config import auth_config, face_config
 from app.core import logger
 from app.core.constants import RedisKeyTemplate, TimeSec
+from app.core.context import AppContext
 from app.core.enums import RespCodeEnum, UserStatusEnum, RoleStatusEnum, PostStatusEnum
-from app.schemas.user import UserUpdateStatusRequest, UserUpdateRequest, UserListQueryRequest, OnlineUserQueryRequest, OnlineUserInfoResponse
 from app.core.exceptions import BusinessError
+from app.core.face import face_model
+from app.core.redis import RedisClient
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
 from app.models import User, Role, Post
-from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
-from app.schemas.user import UserCreateRequest, UserResetPasswordRequest, OnlineUserQueryRequest
+from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse, RegisterRequest
+from app.schemas.user import (
+    UserUpdateStatusRequest,
+    UserUpdateRequest,
+    UserListQueryRequest,
+    OnlineUserQueryRequest,
+    OnlineUserInfoResponse,
+    UserCreateRequest,
+    UserResetPasswordRequest,
+)
 from app.services.base import BaseService
-from app.core.redis import RedisClient
-from datetime import datetime
-from app.core.context import AppContext
-import asyncio
 
 
 class UserService(BaseService):
@@ -52,6 +61,65 @@ class UserService(BaseService):
             raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
 
         return user
+
+    async def _handle_login_success(self, user: User) -> TokenResponse:
+        """登录认证通过后的公共处理
+
+        密码登录、人脸登录等所有认证方式复用，统一完成：
+        重置登录状态 → 更新登录时间 → 签发令牌 → 同步 Redis 刷新令牌与在线缓存，
+        保证 refresh_token 刷新流程、在线用户列表/详情在各登录方式下行为一致。
+
+        :param user: 认证通过的用户对象
+        :return: TokenResponse
+        """
+        # 1. 重置登录状态（解锁账号、清空锁定时间与连续失败次数）
+        await self.user_crud.reset_user_login_status(user.id)
+
+        # 2. 更新登录时间
+        login_date = datetime.now()
+        await self.user_crud.update_login_time(user.id, login_date)
+
+        # 3. 设置请求上下文（供审计日志等使用）
+        AppContext.set_current_user_id(user.id)
+        AppContext.set_current_username(user.username)
+
+        # 4. 生成令牌，refresh_token 写入 Redis（刷新令牌流程依赖该缓存校验）
+        access_token, refresh_token = create_tokens(user.id)
+        await self.redis_client.set(
+            RedisKeyTemplate.refresh_token(user.id),
+            refresh_token,
+            auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
+        )
+
+        # 5. 加入在线用户列表
+        # @description 使用 Redis ZSet 维护在线用户集合，score 为登录时间戳（秒）
+        # @note ZSet 按登录时间倒序排列，支持分页查询和自动去重
+        await self.redis_client.zadd(
+            RedisKeyTemplate.online_user_zset(),
+            {
+                user.id: int(login_date.timestamp())
+            }
+        )
+
+        # 6. 更新用户在线信息缓存（Redis Hash 存储登录时间、IP、归属地、设备类型）
+        online_user_info = {
+            "id": user.id,
+            "login_time": int(login_date.timestamp()),
+            "login_ip": AppContext.get_client_ip(),
+            "login_address": AppContext.get_ip_location_info().full_location,
+            "login_device": AppContext.get_user_agent_info().device_type
+        }
+        await self.redis_client.hset(
+            RedisKeyTemplate.online_user(user.id),
+            mapping=online_user_info,
+            expire=auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
+        )
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=auth_config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * TimeSec.MINUTE
+        )
 
     async def login_password(self, req: PasswordLoginRequest) -> TokenResponse:
         """账号密码登录
@@ -105,52 +173,82 @@ class UserService(BaseService):
             # 未达上限 → 返回剩余次数
             raise BusinessError(RespCodeEnum.PWD_VERIFY_FAIL, count=remaining_attempts)
 
-        # 4. 登录成功 → 重置所有登录状态
-        await self.user_crud.reset_user_login_status(user.id)
+        # 4. 密码校验通过 → 公共登录成功处理（状态重置、登录时间、令牌、Redis 在线缓存）
+        return await self._handle_login_success(user)
 
-        # 5. 登录成功 → 更新登录时间
+    async def login_face(self, face_image) -> TokenResponse:
+        """
+        人脸识别登录
+        接收前端上传的人脸图片，提取特征，与 PostgreSQL（pgvector）人脸向量库比对，
+        余弦相似度达到阈值则判定匹配成功，返回JWT令牌
 
-        login_date = datetime.now()
-        await self.user_crud.update_login_time(user.id, login_date)
+        :param face_image: 人脸图片文件（UploadFile）
+        :return: TokenResponse
+        """
+        img_bytes = await face_image.read()
+        emb = face_model.extract_embedding(img_bytes)
+        if emb is None:
+            raise BusinessError(RespCodeEnum.FACE_NOT_DETECT)
 
-        # 6. 生成令牌
-        access_token, refresh_token = create_tokens(user.id)
-        await self.redis_client.set(
-            RedisKeyTemplate.refresh_token(user.id),
-            refresh_token,
-            auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
-        )
+        # pgvector 余弦距离最近邻检索；向量已归一化，余弦相似度 = 1 - 余弦距离
+        user, distance = await self.user_crud.search_nearest_face(emb.tolist())
+        best_score = 1.0 - distance
 
-        # 7. 登录成功 → 加入在线用户列表
-        # @description 使用 Redis ZSet 维护在线用户集合，score 为登录时间戳（秒）
-        # @note ZSet 按登录时间倒序排列，支持分页查询和自动去重
-        await self.redis_client.zadd(
-            RedisKeyTemplate.online_user_zset(),
-            {
-                user.id: int(login_date.timestamp())
-            }
-        )
+        logger.warning(f"人脸比对，最高分数:{best_score:.4f},阈值:{face_config.SIMILARITY_THRESHOLD}")
 
-        # 8. 登录成功 → 更新用户在线信息缓存（使用 Redis Hash 存储用户详细的在线信息，包括登录时间、IP 地址等）
-        online_user_info = {
-            "id": user.id,
-            "login_time": int(login_date.timestamp()),
-            "login_ip": AppContext.get_client_ip(),
-            "login_address": AppContext.get_ip_location_info().full_location,
-            "login_device": AppContext.get_user_agent_info().device_type
-        }
+        # 判断是否达到阈值，并且存在匹配用户
+        if user is not None and best_score >= face_config.SIMILARITY_THRESHOLD:
+            if not UserStatusEnum.is_normal(user.status):
+                # 用户状态异常，拒绝登录，删除 refresh_token
+                await self.redis_client.delete(RedisKeyTemplate.refresh_token(user.id))
+                raise BusinessError(RespCodeEnum.LOGIN_EXPIRED)
+            # 人脸比对通过 → 公共登录成功处理（状态重置、登录时间、令牌、Redis 在线缓存）
+            return await self._handle_login_success(user)
 
-        await self.redis_client.hset(
-            RedisKeyTemplate.online_user(user.id),
-            mapping=online_user_info,
-            expire=auth_config.JWT_REFRESH_TOKEN_EXPIRE_DAYS * TimeSec.DAY
-        )
+        # 分数不足，人脸校验失败
+        logger.warning(f"人脸比对不通过，最高分数:{best_score:.4f},阈值:{face_config.SIMILARITY_THRESHOLD}")
+        raise BusinessError(RespCodeEnum.FACE_LOGIN_FAIL)
 
-        return TokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=auth_config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * TimeSec.MINUTE
-        )
+    async def enroll_face(self, user_id: int, face_image) -> None:
+        """
+        人脸录入
+        提取上传图片的人脸特征向量，写入用户表 face_embedding 字段（pgvector），
+        用于后续人脸识别登录；重复录入直接覆盖旧特征
+
+        :param user_id: 用户ID
+        :param face_image: 人脸图片文件（UploadFile）
+        :return: None
+        """
+        # 校验用户是否存在
+        user = await self.user_crud.get_user(id=user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+
+        img_bytes = await face_image.read()
+        emb = face_model.extract_embedding(img_bytes)
+        if emb is None:
+            raise BusinessError(RespCodeEnum.FACE_NOT_DETECT)
+
+        # 特征向量入库（pgvector 自动完成向量类型绑定）
+        await self.user_crud.update_face_embedding(user_id, emb.tolist())
+        logger.info(f"用户 {user_id} 人脸特征录入成功")
+
+    async def clear_face(self, user_id: int) -> None:
+        """
+        清除人脸
+        清空指定用户的人脸特征向量，清除后该用户将无法使用人脸识别登录；
+        操作幂等，用户未录入人脸时执行无副作用
+
+        :param user_id: 用户ID
+        :return: None
+        """
+        # 校验用户是否存在
+        user = await self.user_crud.get_user(id=user_id)
+        if user is None:
+            raise BusinessError(RespCodeEnum.USER_NOT_EXIST)
+
+        await self.user_crud.clear_face_embedding(user_id)
+        logger.info(f"用户 {user_id} 人脸特征已清除")
 
     async def refresh_token(self, req: RefreshTokenRequest) -> TokenResponse:
         """刷新令牌
@@ -303,6 +401,38 @@ class UserService(BaseService):
         if req.post_ids:
             await self.user_crud.bind_posts_to_user(user.id, req.post_ids)
 
+        return user
+
+    async def register(self, req: RegisterRequest) -> User:
+        """用户自助注册
+
+        公开接口，无需登录。仅校验用户名与手机号唯一性，创建状态正常的用户。
+        短信验证码校验待接入短信服务后补充。
+
+        :param req: 注册请求
+        :return: 创建后的用户对象
+        :raises BusinessError: 用户名已存在、手机号已被注册
+        """
+        # 校验用户名是否已存在
+        existing_user = await self.user_crud.get_user(username=req.username)
+        if existing_user:
+            raise BusinessError(RespCodeEnum.USERNAME_EXIST)
+
+        # 校验手机号是否已存在
+        existing_user = await self.user_crud.get_user(phone=req.phone)
+        if existing_user:
+            raise BusinessError(RespCodeEnum.PHONE_EXIST)
+
+        # 密码加密
+        hashed_password = get_password_hash(req.password)
+
+        # 创建用户
+        user_data = {
+            "username": req.username,
+            "phone": req.phone,
+            "password": hashed_password,
+        }
+        user = await self.user_crud.create_user(user_data)
         return user
 
     async def reset_user_password(self, req: UserResetPasswordRequest) -> None:

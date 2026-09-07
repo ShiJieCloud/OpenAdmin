@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, Body, Query
+from fastapi import APIRouter, Depends, Path, Body, Query, UploadFile, File
 
 from app.core.enums import PermCode
 from app.core.response import ResponseBuilder
@@ -52,10 +52,64 @@ async def get_user_info(
 
     # 获取用户绑定岗位信息
     bind_posts = await user_service.get_user_bind_posts(user_id)
-    
+
     user_info.post_ids = [post.id for post in bind_posts]
 
     return ResponseBuilder.success(user_info)
+
+
+@router.post(
+    "/{user_id}/face",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.User.UPDATE))],
+    summary="录入/更新用户人脸",
+    description="上传指定用户的人脸图片，提取特征向量入库，用于人脸识别登录，重复录入将覆盖旧特征（需要具备用户更新权限）"
+)
+async def enroll_user_face(
+    user_id: int = Path(..., description="用户ID", ge=1, examples=[1001]),
+    face_image: UploadFile = File(..., description="人脸图片"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    录入/更新用户人脸特征
+
+    上传人脸图片并提取特征向量（pgvector），写入指定用户记录，
+    用于后续人脸识别登录；重复录入直接覆盖旧特征。
+    接口需要用户登录并拥有用户更新权限方可访问。
+
+    :param user_id: 目标用户的唯一标识ID
+    :param face_image: 人脸图片文件
+    :return: 返回成功响应
+    :raises BusinessError: 用户不存在、未检测到人脸
+    """
+    await user_service.enroll_face(user_id, face_image)
+    return ResponseBuilder.success(message="人脸录入成功")
+
+
+@router.delete(
+    "/{user_id}/face",
+    response_model=ApiResponse[None],
+    dependencies=[Depends(has_perm(PermCode.User.UPDATE))],
+    summary="清除用户人脸",
+    description="清除指定用户的人脸特征向量，清除后该用户将无法使用人脸识别登录（需要具备用户更新权限）"
+)
+async def clear_user_face(
+    user_id: int = Path(..., description="用户ID", ge=1, examples=[1001]),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    清除用户人脸特征
+
+    将指定用户的人脸特征向量置空，该用户随即退出人脸向量库，
+    无法再通过人脸识别登录；操作幂等，未录入人脸时执行无副作用。
+    接口需要用户登录并拥有用户更新权限方可访问。
+
+    :param user_id: 目标用户的唯一标识ID
+    :return: 返回成功响应
+    :raises BusinessError: 用户不存在
+    """
+    await user_service.clear_face(user_id)
+    return ResponseBuilder.success(message="人脸清除成功")
 
 
 @router.post(

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { passwordLogin, refreshTokenApi } from '@/api'
+import { loginByPassword, loginByFace, refreshTokenApi } from '@/api'
 import type { PasswordLoginRequest, TokenResponse, RefreshTokenRequest } from '@/types'
 
 export const useUserStore = defineStore(
@@ -8,14 +8,18 @@ export const useUserStore = defineStore(
   () => {
     const accessToken = ref<string>('')
     const refreshToken = ref<string>('')
-    const username = ref<string>('')
-    const expiresIn = ref<number>(0)
 
-    const login = async (req: PasswordLoginRequest): Promise<TokenResponse> => {
-      const data = await passwordLogin(req)
+    const passwordLogin = async (req: PasswordLoginRequest): Promise<TokenResponse> => {
+      const data = await loginByPassword(req)
       accessToken.value = data.access_token
       refreshToken.value = data.refresh_token
-      expiresIn.value = data.expires_in
+      return data
+    }
+
+    const faceLogin = async (blob: Blob): Promise<TokenResponse> => {
+      const data = await loginByFace(blob)
+      accessToken.value = data.access_token
+      refreshToken.value = data.refresh_token
       return data
     }
 
@@ -29,15 +33,12 @@ export const useUserStore = defineStore(
       const data = await refreshTokenApi(refreshTokenReq)
       accessToken.value = data.access_token
       refreshToken.value = data.refresh_token
-      expiresIn.value = data.expires_in
       return data
     }
 
     const logout = (): void => {
       accessToken.value = ''
       refreshToken.value = ''
-      username.value = ''
-      expiresIn.value = 0
     }
 
     const setToken = (token: string): void => {
@@ -51,9 +52,8 @@ export const useUserStore = defineStore(
     return {
       accessToken,
       refreshToken,
-      username,
-      expiresIn,
-      login,
+      passwordLogin,
+      faceLogin,
       renewToken,
       logout,
       setToken,

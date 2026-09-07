@@ -51,3 +51,11 @@ class PasswordLoginRequest(BaseModel):
     password: str = Field(..., description="密码")
     captcha_id: Optional[str] = Field(None, description="验证码唯一标识")
     captcha_code: Optional[str] = Field(None, description="验证码")
+
+
+class RegisterRequest(BaseModel):
+    """用户注册请求"""
+    username: str = Field(..., description="登录账号", min_length=2, max_length=20, example="newuser")
+    phone: str = Field(..., description="手机号", max_length=20, example="13800138000")
+    password: str = Field(..., description="登录密码", min_length=8, max_length=50, example="abc12345")
+    sms_code: Optional[str] = Field(None, description="短信验证码", max_length=6)

@@ -1,6 +1,5 @@
-from sqlalchemy import String, Integer
+from sqlalchemy import String, Integer, SMALLINT
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.mysql import TINYINT
 
 
 from app.models.base import BaseModel
@@ -38,7 +37,7 @@ class Role(BaseModel):
         comment="角色描述"
     )
     status: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="状态 0=启用 1=禁用"
     )

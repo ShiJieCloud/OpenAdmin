@@ -1,6 +1,5 @@
-from sqlalchemy import String, BigInteger, Integer
+from sqlalchemy import String, BigInteger, Integer, SMALLINT
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.mysql import TINYINT
 from app.models.base import BaseModel
 
 
@@ -46,7 +45,7 @@ class Menu(BaseModel):
         comment="前端组件路径"
     )
     type: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         nullable=False,
         comment="菜单类型：0=目录 1=页面"
     )
@@ -61,22 +60,22 @@ class Menu(BaseModel):
         comment="菜单图标"
     )
     is_hidden: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="是否隐藏：0=显示 1=隐藏"
     )
     is_frame: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="是否内嵌：0=否 1=是"
     )
     is_external: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="是否外部链接：0=否 1=是"
     )
     status: Mapped[int] = mapped_column(
-        TINYINT,
+        SMALLINT,
         default=0,
         comment="状态：0=启用 1=禁用"
     )
