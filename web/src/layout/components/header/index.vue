@@ -19,7 +19,7 @@ const searchDialogRef = ref<InstanceType<typeof SearchDialog>>()
 </script>
 
 <template>
-  <header class="layout-header flex items-center justify-between">
+  <header class="layout-header">
     <!-- 左侧区域 -->
     <div class="flex items-center header-left">
       <!-- Logo区域 -->
@@ -51,12 +51,25 @@ const searchDialogRef = ref<InstanceType<typeof SearchDialog>>()
         </div>
       </el-tooltip>
 
+      <!-- 主题切换按钮 -->
+      <el-tooltip
+        :content="themeStore.isDarkMode ? '明亮模式' : '暗黑模式'"
+        placement="bottom"
+      >
+        <div class="header-settings-btn" @click="themeStore.toggleTheme">
+          <el-icon>
+            <i-ep-sunny v-if="themeStore.isDarkMode" />
+            <i-ep-moon v-else />
+          </el-icon>
+        </div>
+      </el-tooltip>
+
       <!-- 全屏按钮 -->
       <div class="header-settings-btn">
         <FullScreen />
       </div>
 
-      <el-tooltip content="主题设置" placement="bottom-end">
+      <el-tooltip content="主题设置" placement="bottom">
         <el-icon class="header-settings-btn" @click="themeStore.toggleSettingsPanel">
           <i-solar-palette-broken />
         </el-icon>
@@ -76,6 +89,8 @@ const searchDialogRef = ref<InstanceType<typeof SearchDialog>>()
 .layout-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
 
   .header-menu {
     height: var(--header-height);

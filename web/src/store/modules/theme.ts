@@ -7,7 +7,7 @@
  * @remark 数据持久化pinia-plugin-persistedstate，刷新保留主题设置
  */
 import { defineStore } from 'pinia'
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { tint, shade, mix } from '@/utils/color'
 import type { ThemeMode, FontType, ThemeConfig, CodeThemeMode, CodeThemeLabel } from '@/types/modules/theme'
 import { THEME_MODE, FONT_TYPE, CODE_THEME_MODE, CODE_THEME_LABEL } from '@/types/modules/theme'
@@ -258,6 +258,64 @@ export const useThemeStore = defineStore(
       applyThemeClass()
       console.log('System theme mode changed:', e.matches)
     }
+
+    /**
+     * @method toggleTheme
+     * @desc 切换主题模式（带 View Transition API 圆形扩散动画）
+     * @param {MouseEvent} event 点击事件，用于获取动画起点坐标
+     */
+    let vtStyleEl: HTMLStyleElement | null = null
+    const toggleTheme = (event: MouseEvent) => {
+      const doc = document as Document & {
+        startViewTransition?: (cb: () => Promise<void>) => {
+          finished: Promise<void>
+        }
+      }
+      const isSwitchingToDark = !isDarkMode.value
+      const targetMode = isSwitchingToDark ? THEME_MODE.Dark : THEME_MODE.Light
+
+      if (typeof doc.startViewTransition !== 'function') {
+        setThemeMode(targetMode)
+        return
+      }
+
+      const { clientX: x, clientY: y } = event
+      const endRadius = Math.hypot(
+        Math.max(x, innerWidth - x),
+        Math.max(y, innerHeight - y),
+      )
+      const circle = (r: number) => `circle(${r}px at ${x}px ${y}px)`
+
+      // 让"亮色"始终做主动动画，暗色在底层被动变化：
+      //   亮→暗：old（亮色）在顶层收缩 circle(endRadius → 0)
+      //   暗→亮：new（亮色）在顶层扩散 circle(0 → endRadius)
+      const active = isSwitchingToDark ? 'old' : 'new'
+      const from = isSwitchingToDark ? circle(endRadius) : circle(0)
+      const to = isSwitchingToDark ? circle(0) : circle(endRadius)
+
+      vtStyleEl?.remove()
+
+      const el = document.createElement('style')
+      el.textContent = `
+        @keyframes vt-clip { from { clip-path: ${from}; } to { clip-path: ${to}; } }
+        ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+        ::view-transition-${active}(root) { z-index: 9999; animation: vt-clip 500ms ease-in-out both; }
+      `
+      document.head.appendChild(el)
+      vtStyleEl = el
+
+      const transition = doc.startViewTransition(() => {
+        setThemeMode(targetMode)
+        return nextTick()
+      })
+
+      transition.finished
+        .catch(() => {})
+        .then(() => {
+          el.remove()
+          if (vtStyleEl === el) vtStyleEl = null
+        })
+    }
     // #endregion
 
     /**
@@ -316,6 +374,7 @@ export const useThemeStore = defineStore(
       resetPrimaryColor,
       resetTheme,
       toggleSettingsPanel,
+      toggleTheme,
     }
   },
   {

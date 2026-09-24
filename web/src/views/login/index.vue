@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import {
   Platform,
   Lock,
@@ -13,7 +13,6 @@ import PasswordLogin from './components/PasswordLogin.vue'
 import FaceLogin from './components/FaceLogin.vue'
 import RegisterForm from './components/RegisterForm.vue'
 import { useThemeStore } from '@/store'
-import { THEME_MODE } from '@/types/modules/theme'
 
 // ==================== 响应式数据 ====================
 const activeTab = ref<string>('login')
@@ -27,74 +26,6 @@ interface LoginSuccessPayload {
   username?: string
   phone?: string
   method?: string
-}
-
-function toggleTheme(event: MouseEvent) {
-  const doc = document as Document & {
-    startViewTransition?: (cb: () => Promise<void>) => {
-      ready: Promise<void>
-      finished: Promise<void>
-    }
-  }
-  // 是否切换到暗色（false 为切换到亮色）
-  const isSwitchingToDark = !themeStore.isDarkMode
-  const targetMode = isSwitchingToDark ? THEME_MODE.Dark : THEME_MODE.Light
-
-  // 不支持 View Transition API 时直接切换
-  if (typeof doc.startViewTransition !== 'function') {
-    themeStore.setThemeMode(targetMode)
-    return
-  }
-
-  const root = document.documentElement
-  // 圆形扩散起点 = 点击位置；endRadius 为扩散至视口最远角的距离
-  const { clientX: x, clientY: y } = event
-  const endRadius = Math.hypot(
-    Math.max(x, innerWidth - x),
-    Math.max(y, innerHeight - y)
-  )
-  const circle = (r: number) => `circle(${r}px at ${x}px ${y}px)`
-
-  // 在 startViewTransition 之前设置 z-index，伪元素创建时就确定层级：
-  // 切暗色旧（亮）快照在上层缩小消失，切亮色新（亮）快照在上层向外扩散
-  root.style.setProperty('--vt-old-z', isSwitchingToDark ? '9999' : '1')
-  root.style.setProperty('--vt-new-z', isSwitchingToDark ? '1' : '9999')
-
-  const transition = doc.startViewTransition(() => {
-    themeStore.setThemeMode(targetMode)
-    return nextTick()
-  })
-
-  // 切暗色动画作用于旧快照（满屏圆 → 点击点），切亮色作用于新快照（点击点 → 满屏圆）
-  const [fromRadius, toRadius] = isSwitchingToDark
-    ? [endRadius, 0]
-    : [0, endRadius]
-
-  transition.ready
-    .then(() => {
-      root.animate(
-        { clipPath: [circle(fromRadius), circle(toRadius)] },
-        {
-          duration: 500,
-          easing: 'ease-in-out',
-          // fill: 'both'：首帧绘制前即应用起始裁剪；动画结束后保持末帧（切暗色时
-          // 旧快照保持 circle(0)），避免伪元素移除前 clip-path 回弹导致亮色闪回
-          fill: 'both',
-          pseudoElement: `::view-transition-${isSwitchingToDark ? 'old' : 'new'}(root)`,
-        }
-      )
-    })
-    .catch(() => {
-      // 快速连续切换时过渡被跳过，ready 会 reject，无需处理
-    })
-
-  // 过渡结束后清理临时 z-index 变量，避免污染根元素
-  transition.finished
-    .catch(() => {})
-    .then(() => {
-      root.style.removeProperty('--vt-old-z')
-      root.style.removeProperty('--vt-new-z')
-    })
 }
 
 // ==================== 登录/注册回调 ====================
@@ -121,7 +52,7 @@ function onRegisterSuccess({ username }: { username: string }) {
           :content="themeStore.isDarkMode ? '切换为明亮模式' : '切换为暗黑模式'"
           placement="left"
         >
-          <el-button circle class="theme-toggle-btn" @click="toggleTheme">
+          <el-button circle class="theme-toggle-btn" @click="themeStore.toggleTheme">
             <i-solar-sun-2-line-duotone v-if="themeStore.isDarkMode" />
             <i-solar-moon-stars-line-duotone v-else />
           </el-button>
@@ -406,27 +337,6 @@ html.dark .theme-toggle-btn:hover {
   }
   .auth-form-panel {
     padding: 28px 56px;
-  }
-}
-</style>
-
-<style>
-/* 主题切换：圆形扩散动画（View Transition API，仿 Element Plus 官网） */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-old(root) {
-  z-index: var(--vt-old-z, 1);
-}
-::view-transition-new(root) {
-  z-index: var(--vt-new-z, 9999);
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
   }
 }
 </style>

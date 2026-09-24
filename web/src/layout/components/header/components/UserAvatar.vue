@@ -26,20 +26,21 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="user-avatar-container w-14 h-full">
+  <div class="user-avatar-container">
     <el-dropdown trigger="click" class="user-dropdown">
-      <div>
-        <el-avatar :size="32" class="avatar">
+      <div class="user-pill">
+        <el-avatar :size="26" class="avatar" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png">
           <el-icon>
             <i-ep-user />
           </el-icon>
         </el-avatar>
+        <span class="user-name">
+          {{ userName }}
+        </span>
       </div>
 
       <template #dropdown>
-
         <el-dropdown-menu class="user-dropdown-menu">
-
           <el-dropdown-item class="dropdown-item" @click="handlePersonalCenter">
             <el-icon>
               <i-solar-user-line-duotone />
@@ -68,10 +69,48 @@ const handleLogout = async () => {
 .user-avatar-container {
   display: flex;
   align-items: center;
-  padding: 0 8px;
 }
 
 .user-dropdown {
   cursor: pointer;
+}
+
+.user-pill {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 4px;
+  border: 2px solid var(--el-border-color-lighter);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: padding 0.3s ease, background-color 0.2s ease;
+
+  .avatar {
+    flex-shrink: 0;
+  }
+
+  .user-name {
+    max-width: 0;
+    opacity: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: max-width 0.3s ease, opacity 0.3s ease, margin-left 0.3s ease;
+  }
+}
+
+.user-pill:hover {
+  padding: 4px 12px 4px 4px;
+  background-color: var(--el-fill-color-light);
+
+  .user-name {
+    max-width: 100px;
+    margin-left: 8px;
+    opacity: 1;
+  }
 }
 </style>
