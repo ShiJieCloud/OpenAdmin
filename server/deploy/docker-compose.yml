@@ -7,37 +7,100 @@
 # ⚠️重要：数据库初始化完成后，需要手动执行SQL开启pgvector向量扩展
 
 name: openadmin
-version: '3.8'
 
 services:
   postgres:
-    # PostgreSQL18，内置pgvector向量扩展，Debian trixie基础镜像
+    # PostgreSQL18镜像，内置pgvector向量扩展，Debian trixie基础镜像
     image: pgvector/pgvector:pg18-trixie
-    # 容器实例名称
+    # 容器实例固定名称，方便docker命令操作、OrbStack识别
     container_name: openadmin-db
-    # 容器异常退出、OrbStack重启自动拉起数据库
+    # 重启策略：容器异常崩溃、OrbStack虚拟机重启时自动拉起数据库
     restart: always
-    # 端口映射：宿主机5432端口映射容器5432
+    # 端口映射格式：宿主机端口:容器内部端口，用于mac宿主机DataGrip/本地FastAPI访问
+    # 注意：容器之间通信不依赖该端口映射，直接走docker网桥DNS
     ports:
       - "5432:5432"
     environment:
-      # Postgres超级用户账号
+      # Postgres超级用户账号，这里使用root（不是默认postgres）
       POSTGRES_USER: root
-      # 超级用户密码
+      # 超级用户密码，开发环境简单密码；生产环境务必使用强密码
       POSTGRES_PASSWORD: root
-      # 容器首次初始化自动创建业务数据库
+      # 容器首次初始化的时候，自动创建业务数据库openadmin
+      # ⚠️ 仅第一次初始化生效！已经有数据卷存在时，修改这个不生效
       POSTGRES_DB: openadmin
     volumes:
-      # 命名数据卷持久化PG数据；容器删除数据不会丢失
+      # 挂载docker命名卷，将PG数据目录持久化
+      # pg18_data：卷名；/var/lib/postgresql：容器内pg的数据存储目录
+      # 容器删除不会删除volume，数据保留；除非执行down -v
       - pg18_data:/var/lib/postgresql
+    # 传递给postgres进程的启动参数，优化数据库配置
     command:
-      # PG内存缓冲区，开发环境512MB，生产根据机器内存调大
+      # 共享内存缓冲区，开发环境分配512MB；生产环境建议为物理内存的1/4
       - -c
       - shared_buffers=512MB
-      # 数据库最大并发连接数
+      # 最大并发连接数，根据业务调整，开发200足够
       - -c
       - max_connections=200
+    # 加入自定义网桥openadmin-net，和redis处于同一个局域网
+    networks:
+      - openadmin-net
+    # 健康检查：判断数据库服务是否真正就绪（不是只看容器进程启动）
+    # depends_on只能等容器启动，不能等数据库就绪，配合healthcheck解决竞态问题
+    healthcheck:
+      # 使用pg自带pg_isready工具检测数据库连接状态，用户root，数据库openadmin
+      test: ["CMD-SHELL", "pg_isready -U root -d openadmin"]
+      # 每5秒执行一次健康检测
+      interval: 5s
+      # 单次检测超时3秒
+      timeout: 3s
+      # 连续失败5次标记为不健康
+      retries: 5
+      # 启动宽限期：容器刚启动前10s不做健康检查，给PG初始化时间
+      start_period: 10s
 
-# Docker命名数据卷定义
+  redis:
+    # redis7轻量alpine镜像，体积小适合开发环境
+    image: redis:7-alpine
+    # 固定容器名，方便操作
+    container_name: openadmin-redis
+    # 重启策略，异常自动拉起
+    restart: always
+    # 端口映射，宿主机6379映射容器6379，供本地FastAPI连接
+    ports:
+      - "6379:6379"
+    volumes:
+      # 命名卷挂载redis的数据目录 /data
+      # RDB快照dump.rdb 和AOF日志appendonlydir都保存在这个目录
+      - redis_data:/data
+    # redis启动参数，使用>多行语法，可读性更好
+    command:
+      - redis-server
+      # 开启AOF持久化；RDB默认是开启的，开启后RDB+AOF混合持久化
+      - --appendonly yes
+      # AOF刷盘策略 everysec：每秒刷盘，兼顾性能与数据安全
+      - --appendfsync everysec
+      # 设置redis最大可用内存，防止无限制占用内存导致OOM
+      - --maxmemory 256mb
+      # 内存淘汰策略：内存满时，淘汰所有key中最近最少使用(LRU)
+      - --maxmemory-policy allkeys-lru
+
+    # 和postgres加入同一个网桥，容器内可直接用服务名互相访问
+    networks:
+      - openadmin-net
+    # redis健康检查，发送PING，返回PONG代表服务就绪
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      # redis启动很快，给5s启动宽限期
+      start_period: 5s
+
+# 自定义网桥定义，统一挂载
+networks:
+  openadmin-net:
+
+# Docker命名数据卷声明
 volumes:
-  pg18_data:
+  pg18_data:    # postgres数据卷
+  redis_data:   # redis持久化数据卷
