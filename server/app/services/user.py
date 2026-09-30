@@ -12,7 +12,7 @@ from app.core.redis import RedisClient
 from app.core.security import verify_password, create_tokens, verify_refresh_token, get_password_hash
 from app.crud import UserCRUD
 from app.models import User, Role, Post
-from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse, RegisterRequest
+from app.schemas.auth import PasswordLoginRequest, RefreshTokenRequest, TokenResponse
 from app.schemas.user import (
     UserUpdateStatusRequest,
     UserUpdateRequest,
@@ -401,38 +401,6 @@ class UserService(BaseService):
         if req.post_ids:
             await self.user_crud.bind_posts_to_user(user.id, req.post_ids)
 
-        return user
-
-    async def register(self, req: RegisterRequest) -> User:
-        """用户自助注册
-
-        公开接口，无需登录。仅校验用户名与手机号唯一性，创建状态正常的用户。
-        短信验证码校验待接入短信服务后补充。
-
-        :param req: 注册请求
-        :return: 创建后的用户对象
-        :raises BusinessError: 用户名已存在、手机号已被注册
-        """
-        # 校验用户名是否已存在
-        existing_user = await self.user_crud.get_user(username=req.username)
-        if existing_user:
-            raise BusinessError(RespCodeEnum.USERNAME_EXIST)
-
-        # 校验手机号是否已存在
-        existing_user = await self.user_crud.get_user(phone=req.phone)
-        if existing_user:
-            raise BusinessError(RespCodeEnum.PHONE_EXIST)
-
-        # 密码加密
-        hashed_password = get_password_hash(req.password)
-
-        # 创建用户
-        user_data = {
-            "username": req.username,
-            "phone": req.phone,
-            "password": hashed_password,
-        }
-        user = await self.user_crud.create_user(user_data)
         return user
 
     async def reset_user_password(self, req: UserResetPasswordRequest) -> None:

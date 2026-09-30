@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.deps.datebase import get_db_session, get_redis
 from app.services import (
     UserService,
+    UserApplyService,
     PermissionService,
     RoleService,
     PostService,
@@ -24,6 +25,13 @@ async def get_user_service(
 ) -> UserService:
     """用户服务依赖注入，返回 UserService 实例"""
     return UserService(db_session, redis_client)
+
+
+async def get_user_apply_service(
+    db_session: AsyncSession = Depends(get_db_session)
+) -> UserApplyService:
+    """用户注册申请服务依赖注入，返回 UserApplyService 实例"""
+    return UserApplyService(db_session)
 
 
 async def get_captcha_service(

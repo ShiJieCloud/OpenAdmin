@@ -2,18 +2,19 @@ from fastapi import APIRouter, Depends, UploadFile, File
 
 from app.core.response import ResponseBuilder
 from app.deps.auth import get_current_active_user
-from app.deps.service import get_user_service, get_captcha_service
+from app.deps.service import get_user_service, get_user_apply_service, get_captcha_service
 from app.models.user import User
 from app.schemas.base.response import ApiResponse
 from app.schemas import (
     UserInfoResponse,
+    UserApplyInfoResponse,
     PasswordLoginRequest,
     RegisterRequest,
     RefreshTokenRequest,
     TokenResponse,
     CaptchaResponse
 )
-from app.services import UserService, CaptchaService
+from app.services import UserService, UserApplyService, CaptchaService
 
 router = APIRouter()
 
@@ -37,18 +38,23 @@ async def password_login(
 
 @router.post(
     "/register",
-    response_model=ApiResponse[UserInfoResponse],
+    response_model=ApiResponse[UserApplyInfoResponse],
     summary="用户注册",
-    description="用户自助注册账号"
+    description="提交用户注册申请，写入待审批记录（不创建正式账号），需等待管理员审批通过后即可登录"
 )
 async def register(
     req: RegisterRequest,
-    user_service: UserService = Depends(get_user_service)
+    apply_service: UserApplyService = Depends(get_user_apply_service)
 ):
-    """用户自助注册"""
-    user = await user_service.register(req)
-    user_info = UserInfoResponse.model_validate(user)
-    return ResponseBuilder.success(user_info)
+    """提交用户注册申请
+
+    走审批制注册流程：仅校验用户名/手机号唯一性并写入 sys_user_apply 申请表，
+    status=0 待审核，不创建正式系统用户，也不签发 Token。
+    用户需等待管理员审批通过后，凭账号密码走登录流程获取 Token。
+    """
+    apply = await apply_service.create_apply(req)
+    apply_info = UserApplyInfoResponse.model_validate(apply)
+    return ResponseBuilder.success(apply_info, message="注册申请提交成功，请等待管理员审批")
 
 
 @router.post(

@@ -1,6 +1,6 @@
 
-from enum import Enum
+from enum import IntEnum, Enum
 
-class RoleStatusEnum(Enum):
+class RoleStatusEnum(IntEnum):
     normal = 0
     disabled = 1

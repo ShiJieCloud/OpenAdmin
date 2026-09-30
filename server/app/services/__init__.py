@@ -1,5 +1,6 @@
 from app.services.base import BaseService
 from app.services.user import UserService
+from app.services.user_apply import UserApplyService
 from app.services.permission import PermissionService
 from app.services.role import RoleService
 from app.services.post import PostService
@@ -16,6 +17,7 @@ from app.services.ai_session import AiSessionService
 __all__ = [
     "BaseService",
     "UserService",
+    "UserApplyService",
     "PermissionService",
     "RoleService",
     "PostService",

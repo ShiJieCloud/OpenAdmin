@@ -1,5 +1,6 @@
 from app.models.base import BaseModel, BaseRelation
 from app.models.user import User
+from app.models.user_apply import UserApply
 from app.models.role import Role
 from app.models.dept import Dept
 from app.models.post import Post
@@ -16,6 +17,7 @@ __all__ = [
     "BaseModel",
     "BaseRelation",
     "User",
+    "UserApply",
     "Role",
     "Dept",
     "Post",

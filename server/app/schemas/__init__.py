@@ -18,6 +18,11 @@ from .login_log import LoginLogListQueryRequest, LoginLogCreateRequest, LoginLog
 from .oper_log import OperLogCreateRequest, OperLogListQueryRequest, OperLogResponse
 from .post import PostInfoResponse
 from .user import UserInfoResponse
+from .user_apply import (
+    UserApplyListQueryRequest,
+    UserApplyRejectRequest,
+    UserApplyInfoResponse,
+)
 
 
 __all__ = [
@@ -35,6 +40,9 @@ __all__ = [
     "LoginLogCreateRequest",
     "LoginLogResponse",
     "UserInfoResponse",
+    "UserApplyListQueryRequest",
+    "UserApplyRejectRequest",
+    "UserApplyInfoResponse",
     "DashboardOverviewResponse",
     "DeptInfoResponse",
     "DeptCreateRequest",

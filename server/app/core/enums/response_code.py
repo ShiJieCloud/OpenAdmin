@@ -51,6 +51,14 @@ class RespCodeEnum(Enum):
     # B-PW = 密码认证 (Password)
     PWD_VERIFY_FAIL = ("BPW0001", "用户名或密码错误，，剩余尝试次数: {count} 次")
     ACCOUNT_LOCKED = ("BPW0002", "账号已被锁定，请稍后再试或联系管理员")
+
+    # B-UA = 用户注册申请相关 (User Apply)
+    USER_APPLY_NOT_EXIST = ("BUA0001", "用户注册申请不存在")
+    USER_APPLY_ALREADY_PROCESSED = ("BUA0002", "申请已处理，无法重复审批")
+    USER_APPLY_HAS_PENDING = ("BUA0003", "您尚有正在审核中的申请，请勿重复提交！")
+    USER_APPLY_USER_EXIST = ("BUA0004", "该用户名已存在正式账号，无法提交注册申请")
+    DEPT_NOT_FOUND_OR_DISABLED = ("BUA0005", "部门不存在或已停用")
+    POST_NOT_FOUND_OR_DISABLED = ("BUA0006", "岗位不存在或已停用")
     
     # B-GE = 通用业务 (General)
     PARAM_INVALID = ("BGE0001", "参数无效")

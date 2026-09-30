@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.user import router as user_router
+from app.api.v1.endpoints.approval import router as approval_router
 from app.api.v1.endpoints.role import router as role_router
 from app.api.v1.endpoints.menu import router as menu_router
 from app.api.v1.endpoints.dept import router as dept_router
@@ -16,6 +17,7 @@ from app.api.v1.endpoints.ai import router as ai_router
 api_v1_router = APIRouter()
 
 api_v1_router.include_router(user_router, prefix="/user", tags=["用户管理"])
+api_v1_router.include_router(approval_router, prefix="/approval", tags=["注册申请审批"])
 api_v1_router.include_router(role_router, prefix="/role", tags=["角色管理"])
 api_v1_router.include_router(menu_router, prefix="/menu", tags=["菜单管理"])
 api_v1_router.include_router(dept_router, prefix="/dept", tags=["部门管理"])
